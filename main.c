@@ -58,6 +58,7 @@ void newFile_menu(void) {
 	printf(" * 'q' - Discard and Quit\n"); // Prints out the text
 	printf("\n>> ");
 
+	// get first character - the command
 	char c;
 	c = getchar();
 	
@@ -65,10 +66,11 @@ void newFile_menu(void) {
 	char rest[MAXLENGTH];
 	char cc;
 	int i = 0;
-	while ((cc = getchar())) { // Get rid of all characters afterward
+	while ((cc = getchar()) != EOF && cc != '\n' && i < MAXLENGTH - 1) {
 		rest[i] = cc;
 		++i;
 	}
+	rest[i] = '\0'; // End of string
 
 	switch (c) {
 		case 's':
