@@ -7,9 +7,9 @@ char text[MAXLENGTH];
 void newFile(void);
 void printText(void);
 void newFile_menu(void);
+void newFile_save(void);
 
 void newFile(void) {
-	//char text[MAXLENGTH];
 	char c;
 	int i = 0;
 	int line = 1;
@@ -60,12 +60,20 @@ void newFile_menu(void) {
 
 	char c;
 	c = getchar();
-	getchar(); // Get rid of new line character
+	
+	// Store rest of line in rest
+	char rest[MAXLENGTH];
+	char cc;
+	int i = 0;
+	while ((cc = getchar())) { // Get rid of all characters afterward
+		rest[i] = cc;
+		++i;
+	}
 
 	switch (c) {
 		case 's':
 		{
-
+			newFile_save();
 		} break;
 		case 'c':
 		{
@@ -88,9 +96,14 @@ void newFile_menu(void) {
 	}
 }
 
+void newFile_save(void) {
+	
+}
+
 int main() {
 	printf("Line Editor: New File\n");
 	printf("Press Ctrl-D on blank line to denote End Of File\n\n");
+	
 	newFile();
 
 	return(0);
