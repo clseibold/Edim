@@ -1,5 +1,8 @@
 This is a test
-of something very cool!
-I might implement the linked list for this eventually (maybe?)
-to make the memory more dynamic
-and not limited based on a max length!
+to see something
+that is interesting!
+and here's some more text that is a continuation on the previous text!
+here's some more continuation!
+
+
+and here's blank lines.

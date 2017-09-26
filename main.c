@@ -57,7 +57,7 @@ int main() {
 		switch (state) {
 			case MAIN_MENU:
 			{
-				state = mainMenu(args, argsLength);
+				state = mainMenu(args, &argsLength);
 				if (state == KEEP) state = statePrev;
 			} break;
 			case NEW_FILE:
@@ -68,7 +68,7 @@ int main() {
 			} break;
 			case OPEN_FILE:
 			{
-				char filename[argsLength] = { 0 };
+				char filename[argsLength];
 				int i, ii;
 
 				while (filename[i] != ' ')
