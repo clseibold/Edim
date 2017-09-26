@@ -9,14 +9,12 @@ typedef enum State {
 	KEEP,
 	MAIN_MENU,
 	NEW_FILE,
+	OPEN_FILE,
 	QUIT
 } State;
 
-/* === parsing.c === */
-int getLine(char *line, int max, int trimSpace);
-
 /* === editor.c === */
-#define MAXLENGTH 2000000
+#define MAXLENGTH 200000 /* 2000000 was too big on Windows */
 
 char text[MAXLENGTH];
 int textEndI;
@@ -31,9 +29,13 @@ typedef enum NewFileState {
 } NewFileState;
 
 State newFile(void);
+State openFile(char *filename);
 State newFile_menu(void);
 State newFile_editor(void);
 void printText(void);
 void newFile_save(void);
+
+/* === parsing.c === */
+int parsing_getLine(char *line, int max, int trimSpace);
 
 #endif

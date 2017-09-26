@@ -1,5 +1,7 @@
 #include <stdio.h>
 
+#include "lineeditor.h"
+
 /* Gets input, trims leading space, and puts into line char array
 	as long as it doesn't go over the max.
 
@@ -8,30 +10,33 @@
 	@trimSpace - Whether to trim leading space (1) or not (0)
 	@return - the length of the line
  */
-int getLine(char *line, int max, int trimSpace) {
-	char c;
-	register int i = 0;
+int parsing_getLine(char *line, int max, int trimSpace) {
+	int c;
+	int i = 0;
 
 	/* Trim whitespace */
-	while (trimSpace && (c = getchar()) == ' ' || c == '\t')
+	while (trimSpace && ((c = getchar()) == ' ' || c == '\t'))
 		;
+
+	if (!trimSpace) c = getchar();
 
 	/* If there's nothing left, return */
 	if (c == '\n') {
 		line[i] = '\0';
-		return 1;
+		return 1; /* Including \0 */
 	}
 
 	/* Transfer input characters into line string */
 	while (c != EOF && c != '\n' && i < max)
 	{
-		line[i] = c;
+		line[i] = (char) c;
 		++i;
 		c = getchar();
 	}
 
 	/* End of string */
 	line[i] = '\0';
+	++i; /* Includes '\0' in the length */
 
 	return i;
 }

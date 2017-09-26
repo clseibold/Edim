@@ -2,7 +2,7 @@
 
 #include "lineeditor.h"
 
-State mainMenu() {
+State mainMenu(char *args, int *argsLength) {
 	printf("Line Editor: Main Menu\n");
 	printf("Copyright (c) Christian Seibold. All Rights Reserved.\n\n");
 
@@ -14,15 +14,14 @@ State mainMenu() {
 	printf(" * 'Q' - Quit\n");
 
 	/* Prompt */
-	printf("\n>> ");
+	printf("\n: ");
 
 	/* get first character - the menu item */
 	char c;
 	c = getchar();
 	
 	/* Store rest of line in rest */
-	char rest[MAXLENGTH];
-	int restLength = getLine(rest, MAXLENGTH, TRUE);
+	*argsLength = parsing_getLine(args, MAXLENGTH, TRUE);
 	/*printf("Rest is: %s\n", rest);
 	printf("RestLength is: %d", restLength);*/
 
@@ -34,6 +33,7 @@ State mainMenu() {
 		case 'o':
 		{
 			printf("\nUnimplemented!\n");
+			return OPEN_FILE;
 		} break;
 		case 'Q':
 		{
@@ -47,7 +47,9 @@ State mainMenu() {
 }
 
 int main() {
-	int running = TRUE;
+	char args[MAXLENGTH] = { 0 };
+	int argsLength = 0;
+	int running = 1;
 	State state = MAIN_MENU;
 	State statePrev = state;
 
@@ -55,7 +57,7 @@ int main() {
 		switch (state) {
 			case MAIN_MENU:
 			{
-				state = mainMenu();
+				state = mainMenu(args, argsLength);
 				if (state == KEEP) state = statePrev;
 			} break;
 			case NEW_FILE:
@@ -64,9 +66,25 @@ int main() {
 				state = newFile();
 				if (state == KEEP) state = statePrev;
 			} break;
+			case OPEN_FILE:
+			{
+				char filename[argsLength] = { 0 };
+				int i, ii;
+
+				while (filename[i] != ' ')
+				{
+					filename[ii] = args[i];
+					++i;
+					++ii;
+				}
+
+				state = openFile(filename);
+				if (state == KEEP) state = statePrev;
+			} break;
 			case QUIT:
 			{
 				running = FALSE;
+				break;
 			}
 		}
 

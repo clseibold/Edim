@@ -51,7 +51,7 @@ int count(Node *head)
 	return count;
 }
 
-Node *append(Node *head, data)
+Node *append(Node *head, int data)
 {
 	/* Go to last node */
 	Node *cursor = head;
@@ -67,11 +67,95 @@ Node *append(Node *head, data)
 	return newNode;
 }
 
+Node *insert_after(Node *head, Node *prev, int data) {
+	Node *cursor = head;
+	while (cursor != prev) {
+		cursor = cursor->next;
+	}
+
+	if (cursor != NULL) {
+		Node *newNode = create(data, cursor->next);
+		cursor->next = newNode;
+		return head;
+	} else {
+		return NULL;
+	}
+}
+
+Node *insert_before(Node *head, Node *next, int data) {
+	if (head == NULL)
+		return NULL;
+
+	if (next == NULL) {
+		head = append(head, data);
+		return head;
+	}
+
+	if (head == next) {
+		head = prepend(head, data);
+		return head;
+	}
+
+	Node *cursor = head;
+	while (cursor != next - 1) {
+		cursor = cursor->next;
+	}
+
+	if (cursor != NULL) {
+		Node *newNode = create(data, cursor->next);
+		cursor->next = newNode;
+		return head;
+	} else {
+		return NULL;
+	}
+}
+
+Node *search(Node *head, int data) {
+	Node *cursor = head;
+	while (cursor != NULL) {
+		if (cursor->data = data)
+			return cursor;
+		cursor = cursor->next;
+	}
+	return NULL;
+}
+
+Node *reverse(Node *head) { // TODO: I don't understand this!
+	Node *prev = NULL;
+	Node *current = head;
+	Node *next;
+
+	while (current != NULL) {
+		next = current->next;
+		current->next = prev;
+		prev = current;
+		current = next;
+	}
+
+	return NULL;
+}
+
+Node *remove_front(Node *head) {
+	if (head == NULL)
+		return NULL;
+	
+	Node *front = head;
+	head = head->next;
+	front->next = NULL;
+
+	/* Is this the last node in the list? */
+	if (front == head) head = NULL; // TODO: this doesn't make any sense to me
+
+	free(front);
+	return head;
+}
+
+Node *remove_back(Node *head) {
+	
+}
+
 int main(int argc, char *argv[])
 {
 	Node *head = NULL;
-
 	Node *last = head;
-
-	append(last, 13);
 }

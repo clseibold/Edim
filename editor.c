@@ -44,6 +44,17 @@ State newFile(void) {
 	return KEEP;
 }
 
+State openFile(char *filename)
+{
+	// Open the file, then
+	// Take all characters from file and put into 'text'
+
+	// Show the menu
+	
+
+	return KEEP;
+}
+
 /* Menu for New File */
 State newFile_menu(void) {
 	printf("\nNew File: Menu\n");
@@ -66,7 +77,7 @@ State newFile_menu(void) {
 	printf(" * 'Q' - Quit (without save)\n");
 
 	/* Prompt */
-	printf("\n>> ");
+	printf("\neditor: ");
 
 	/* get first character - the menu item */
 	char c;
@@ -74,7 +85,7 @@ State newFile_menu(void) {
 	
 	/* Store rest of line in rest */
 	char rest[MAXLENGTH];
-	int restLength = getLine(rest, MAXLENGTH, TRUE);
+	int restLength = parsing_getLine(rest, MAXLENGTH, TRUE);
 	/*printf("Rest is: %s\n", rest);
 	printf("RestLength is: %d", restLength);*/
 

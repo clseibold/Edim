@@ -1,1 +1,5 @@
-Another new file!
+This is a test
+of something very cool!
+I might implement the linked list for this eventually (maybe?)
+to make the memory more dynamic
+and not limited based on a max length!
