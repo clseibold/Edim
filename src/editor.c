@@ -250,7 +250,19 @@ void editorState_save(void) {
     if (openedFilename[0] != '\0') {
         fp = fopen(openedFilename, "w");
     } else {
-        fp = fopen("output.txt", "w"); // TODO: Prompt for filename
+        printf("Enter the filename: ");
+        char filename[MAXLENGTH];
+        int filenameLength = 0;
+        filenameLength = parsing_getLine(filename, MAXLENGTH, TRUE);
+        while (filenameLength == -1) {
+            printf("Enter the filename: ");
+            filenameLength = parsing_getLine(filename, MAXLENGTH, TRUE);
+        }
+        fp = fopen(filename, "w");
+        // Copy filename into openedFilename
+        for (int i = 0; i < MAXLENGTH; i++) {
+            openedFilename[i] = filename[i];
+        }
     }
     
     fprintf(fp, "%s", text);
