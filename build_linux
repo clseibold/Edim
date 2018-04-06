@@ -1,3 +1,4 @@
 #!/bin/bash
 
-gcc --std=c99 main.c parsing.c editor.c -o main
+mkdir -p build/debug
+gcc --std=c99 src/main.c src/parsing.c src/editor.c -o build/debug/main
