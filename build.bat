@@ -3,6 +3,7 @@
 set compiler=%1
 set command=%compiler%
 set arch=%2
+rem.TODO- Fix these:
 if exist "..\..\src\win32\NUL" (
    set win32sources="..\..\src\win32\*.c"
 )
@@ -117,9 +118,9 @@ goto :end
 :msvcdo
 cd %projDirectory%
 mkdir build\debug
-cd build\debug
+rem.cd build\debug
 echo Using MSVC
-cl /D_CRT_SECURE_NO_WARNINGS /nologo /Oi /Gm- /MP /FC /fp:fast /fp:except- %projDirectory%\src\*.c %win32sources% %libc%  /I%projDirectory%\src\headers\ %msvclibh% /link -OUT:main.exe -incremental:no -opt:ref -subsystem:console
+cl /D_CRT_SECURE_NO_WARNINGS /nologo /Oi /Gm- /MP /FC /fp:fast /fp:except- %projDirectory%\src\*.c %win32sources% %libc%  /I%projDirectory%\src\headers\ %msvclibh% /link -OUT:%projDirectory%\build\debug\main.exe -incremental:no -opt:ref -subsystem:console
 rem.cd ..\.. 
 goto :end
 
@@ -155,11 +156,11 @@ goto :end
 
 
 :run
-if not exist build\debug\lydrige.exe (
+if not exist build\debug\main.exe (
    echo Must compile project before you can run it.
    goto :end
 )
-call build\debug\lydrige.exe
+call build\debug\main.exe
 goto :end
 
 
