@@ -1,8 +1,3 @@
-This is a test
-to see something
-that is interesting!
-and here's some more text that is a continuation on the previous text!
-here's some more continuation!
-
-
-and here's blank lines.
+Testing something interesting
+and cool!
+and now for appending to an open file!
