@@ -1,3 +1,0 @@
-Testing something interesting
-and saving with the new text data structure
-that I'm using!

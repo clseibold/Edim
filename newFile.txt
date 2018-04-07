@@ -1,4 +1,0 @@
-Testing something cool!
-and newwwwwwwwwww.
-and appending to make sure
-openedFilename is correctly changed!
