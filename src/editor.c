@@ -260,7 +260,7 @@ EditorState editorState_editor(void) {
         //++i;
     }
     
-    text[i] = '\0';
+    //text[i] = '\0';
     textEndI = i;
     textEndLine = line;
     
@@ -324,7 +324,12 @@ void editorState_save(void) {
         }
     }
     
-    fprintf(fp, "%s", text);
+    for (int line = 0; line < buf_len(lines); line++) {
+        for (int i = 0; i < buf_len(lines[line].chars); i++) {
+            fprintf(fp, "%c", lines[line].chars[i]);
+        }
+    }
+    //fprintf(fp, "%s", text);
     
     fclose(fp);
 }
