@@ -53,7 +53,6 @@ State editorState(EditorState state, char args[MAXLENGTH], int argsLength) {
                     printf("Enter the filename: ");
                     filenameLength = parsing_getLine(filename, MAXLENGTH, true);
                 }
-                printf("Opening file %s\n", filename);
                 subState = openFile(filename);
             } else {
                 char *filename = alloca((argsLength + 1) * sizeof(char));
@@ -67,7 +66,6 @@ State editorState(EditorState state, char args[MAXLENGTH], int argsLength) {
                     ++ii;
                 }
                 filename[ii] = '\0';
-                printf("Opening file %s\n", filename);
                 subState = openFile(filename);
                 //free(filename);
                 //filename = 0;
@@ -156,8 +154,6 @@ EditorState openFile(char *filename)
 
 /* Menu for New File */
 EditorState editorState_menu(void) {
-    printf("\nNew File: Menu\n");
-    
     /* Prompt */
     printf("\neditor> ");
     
@@ -165,11 +161,15 @@ EditorState editorState_menu(void) {
     char c;
     c = getchar();
     
+    if (c == '\n') return KEEP;
+    
     /* Store rest of line in rest */
     char rest[MAXLENGTH];
     int restLength = parsing_getLine(rest, MAXLENGTH, true);
     /*printf("Rest is: %s\n", rest);
  printf("RestLength is: %d", restLength);*/
+    
+    printf("\n");
     
     switch (c) {
         case '?': // TODO: Add new file and open file.
@@ -200,7 +200,6 @@ EditorState editorState_menu(void) {
         } break;
         case 'c':
         {
-            printf("\n");
             return ED_EDITOR;
         } break;
         case 'p':
@@ -264,7 +263,6 @@ EditorState editorState_editor(void) {
     textEndI = i;
     textEndLine = line;
     
-    printf("\n");
     return ED_MENU;
 }
 

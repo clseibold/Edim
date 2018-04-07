@@ -24,10 +24,11 @@ State mainMenu(char *args, int *argsLength) {
     /*printf("Rest is: %s\n", rest);
  printf("RestLength is: %d", restLength);*/
     
+    printf("\n");
+    
     switch (c) {
         case '?':
         {
-            printf("\n");
             printf(" * 'n' - New File\n");
             printf(" * 'o' - Open File\n");
             printf(" * 'q' or 'Q' - Quit\n");
@@ -81,18 +82,18 @@ int main() {
             case OPEN_FILE:
             {
                 /*char *filename = alloca((argsLength + 1) * sizeof(char));
-    //char filename[argsLength];
-    int i, ii;
-    
-    while (args[i] != ' ' && args[i] != '\n' && args[i] != '\0')
-    {
-     filename[ii] = args[i];
-     ++i;
-     ++ii;
-    }
-    filename[ii] = '\0';
-    
-    printf("Opening %s\n", filename);*/
+                //char filename[argsLength];
+                int i, ii;
+                
+                while (args[i] != ' ' && args[i] != '\n' && args[i] != '\0')
+                {
+                filename[ii] = args[i];
+                ++i;
+                ++ii;
+                }
+                filename[ii] = '\0';
+                
+                printf("Opening %s\n", filename);*/
                 //state = openFile(filename, ii + 1);
                 state = editorState(ED_OPEN, args, argsLength);
                 if (state == KEEP) state = statePrev;
