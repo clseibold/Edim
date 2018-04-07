@@ -37,7 +37,7 @@ typedef enum EditorState {
     ED_QUIT, // Quit program
 } EditorState;
 
-State editorState(EditorState state, char args[MAXLENGTH], int argsLength);
+State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength);
 EditorState openFile(char *filename);
 EditorState editorState_menu(void);
 EditorState editorState_editor(void);

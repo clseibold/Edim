@@ -20,7 +20,7 @@ State mainMenu(char *args, int *argsLength) {
     c = getchar();
     
     /* Store rest of line in rest */
-    *argsLength = parsing_getLine(args, MAXLENGTH, true);
+    *argsLength = parsing_getLine(args, MAXLENGTH / 4, true);
     /*printf("Rest is: %s\n", rest);
  printf("RestLength is: %d", restLength);*/
     

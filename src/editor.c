@@ -9,7 +9,7 @@
 char *openedFilename = NULL;
 
 /* Get input for new file */
-State editorState(EditorState state, char args[MAXLENGTH], int argsLength) {
+State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
     static EditorState subState = ED_EDITOR;
     static int initialSet = 0;
     static EditorState subStatePrev;
@@ -47,16 +47,16 @@ State editorState(EditorState state, char args[MAXLENGTH], int argsLength) {
             // TODO: Get arg for filename or Prompt for filename if no args provided
             if (argsLength <= 1) {
                 printf("Enter the filename: ");
-                char filename[MAXLENGTH];
+                char filename[MAXLENGTH / 4];
                 int filenameLength = 0;
-                filenameLength = parsing_getLine(filename, MAXLENGTH, true);
+                filenameLength = parsing_getLine(filename, MAXLENGTH / 4, true);
                 while (filenameLength == -1) {
                     printf("Enter the filename: ");
-                    filenameLength = parsing_getLine(filename, MAXLENGTH, true);
+                    filenameLength = parsing_getLine(filename, MAXLENGTH / 4, true);
                 }
                 subState = openFile(filename);
             } else {
-                char *filename = alloca((argsLength + 1) * sizeof(char));
+                char *filename = malloc((argsLength + 1) * sizeof(char));
                 int i = 0;
                 int ii = 0;
                 
@@ -68,8 +68,8 @@ State editorState(EditorState state, char args[MAXLENGTH], int argsLength) {
                 }
                 filename[ii] = '\0';
                 subState = openFile(filename);
-                //free(filename);
-                //filename = 0;
+                free(filename);
+                filename = 0;
             }
             if (subState == ED_KEEP) subState = subStatePrev;
         } break;
@@ -88,7 +88,6 @@ State editorState(EditorState state, char args[MAXLENGTH], int argsLength) {
         case ED_EXIT:
         {
             subState = ED_EDITOR;
-            printf("Exiting");
             
             // Clear openedFilename and the file information
             buf_free(openedFilename);
@@ -159,8 +158,8 @@ EditorState editorState_menu(void) {
     if (c == '\n') return KEEP;
     
     /* Store rest of line in rest */
-    char rest[MAXLENGTH];
-    int restLength = parsing_getLine(rest, MAXLENGTH, true);
+    char rest[MAXLENGTH / 4];
+    int restLength = parsing_getLine(rest, MAXLENGTH / 4, true);
     //printf("Rest is: %s\n", rest);
     //printf("RestLength is: %d", restLength);
     
@@ -202,13 +201,13 @@ EditorState editorState_menu(void) {
             
             // TODO: if line == 0, then insert before line 1
             
-            char lineInput[MAXLENGTH];
+            char lineInput[MAXLENGTH / 4];
             int length;
             while (line == 0 || line > buf_len(lines) || length == -1) {
                 if (rest != end)
                     printf("That line number exceeds the bounds of the file.\n");
                 printf("Enter a line number: ");
-                length = parsing_getLine(lineInput, MAXLENGTH, true);
+                length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
                 line = (int) strtol(lineInput, &end, 10);
             }
             
@@ -223,13 +222,13 @@ EditorState editorState_menu(void) {
             char *end;
             int line = (int) strtol(rest, &end, 10);
             
-            char lineInput[MAXLENGTH];
+            char lineInput[MAXLENGTH / 4];
             int length;
             while (line == 0 || line > buf_len(lines) || length == -1) {
                 if (rest != end)
                     printf("That line number exceeds the bounds of the file.\n");
                 printf("Enter a line number: ");
-                length = parsing_getLine(lineInput, MAXLENGTH, true);
+                length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
                 line = (int) strtol(lineInput, &end, 10);
             }
             
@@ -409,16 +408,16 @@ void printLine(int line) {
 /* Save the currently stored text in a new file (or the file that was opened or saved to previously) */
 void editorState_save(void) {
     FILE *fp;
-    if (buf_len(openedFilename) > 0) {
+    if (openedFilename && buf_len(openedFilename) > 0) {
         fp = fopen(openedFilename, "w");
     } else {
         printf("Enter the filename: ");
-        char filename[MAXLENGTH];
+        char filename[MAXLENGTH / 4];
         int filenameLength = 0;
-        filenameLength = parsing_getLine(filename, MAXLENGTH, true);
+        filenameLength = parsing_getLine(filename, MAXLENGTH / 4, true);
         while (filenameLength == -1) {
             printf("Enter the filename: ");
-            filenameLength = parsing_getLine(filename, MAXLENGTH, true);
+            filenameLength = parsing_getLine(filename, MAXLENGTH / 4, true);
         }
         fp = fopen(filename, "w");
         // Copy filename into openedFilename
@@ -427,6 +426,7 @@ void editorState_save(void) {
         }
     }
     
+    printf("Saving '%s'.\n", openedFilename);
     for (int line = 0; line < buf_len(lines); line++) {
         for (int i = 0; i < buf_len(lines[line].chars); i++) {
             fprintf(fp, "%c", lines[line].chars[i]);
