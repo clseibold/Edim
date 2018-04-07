@@ -203,7 +203,7 @@ EditorState editorState_menu(void) {
             
             char lineInput[MAXLENGTH / 4];
             int length;
-            while (line == 0 || line > buf_len(lines) || length == -1) {
+            while (line > buf_len(lines) || length == -1) {
                 if (rest != end)
                     printf("That line number exceeds the bounds of the file.\n");
                 printf("Enter a line number: ");
@@ -211,11 +211,29 @@ EditorState editorState_menu(void) {
                 line = (int) strtol(lineInput, &end, 10);
             }
             
-            editorState_insertAfter(line);
+            if (line == 0)
+                editorState_insertBefore(1);
+            else editorState_insertAfter(line);
         } break;
         case 'i':
         {
-            printf("Unimplemented!\n");
+            char *end;
+            int line = (int) strtol(rest, &end, 10);
+            
+            char lineInput[MAXLENGTH / 4];
+            int length;
+            while (line == 0 || line > buf_len(lines) + 1 || length == -1) {
+                if (rest != end)
+                    printf("That line number exceeds the bounds of the file.\n");
+                printf("Enter a line number: ");
+                length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
+                line = (int) strtol(lineInput, &end, 10);
+            }
+            
+            if (line == buf_len(lines) + 1)
+                editorState_insertAfter(buf_len(lines));
+            else editorState_insertBefore(line);
+            //printf("Unimplemented!\n");
         } break;
         case 'x':
         {
@@ -293,9 +311,11 @@ EditorState editorState_editor(void) {
     return ED_MENU;
 }
 
+// Insert lines after a specific line. Denote end of input by typing Ctrl-D (or Ctrl-Z+Enter on Windows) on new line.
 EditorState editorState_insertAfter(int line) {
     char c;
-    printLine(line - 1);
+    if (line - 1 >= 0 && line - 1 < buf_len(lines))
+        printLine(line - 1);
     int currentLine = line + 1;
     int lineStart = currentLine;
     
@@ -337,7 +357,50 @@ EditorState editorState_insertAfter(int line) {
         lines[lineStart - 1 + i] = insertLines[i];
     }
     
-    // Free the old line stretchy buffer
+    // Free the old lines stretchy buffer
+    buf_free(insertLines);
+    
+    return ED_MENU;
+}
+
+EditorState editorState_insertBefore(int line) {
+    char c;
+    if (line - 2 >= 0 && line - 1 < buf_len(lines))
+        printLine(line - 2);
+    int currentLine = line;
+    int lineStart = currentLine;
+    
+    Line *insertLines = NULL;
+    char *chars = NULL;
+    
+    printf("%3d ", currentLine);
+    while ((c = getchar()) != EOF) {
+        buf_push(chars, c);
+        if (c == '\n') {
+            buf_push(insertLines, ((Line) { chars, currentLine }));
+            ++currentLine;
+            printf("%3d ", currentLine);
+            chars = NULL; // create new char stretchy buffer for next line
+        }
+    }
+    
+    int linesAddedAmt = buf_len(insertLines);
+    
+    // Insert the new lines into the lines buffer
+    buf_add(lines, linesAddedAmt);
+    
+    int linesLeft = buf_len(lines) - linesAddedAmt - (lineStart - 1);
+    // Moves lines up by how many lines have been inserted
+    for (int i = 0; i < linesLeft; i++) {
+        lines[buf_len(lines) - i - 1] = lines[lineStart - 2 + (linesLeft - i)];
+    }
+    
+    // Copy over new lines
+    for (int i = 0; i < linesAddedAmt; i++) {
+        lines[lineStart - 1 + i] = insertLines[i];
+    }
+    
+    // Free the old lines stretchy buffer
     buf_free(insertLines);
     
     return ED_MENU;

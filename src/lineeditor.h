@@ -42,6 +42,7 @@ EditorState openFile(char *filename);
 EditorState editorState_menu(void);
 EditorState editorState_editor(void);
 EditorState editorState_insertAfter(int line);
+EditorState editorState_insertBefore(int line);
 void editorState_save(void);
 void editorState_deleteLine(int line);
 void printText(void);
