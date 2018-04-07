@@ -33,7 +33,7 @@ State editorState(EditorState state, char args[MAXLENGTH], int argsLength) {
             }
             
             printf("Opening a new file.\n");
-            printf("Press Ctrl-D (or Ctrl-Z on Windows) to denote End Of File\n\n");
+            printf("Press Ctrl-D (or Ctrl-Z on Windows) on new line to denote End Of Input\n\n");
             
             // Make sure currently stored text has been cleared out.
             assert(buf_len(lines) == 0);
@@ -176,7 +176,9 @@ EditorState editorState_menu(void) {
             printf(" * 's' - Save\n");
             /* Edit - rewrite a specific line, group of lines, group of characters in a line (given column numbers), and word/group of words */
             printf(" * 'e' - Edit\n");
-            printf(" * 'i [line#] - Insert after line number\n");
+            printf(" * 'a [line#]' - Insert after the line number\n");
+            printf(" * 'i [line#]' - Insert before the line number\n");
+            printf(" * 'x [line#]' - Deletes a line\n");
             // Continue writing from last line of file.
             printf(" * 'c' - Continue\n");
             printf(" * 'p' - Preview\n");
@@ -193,7 +195,7 @@ EditorState editorState_menu(void) {
         {
             return ED_EDITOR;
         } break;
-        case 'i':
+        case 'a':
         {
             char *end;
             int line = (int) strtol(rest, &end, 10);
@@ -211,6 +213,27 @@ EditorState editorState_menu(void) {
             }
             
             editorState_insertAfter(line);
+        } break;
+        case 'i':
+        {
+            printf("Unimplemented!\n");
+        } break;
+        case 'x':
+        {
+            char *end;
+            int line = (int) strtol(rest, &end, 10);
+            
+            char lineInput[MAXLENGTH];
+            int length;
+            while (line == 0 || line > buf_len(lines) || length == -1) {
+                if (rest != end)
+                    printf("That line number exceeds the bounds of the file.\n");
+                printf("Enter a line number: ");
+                length = parsing_getLine(lineInput, MAXLENGTH, true);
+                line = (int) strtol(lineInput, &end, 10);
+            }
+            
+            editorState_deleteLine(line);
         } break;
         case 'p':
         {
@@ -297,6 +320,7 @@ EditorState editorState_insertAfter(int line) {
     buf_add(lines, linesAddedAmt);
     
     int linesLeft = buf_len(lines) - linesAddedAmt - (lineStart - 1);
+    // Move lines up by how many lines have been inserted
     for (int i = 0; i < linesLeft; i++) {
         lines[buf_len(lines) - i - 1] = lines[lineStart - 2 + (linesLeft - i)];
         //    V
@@ -309,13 +333,35 @@ EditorState editorState_insertAfter(int line) {
         // 3 <- 2
     }
     
+    // Copy over new lines
     for (int i = 0; i < linesAddedAmt; i++) {
         lines[lineStart - 1 + i] = insertLines[i];
     }
     
+    // Free the old line stretchy buffer
     buf_free(insertLines);
     
     return ED_MENU;
+}
+
+void editorState_deleteLine(int line) {
+    if (line == buf_len(lines)) {
+        buf_free(buf_pop(lines)->chars);
+        return;
+    }
+    
+    printf("Deleting line '%d'\n", line - 1);
+    
+    // Delete char stretchy buffer of line that's being deleted
+    buf_free(lines[line - 1].chars);
+    
+    // Move all lines down one
+    for (int i = line - 1; i < buf_len(lines) - 1; i++) {
+        lines[i] = lines[i + 1];
+    }
+    
+    // Decrease the length of the buffer, keeping the char stretchy buffer of this last line because it was moved down one.
+    buf_pop(lines)->chars;
 }
 
 /* Print the currently stored text with line numbers */

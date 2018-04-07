@@ -43,6 +43,7 @@ EditorState editorState_menu(void);
 EditorState editorState_editor(void);
 EditorState editorState_insertAfter(int line);
 void editorState_save(void);
+void editorState_deleteLine(int line);
 void printText(void);
 void printLine(int line);
 
