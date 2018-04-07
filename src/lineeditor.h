@@ -41,6 +41,7 @@ State editorState(EditorState state, char args[MAXLENGTH], int argsLength);
 EditorState openFile(char *filename);
 EditorState editorState_menu(void);
 EditorState editorState_editor(void);
+EditorState editorState_insertAfter(int line);
 void editorState_save(void);
 void printText(void);
 void printLine(int line);
@@ -57,8 +58,8 @@ void *xmalloc(size_t num_bytes);
 void fatal(const char *fmt, ...);
 
 typedef struct Line {
-    const char *chars;
-    int lineNum;
+    char *chars;
+    int lineNum; // TODO: Insertion breaks this
 } Line;
 
 Line *lines;
@@ -78,8 +79,19 @@ typedef struct BufHdr {
 #define buf_len(b) ((b) ? buf__hdr(b)->len : 0)
 #define buf_cap(b) ((b) ? buf__hdr(b)->cap : 0)
 #define buf_push(b, x) (buf__fit((b), 1), (b)[buf__hdr(b)->len++] = (x))
+
+#define buf_add(b, n) (buf__fit((b), n), buf__hdr(b)->len += n, &(b)[buf__hdr(b)->len - n]) // TODO: Not sure if I should be returning the address or not
+#define buf_pop(b) (buf__hdr(b)->len--, &(b)[buf__hdr(b)->len + 1]) // TODO: Check that array exists and length doesn't go below 0
+
 #define buf_free(b) ((b) ? (free(buf__hdr(b)), (b) = NULL) : 0)
 
 void *buf__grow(const void *buf, size_t new_len, size_t elem_size);
 
 #endif
+
+//start at 3
+
+//0 1 2 3 4
+//1 2 3 4
+//1 2 3 4 5 // add 1 line, line added is now line 3
+

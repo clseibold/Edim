@@ -2,6 +2,7 @@
 #include <string.h>
 #include <malloc.h>
 #include <assert.h>
+#include <stdlib.h>
 
 #include "lineeditor.h"
 
@@ -31,7 +32,7 @@ State editorState(EditorState state, char args[MAXLENGTH], int argsLength) {
                 }
             }
             
-            printf("Opening a new file.");
+            printf("Opening a new file.\n");
             printf("Press Ctrl-D (or Ctrl-Z on Windows) to denote End Of File\n\n");
             
             // Make sure currently stored text has been cleared out.
@@ -160,8 +161,8 @@ EditorState editorState_menu(void) {
     /* Store rest of line in rest */
     char rest[MAXLENGTH];
     int restLength = parsing_getLine(rest, MAXLENGTH, true);
-    /*printf("Rest is: %s\n", rest);
- printf("RestLength is: %d", restLength);*/
+    //printf("Rest is: %s\n", rest);
+    //printf("RestLength is: %d", restLength);
     
     printf("\n");
     
@@ -175,6 +176,7 @@ EditorState editorState_menu(void) {
             printf(" * 's' - Save\n");
             /* Edit - rewrite a specific line, group of lines, group of characters in a line (given column numbers), and word/group of words */
             printf(" * 'e' - Edit\n");
+            printf(" * 'i [line#] - Insert after line number\n");
             // Continue writing from last line of file.
             printf(" * 'c' - Continue\n");
             printf(" * 'p' - Preview\n");
@@ -190,6 +192,25 @@ EditorState editorState_menu(void) {
         case 'c':
         {
             return ED_EDITOR;
+        } break;
+        case 'i':
+        {
+            char *end;
+            int line = (int) strtol(rest, &end, 10);
+            
+            // TODO: if line == 0, then insert before line 1
+            
+            char lineInput[MAXLENGTH];
+            int length;
+            while (line == 0 || line > buf_len(lines) || length == -1) {
+                if (rest != end)
+                    printf("That line number exceeds the bounds of the file.\n");
+                printf("Enter a line number: ");
+                length = parsing_getLine(lineInput, MAXLENGTH, true);
+                line = (int) strtol(lineInput, &end, 10);
+            }
+            
+            editorState_insertAfter(line);
         } break;
         case 'p':
         {
@@ -223,7 +244,7 @@ EditorState editorState_menu(void) {
 // Editor - will allow user to type in anything, showing line number at start of new lines. To exit the editor, press Ctrl-D on Linux or Ctrl-Z+Enter on Windows. As each new line is entered, the characters will be added to a char pointer streatchy buffer (dynamic array). Then, this line will be added to the streatchy buffer of lines (called 'lines').
 EditorState editorState_editor(void) {
     char c;
-    register int line = 1;
+    int line = 1;
     
     // If continuing a previously typed-in file,
     //  start on last line and overwrite the EOF character
@@ -243,9 +264,56 @@ EditorState editorState_editor(void) {
             buf_push(lines, ((Line) { chars, line }));
             ++line;
             printf("%3d ", line);
-            chars = NULL; // Create new char streatchy buffer for next line
+            chars = NULL; // Create new char stretchy buffer for next line
         }
     }
+    
+    return ED_MENU;
+}
+
+EditorState editorState_insertAfter(int line) {
+    char c;
+    printLine(line - 1);
+    int currentLine = line + 1;
+    int lineStart = currentLine;
+    
+    Line *insertLines = NULL;
+    char *chars = NULL;
+    
+    printf("%3d ", currentLine);
+    while ((c = getchar()) != EOF) {
+        buf_push(chars, c);
+        if (c == '\n') {
+            buf_push(insertLines, ((Line) { chars, currentLine }));
+            ++currentLine;
+            printf("%3d ", currentLine);
+            chars = NULL; // create new char stretchy buffer for next line
+        }
+    }
+    
+    int linesAddedAmt = buf_len(insertLines);
+    
+    // Insert the new lines into the lines buffer
+    buf_add(lines, linesAddedAmt);
+    
+    int linesLeft = buf_len(lines) - linesAddedAmt - (lineStart - 1);
+    for (int i = 0; i < linesLeft; i++) {
+        lines[buf_len(lines) - i - 1] = lines[lineStart - 2 + (linesLeft - i)];
+        //    V
+        // 0 1|2 3 4
+        // 1 2|3 4
+        //    -V
+        // 1 2 3 4 5
+        
+        // 4 <- 3
+        // 3 <- 2
+    }
+    
+    for (int i = 0; i < linesAddedAmt; i++) {
+        lines[lineStart - 1 + i] = insertLines[i];
+    }
+    
+    buf_free(insertLines);
     
     return ED_MENU;
 }
@@ -278,6 +346,11 @@ void printLine(int line) {
     if (buf_len(lines) <= 0 && line == 0) {
         printf("%3d ", 1);
         printf("\n");
+        return;
+    }
+    
+    if (line > buf_len(lines)) {
+        // Error!
         return;
     }
     
