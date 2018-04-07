@@ -24,10 +24,8 @@ typedef enum State {
 /* === editor.c === */
 #define MAXLENGTH 200000 /* 2000000 was too big on Windows */
 
-char openedFilename[MAXLENGTH];
-char text[MAXLENGTH];
-int textEndI;
-int textEndLine;
+// char Streatchy buffer for the currently opened filename
+char *openedFilename;
 
 typedef enum EditorState {
     ED_KEEP,

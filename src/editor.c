@@ -1,12 +1,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <malloc.h>
+#include <assert.h>
 
 #include "lineeditor.h"
 
-char openedFilename[MAXLENGTH] = { 0 };
-int textEndI = 0;
-int textEndLine = 0;
+char *openedFilename = NULL;
 
 /* Get input for new file */
 State editorState(EditorState state, char args[MAXLENGTH], int argsLength) {
@@ -24,19 +23,20 @@ State editorState(EditorState state, char args[MAXLENGTH], int argsLength) {
     switch (subState) {
         case ED_NEW:
         {
-            if (argsLength >= 1) {
-                char *filename = alloca((argsLength + 1) * sizeof(char));
-                strncpy(openedFilename, filename, strlen(filename));
-                //free(filename);
-                //filename = 0;
+            if (argsLength > 1) {
+                int i = 0;
+                while (args[i] != ' ' && args[i] != '\n' && args[i] != '\0') {
+                    buf_push(openedFilename, args[i]);
+                    ++i;
+                }
             }
-            printf("Line Editor: New File\n");
+            
+            printf("Opening a new file.");
             printf("Press Ctrl-D (or Ctrl-Z on Windows) to denote End Of File\n\n");
-            // TODO: Reset openedFilename and text
-            //openedFilename = { 0 };
-            //text = { 0 };
-            textEndI = 0;
-            textEndLine = 0;
+            
+            // Make sure currently stored text has been cleared out.
+            assert(buf_len(lines) == 0);
+            
             subState = ED_EDITOR;
             subState = editorState_editor();
             if (subState == ED_KEEP) subState = subStatePrev;
@@ -87,10 +87,11 @@ State editorState(EditorState state, char args[MAXLENGTH], int argsLength) {
         case ED_EXIT:
         {
             subState = ED_EDITOR;
-            textEndI = 0;
-            textEndLine = 0;
+            printf("Exiting");
             
             // Clear openedFilename and the file information
+            buf_free(openedFilename);
+            
             for (int i = 0; i < buf_len(lines); i++) {
                 buf_free(lines[i].chars);
             }
@@ -114,35 +115,28 @@ State editorState(EditorState state, char args[MAXLENGTH], int argsLength) {
 EditorState openFile(char *filename)
 {
     // Open the file, then
-    // Take all characters from file and put into 'text'
-    //printf("\nOpening File\n");
+    // Take all characters from file and put into lines streatchy buffer each Line with a chars streatchy buffer.
     char c;
-    int i = 0;
     int line = 1;
     
     FILE *fp;
     fp = fopen(filename, "r");
     printf("Opening file '%s'.\n", filename);
-    strncpy(openedFilename, filename, strlen(filename));
+    for (int i = 0; i < strlen(filename) + 1; i++) {
+        buf_push(openedFilename, filename[i]);
+    }
+    // Make sure the filename ends with '\0'
+    assert(openedFilename[buf_len(openedFilename) - 1] == '\0');
     char *chars = NULL;
     
-    //printf("%3d ", line);
     while ((c = fgetc(fp)) != EOF) {
-        //text[i] = c;
         buf_push(chars, c);
-        //printf("%c", c);
         if (c == '\n') {
             buf_push(lines, ((Line) { chars, line }));
             ++line;
             chars = NULL; // Create new char Stretchy Buffer for next line
-            //printf("%3d ", line);
         }
-        ++i;
     }
-    
-    //text[i] = '\0';
-    textEndI = i; // TODO
-    textEndLine = line;
     
     printText();
     
@@ -152,7 +146,7 @@ EditorState openFile(char *filename)
     return ED_MENU;
 }
 
-/* Menu for New File */
+/* Menu for Editor */
 EditorState editorState_menu(void) {
     /* Prompt */
     printf("\neditor> ");
@@ -174,24 +168,19 @@ EditorState editorState_menu(void) {
     switch (c) {
         case '?': // TODO: Add new file and open file.
         {
-            if (openedFilename[0] != '\0')
+            if (buf_len(openedFilename) > 0)
                 printf("'%s' is currently open.\n\n", openedFilename);
+            else printf("An unnamed file is currently open.\n\n");
             
-            /* Save - save new file */
             printf(" * 's' - Save\n");
             /* Edit - rewrite a specific line, group of lines, group of characters in a line (given column numbers), and word/group of words */
             printf(" * 'e' - Edit\n");
-            /* This will delete the '\0' and continue writing to the text */
+            // Continue writing from last line of file.
             printf(" * 'c' - Continue\n");
-            /* Prints out the text */
             printf(" * 'p' - Preview\n");
-            /* Saves, then goes back to main menu */
             printf(" * 'd' - Save and Exit\n");
-            /* Goes back to main menu */
             printf(" * 'D' - Exit (without save)\n");
-            /* Save and Quit */
             printf(" * 'q' - Save and Quit\n");
-            /* Quit without save */
             printf(" * 'Q' - Quit (without save)\n");
         } break;
         case 's':
@@ -223,7 +212,6 @@ EditorState editorState_menu(void) {
         case 'Q':
         {
             return ED_QUIT;
-            //running = FALSE;
         } break;
         default:
         printf("Unknown Command!");
@@ -232,16 +220,14 @@ EditorState editorState_menu(void) {
     return ED_KEEP;
 }
 
+// Editor - will allow user to type in anything, showing line number at start of new lines. To exit the editor, press Ctrl-D on Linux or Ctrl-Z+Enter on Windows. As each new line is entered, the characters will be added to a char pointer streatchy buffer (dynamic array). Then, this line will be added to the streatchy buffer of lines (called 'lines').
 EditorState editorState_editor(void) {
     char c;
-    register int i = 0;
     register int line = 1;
     
     // If continuing a previously typed-in file,
     //  start on last line and overwrite the EOF character
     if (buf_len(lines) > 0) {
-        i = textEndI; // TODO: Not used anymore
-        //line = textEndLine;
         line = buf_len(lines) + 1;
     }
     
@@ -256,17 +242,12 @@ EditorState editorState_editor(void) {
             printf("%3d ", line);
             chars = NULL; // Create new char streatchy buffer for next line
         }
-        //++i;
     }
-    
-    //text[i] = '\0';
-    textEndI = i;
-    textEndLine = line;
     
     return ED_MENU;
 }
 
-/* Print text given from input with line numbers */
+/* Print the currently stored text with line numbers */
 void printText(void) {
     if (buf_len(lines) <= 0) {
         printf("%3d ", 1);
@@ -288,23 +269,13 @@ void printText(void) {
     if (lines[last_line].chars[last_char] == '\n') {
         printf("%3d ", last_line + 2);
     }
-    /*for (i = 0; i <= textEndI; i++) {
-    putchar(text[i]);
-    if (text[i] == '\n') {
-    ++line;
-    printf("%3d ", line);
-    }
-    if (text[i] == '\0') {
-    break;
-    }
-    }*/
     printf("\n");
 }
 
-/* Save new file */
+/* Save the currently stored text in a new file (or the file that was opened or saved to previously) */
 void editorState_save(void) {
     FILE *fp;
-    if (openedFilename[0] != '\0') {
+    if (buf_len(openedFilename) > 0) {
         fp = fopen(openedFilename, "w");
     } else {
         printf("Enter the filename: ");
@@ -317,8 +288,8 @@ void editorState_save(void) {
         }
         fp = fopen(filename, "w");
         // Copy filename into openedFilename
-        for (int i = 0; i < MAXLENGTH; i++) {
-            openedFilename[i] = filename[i];
+        for (int i = 0; i < filenameLength; i++) {
+            buf_push(openedFilename, filename[i]);
         }
     }
     
@@ -327,7 +298,6 @@ void editorState_save(void) {
             fprintf(fp, "%c", lines[line].chars[i]);
         }
     }
-    //fprintf(fp, "%s", text);
     
     fclose(fp);
 }
