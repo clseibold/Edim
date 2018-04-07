@@ -231,6 +231,9 @@ EditorState editorState_editor(void) {
         line = buf_len(lines) + 1;
     }
     
+    // Show the previous line to give context.
+    printLine(line - 2);
+    
     char *chars = NULL;
     
     printf("%3d ", line);
@@ -255,11 +258,9 @@ void printText(void) {
         return;
     }
     
-    int i;
-    
     for (int line = 0; line < buf_len(lines); line++) {
         printf("%3d ", line + 1);
-        for (i = 0; i < buf_len(lines[line].chars); i++) {
+        for (int i = 0; i < buf_len(lines[line].chars); i++) {
             putchar(lines[line].chars[i]);
         }
     }
@@ -270,6 +271,20 @@ void printText(void) {
         printf("%3d ", last_line + 2);
     }
     printf("\n");
+}
+
+/* Prints one line of text given the line number. Note that the line numbers start at 0 (although they are displayed to the user starting at 1). */
+void printLine(int line) {
+    if (buf_len(lines) <= 0 && line == 0) {
+        printf("%3d ", 1);
+        printf("\n");
+        return;
+    }
+    
+    printf("%3d ", line + 1);
+    for (int i = 0; i < buf_len(lines[line].chars); i++) {
+        putchar(lines[line].chars[i]);
+    }
 }
 
 /* Save the currently stored text in a new file (or the file that was opened or saved to previously) */

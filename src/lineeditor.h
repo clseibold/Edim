@@ -43,6 +43,7 @@ EditorState editorState_menu(void);
 EditorState editorState_editor(void);
 void editorState_save(void);
 void printText(void);
+void printLine(int line);
 
 /* === parsing.c === */
 int parsing_getLine(char *line, int max, int trimSpace);
