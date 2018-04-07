@@ -43,6 +43,9 @@ EditorState editorState_menu(void);
 EditorState editorState_editor(void);
 EditorState editorState_insertAfter(int line);
 EditorState editorState_insertBefore(int line);
+EditorState editorState_appendTo(int line);
+EditorState editorState_prependTo(int line);
+EditorState editorState_replaceLine(int line);
 void editorState_save(void);
 void editorState_deleteLine(int line);
 void printText(void);
@@ -81,6 +84,7 @@ typedef struct BufHdr {
 #define buf_len(b) ((b) ? buf__hdr(b)->len : 0)
 #define buf_cap(b) ((b) ? buf__hdr(b)->cap : 0)
 #define buf_push(b, x) (buf__fit((b), 1), (b)[buf__hdr(b)->len++] = (x))
+#define buf_end(b) ((b) + buf_len(b))
 
 #define buf_add(b, n) (buf__fit((b), n), buf__hdr(b)->len += n, &(b)[buf__hdr(b)->len - n]) // TODO: Not sure if I should be returning the address or not
 #define buf_pop(b) (buf__hdr(b)->len--, &(b)[buf__hdr(b)->len + 1]) // TODO: Check that array exists and length doesn't go below 0
