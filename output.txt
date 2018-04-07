@@ -1,3 +1,0 @@
-Testing something interesting
-and cool!
-and now for appending to an open file!

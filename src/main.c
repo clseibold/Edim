@@ -5,29 +5,33 @@
 #include "lineeditor.h"
 
 State mainMenu(char *args, int *argsLength) {
-    printf("Line Editor: Main Menu\n");
-    printf("Copyright (c) Christian Seibold. All Rights Reserved.\n\n");
-    
     /* Save - save new file */
-    printf(" * 'n' - New File\n");
+    //printf(" * 'n' - New File\n");
     /* Edit - rewrite a specific line, group of lines, group of characters in a line (given column numbers), and word/group of words */
-    printf(" * 'o' - Open File\n");
+    //printf(" * 'o' - Open File\n");
     /* Quit */
-    printf(" * 'Q' - Quit\n");
+    //printf(" * 'Q' - Quit\n");
     
     /* Prompt */
-    printf("\n: ");
+    printf("\n> ");
     
     /* get first character - the menu item */
     char c;
     c = getchar();
     
     /* Store rest of line in rest */
-    *argsLength = parsing_getLine(args, MAXLENGTH, TRUE);
+    *argsLength = parsing_getLine(args, MAXLENGTH, true);
     /*printf("Rest is: %s\n", rest);
  printf("RestLength is: %d", restLength);*/
     
     switch (c) {
+        case '?':
+        {
+            printf("\n");
+            printf(" * 'n' - New File\n");
+            printf(" * 'o' - Open File\n");
+            printf(" * 'q' or 'Q' - Quit\n");
+        } break;
         case 'n':
         {
             return NEW_FILE;
@@ -37,6 +41,7 @@ State mainMenu(char *args, int *argsLength) {
             //printf("\nUnimplemented!\n");
             return OPEN_FILE;
         } break;
+        case 'q':
         case 'Q':
         {
             return QUIT;
@@ -51,9 +56,14 @@ State mainMenu(char *args, int *argsLength) {
 int main() {
     char args[MAXLENGTH] = { 0 };
     int argsLength = 0;
-    int running = 1;
+    int running = true;
     State state = MAIN_MENU;
     State statePrev = state;
+    
+    printf("Line Editor: Main Menu\n");
+    printf("Copyright (c) Christian Seibold. All Rights Reserved.\n\n");
+    
+    printf("Press '?' for help.");
     
     while (running) {
         switch (state) {
@@ -92,7 +102,7 @@ int main() {
             } break;
             case QUIT:
             {
-                running = FALSE;
+                running = false;
                 break;
             }
         }

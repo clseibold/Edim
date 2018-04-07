@@ -24,6 +24,12 @@ State editorState(EditorState state, char args[MAXLENGTH], int argsLength) {
     switch (subState) {
         case ED_NEW:
         {
+            if (argsLength >= 1) {
+                char *filename = alloca((argsLength + 1) * sizeof(char));
+                strncpy(openedFilename, filename, strlen(filename));
+                //free(filename);
+                //filename = 0;
+            }
             printf("Line Editor: New File\n");
             printf("Press Ctrl-D (or Ctrl-Z on Windows) to denote End Of File\n\n");
             // TODO: Reset openedFilename and text
@@ -38,21 +44,34 @@ State editorState(EditorState state, char args[MAXLENGTH], int argsLength) {
         case ED_OPEN:
         {
             // TODO: Get arg for filename or Prompt for filename if no args provided
-            char *filename = alloca((argsLength + 1) * sizeof(char));
-            int i = 0;
-            int ii = 0;
-            
-            while (args[i] != ' ' && args[i] != '\n' && args[i] != '\0')
-            {
-                filename[ii] = args[i];
-                ++i;
-                ++ii;
+            if (argsLength <= 1) {
+                printf("Enter the filename: ");
+                char filename[MAXLENGTH];
+                int filenameLength = 0;
+                filenameLength = parsing_getLine(filename, MAXLENGTH, true);
+                while (filenameLength == -1) {
+                    printf("Enter the filename: ");
+                    filenameLength = parsing_getLine(filename, MAXLENGTH, true);
+                }
+                printf("Opening file %s\n", filename);
+                subState = openFile(filename);
+            } else {
+                char *filename = alloca((argsLength + 1) * sizeof(char));
+                int i = 0;
+                int ii = 0;
+                
+                while (args[i] != ' ' && args[i] != '\n' && args[i] != '\0')
+                {
+                    filename[ii] = args[i];
+                    ++i;
+                    ++ii;
+                }
+                filename[ii] = '\0';
+                printf("Opening file %s\n", filename);
+                subState = openFile(filename);
+                //free(filename);
+                //filename = 0;
             }
-            filename[ii] = '\0';
-            printf("Opening file %s\n", filename);
-            subState = openFile(filename, ii + 1);
-            free(filename);
-            filename = 0;
             if (subState == ED_KEEP) subState = subStatePrev;
         } break;
         case ED_EDITOR:
@@ -86,32 +105,36 @@ State editorState(EditorState state, char args[MAXLENGTH], int argsLength) {
     return KEEP;
 }
 
-EditorState openFile(char *filename, unsigned int filenameLength)
+EditorState openFile(char *filename)
 {
     // Open the file, then
     // Take all characters from file and put into 'text'
     //printf("\nOpening File\n");
     char c;
-    register int i = 0;
-    register int line = 1;
+    int i = 0;
+    int line = 1;
     
     FILE *fp;
     fp = fopen(filename, "r");
-    strncpy(openedFilename, filename, filenameLength + 1);
+    strncpy(openedFilename, filename, strlen(filename));
+    char *chars = NULL;
     
     //printf("%3d ", line);
     while ((c = fgetc(fp)) != EOF) {
-        text[i] = c;
+        //text[i] = c;
+        buf_push(chars, c);
         //printf("%c", c);
         if (c == '\n') {
+            buf_push(lines, ((Line) { chars, line }));
             ++line;
+            chars = NULL; // Create new char Stretchy Buffer for next line
             //printf("%3d ", line);
         }
         ++i;
     }
     
-    text[i] = '\0';
-    textEndI = i;
+    //text[i] = '\0';
+    textEndI = i; // TODO
     textEndLine = line;
     
     printText();
@@ -151,7 +174,7 @@ EditorState editorState_menu(void) {
     
     /* Store rest of line in rest */
     char rest[MAXLENGTH];
-    int restLength = parsing_getLine(rest, MAXLENGTH, TRUE);
+    int restLength = parsing_getLine(rest, MAXLENGTH, true);
     /*printf("Rest is: %s\n", rest);
  printf("RestLength is: %d", restLength);*/
     
@@ -204,17 +227,21 @@ EditorState editorState_editor(void) {
     //  start on last line and overwrite the EOF character
     if (textEndI > 0) {
         i = textEndI;
-        line = textEndLine;
+        line = textEndLine; // Should == buf_len(lines);
     }
+    
+    char *chars = NULL;
     
     printf("%3d ", line);
     while ((c = getchar()) != EOF) {
-        text[i] = c;
+        buf_push(chars, c);
         if (c == '\n') {
+            buf_push(lines, ((Line) { chars, line }));
             ++line;
             printf("%3d ", line);
+            chars = NULL; // Create new char streatchy buffer for next line
         }
-        ++i;
+        //++i;
     }
     
     text[i] = '\0';
@@ -227,11 +254,21 @@ EditorState editorState_editor(void) {
 
 /* Print text given from input with line numbers */
 void printText(void) {
-    register int i;
-    register int line = 1;
+    int i;
     
-    printf("\n\n%3d ", line);
-    for (i = 0; i <= textEndI; i++) {
+    for (int line = 0; line < buf_len(lines); line++) {
+        printf("%3d ", line + 1);
+        for (i = 0; i < buf_len(lines[line].chars); i++) {
+            putchar(lines[line].chars[i]);
+        }
+    }
+    
+    int last_line = buf_len(lines) - 1;
+    int last_char = buf_len(lines[last_line].chars) - 1;
+    if (lines[last_line].chars[last_char] == '\n') {
+        printf("%3d ", last_line + 2);
+    }
+    /*for (i = 0; i <= textEndI; i++) {
         putchar(text[i]);
         if (text[i] == '\n') {
             ++line;
@@ -240,7 +277,7 @@ void printText(void) {
         if (text[i] == '\0') {
             break;
         }
-    }
+    }*/
     printf("\n");
 }
 
@@ -253,10 +290,10 @@ void editorState_save(void) {
         printf("Enter the filename: ");
         char filename[MAXLENGTH];
         int filenameLength = 0;
-        filenameLength = parsing_getLine(filename, MAXLENGTH, TRUE);
+        filenameLength = parsing_getLine(filename, MAXLENGTH, true);
         while (filenameLength == -1) {
             printf("Enter the filename: ");
-            filenameLength = parsing_getLine(filename, MAXLENGTH, TRUE);
+            filenameLength = parsing_getLine(filename, MAXLENGTH, true);
         }
         fp = fopen(filename, "w");
         // Copy filename into openedFilename
