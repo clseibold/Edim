@@ -91,8 +91,15 @@ State editorState(EditorState state, char args[MAXLENGTH], int argsLength) {
             subState = ED_EDITOR;
             textEndI = 0;
             textEndLine = 0;
-            // Clear openedFilename
             
+            // Clear openedFilename and the file information
+            for (int i = 0; i < buf_len(lines); i++) {
+                buf_free(lines[i].chars);
+            }
+            
+            buf_free(lines);
+            
+            initialSet = 0;
             return MAIN_MENU;
         } break;
         case ED_QUIT:
@@ -117,6 +124,7 @@ EditorState openFile(char *filename)
     
     FILE *fp;
     fp = fopen(filename, "r");
+    printf("Opening file '%s'.\n", filename);
     strncpy(openedFilename, filename, strlen(filename));
     char *chars = NULL;
     
@@ -141,6 +149,7 @@ EditorState openFile(char *filename)
     printText();
     
     fclose(fp);
+    
     
     return ED_MENU;
 }
@@ -261,6 +270,12 @@ EditorState editorState_editor(void) {
 
 /* Print text given from input with line numbers */
 void printText(void) {
+    if (buf_len(lines) <= 0) {
+        printf("%3d ", 1);
+        printf("\n");
+        return;
+    }
+    
     int i;
     
     for (int line = 0; line < buf_len(lines); line++) {
@@ -276,14 +291,14 @@ void printText(void) {
         printf("%3d ", last_line + 2);
     }
     /*for (i = 0; i <= textEndI; i++) {
-        putchar(text[i]);
-        if (text[i] == '\n') {
-            ++line;
-            printf("%3d ", line);
-        }
-        if (text[i] == '\0') {
-            break;
-        }
+    putchar(text[i]);
+    if (text[i] == '\n') {
+    ++line;
+    printf("%3d ", line);
+    }
+    if (text[i] == '\0') {
+    break;
+    }
     }*/
     printf("\n");
 }
