@@ -91,6 +91,7 @@ State editorState(EditorState state, char args[MAXLENGTH], int argsLength) {
             subState = ED_EDITOR;
             textEndI = 0;
             textEndLine = 0;
+            // Clear openedFilename
             
             return MAIN_MENU;
         } break;
@@ -148,25 +149,8 @@ EditorState openFile(char *filename)
 EditorState editorState_menu(void) {
     printf("\nNew File: Menu\n");
     
-    /* Save - save new file */
-    printf(" * 's' - Save\n");
-    /* Edit - rewrite a specific line, group of lines, group of characters in a line (given column numbers), and word/group of words */
-    printf(" * 'e' - Edit\n");
-    /* This will delete the '\0' and continue writing to the text */
-    printf(" * 'c' - Continue\n");
-    /* Prints out the text */
-    printf(" * 'p' - Preview\n");
-    /* Saves, then goes back to main menu */
-    printf(" * 'd' - Save and Exit\n");
-    /* Goes back to main menu */
-    printf(" * 'D' - Exit (without save)\n");
-    /* Save and Quit */
-    printf(" * 'q' - Save and Quit\n");
-    /* Quit without save */
-    printf(" * 'Q' - Quit (without save)\n");
-    
     /* Prompt */
-    printf("\neditor: ");
+    printf("\neditor> ");
     
     /* get first character - the menu item */
     char c;
@@ -179,6 +163,28 @@ EditorState editorState_menu(void) {
  printf("RestLength is: %d", restLength);*/
     
     switch (c) {
+        case '?': // TODO: Add new file and open file.
+        {
+            if (openedFilename[0] != '\0')
+                printf("'%s' is currently open.\n\n", openedFilename);
+            
+            /* Save - save new file */
+            printf(" * 's' - Save\n");
+            /* Edit - rewrite a specific line, group of lines, group of characters in a line (given column numbers), and word/group of words */
+            printf(" * 'e' - Edit\n");
+            /* This will delete the '\0' and continue writing to the text */
+            printf(" * 'c' - Continue\n");
+            /* Prints out the text */
+            printf(" * 'p' - Preview\n");
+            /* Saves, then goes back to main menu */
+            printf(" * 'd' - Save and Exit\n");
+            /* Goes back to main menu */
+            printf(" * 'D' - Exit (without save)\n");
+            /* Save and Quit */
+            printf(" * 'q' - Save and Quit\n");
+            /* Quit without save */
+            printf(" * 'Q' - Quit (without save)\n");
+        } break;
         case 's':
         {
             editorState_save();
@@ -225,9 +231,10 @@ EditorState editorState_editor(void) {
     
     // If continuing a previously typed-in file,
     //  start on last line and overwrite the EOF character
-    if (textEndI > 0) {
-        i = textEndI;
-        line = textEndLine; // Should == buf_len(lines);
+    if (buf_len(lines) > 0) {
+        i = textEndI; // TODO: Not used anymore
+        //line = textEndLine;
+        line = buf_len(lines) + 1;
     }
     
     char *chars = NULL;
