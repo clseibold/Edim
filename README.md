@@ -23,6 +23,7 @@ A simple interactive lineeditor program.
 * Shows previous line of current line being operated on to give context
 * Ability to preview whole file in a similar fashion to more/less
 * Ability to preview an individual line (along with the line before and after to give context)
+* Ability to preview a range of lines
 * Ability to show file information
   - Filename
   - Number of lines
@@ -47,7 +48,7 @@ A simple interactive lineeditor program.
 * Replace first occurance in file
 * Replace all in file
 * Better previewing of file
-  - Only the given range of lines
+  - A page of the file
 * Ability to change setting on how many lines to show before the line you are currently modifying (to give context)
 * Add color
 * Tab completion for opening/saving files

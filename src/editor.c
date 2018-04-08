@@ -383,6 +383,7 @@ EditorState editorState_menu(void) {
         {
             char *end;
             int line = (int) strtol(rest, &end, 10);
+            ++end; // Don't include the space in between the first line number and the second line number
             
             char lineInput[MAXLENGTH / 4];
             int length;
@@ -394,6 +395,30 @@ EditorState editorState_menu(void) {
                 line = (int) strtol(lineInput, &end, 10);
             }
             
+            int endLine;
+            char *end2;
+            char str[MAXLENGTH / 4];
+            int strLength = 0;
+            
+            // If a second line number was already given with the command
+            if (rest + restLength - end - 1 > 0) {
+                endLine = (int) strtol(end, &end2, 10);
+                // If given a valid number
+                if (endLine != -1) {
+                    // Print the range of lines along with the line before and after
+                    if (line - 2 >= 0)
+                        printLine(line - 2);
+                    for (int i = line; i <= endLine; i++) {
+                        if (i - 1 >= 0 && i - 1 < buf_len(currentBuffer.lines))
+                            printLine(i - 1);
+                    }
+                    if (endLine < buf_len(currentBuffer.lines))
+                        printLine(endLine);
+                    break;
+                }
+            }
+            
+            // Otherwise, just print that one line
             if (line - 2 >= 0)
                 printLine(line - 2);
             printLine(line - 1);
@@ -419,7 +444,9 @@ EditorState editorState_menu(void) {
             return ED_QUIT;
         } break;
         default:
-        printf("Unknown Command!");
+        {
+            printf("Unknown Command!");
+        } break;
     }
     
     return ED_KEEP;
@@ -431,7 +458,7 @@ EditorState editorState_editor(void) {
     int line = 1;
     
     // If continuing a previously typed-in file,
-    //  start on last line and overwrite the EOF character
+    // start on last line and overwrite the EOF character
     if (buf_len(currentBuffer.lines) > 0) {
         line = buf_len(currentBuffer.lines) + 1;
     }
