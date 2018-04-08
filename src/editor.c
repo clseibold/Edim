@@ -182,8 +182,8 @@ EditorState editorState_menu(void) {
             printf(" * 'A (line#)' - Appends to a line\n");
             printf(" * 'I (line#)' - Prepends to a line\n");
             printf(" * 'r (line#)' - Replace a line with a new line\n");
-            printf(" * 'R (line#)' - Replace the first occurance of the word/phrase in the line\n"); // TODO
-            printf(" * 'x [line#]' - Deletes a line\n");
+            printf(" * 'R (line#) (string)' - Replace the first occurance of the string in the line\n"); // TODO
+            printf(" * 'x (line#)' - Deletes a line\n");
             // Continue writing from last line of file.
             printf(" * 'c' - Continue\n");
             printf(" * 'p' - Preview whole file\n");
@@ -202,8 +202,6 @@ EditorState editorState_menu(void) {
         {
             char *end;
             int line = (int) strtol(rest, &end, 10);
-            
-            // TODO: if line == 0, then insert before line 1
             
             char lineInput[MAXLENGTH / 4];
             int length;
@@ -237,7 +235,6 @@ EditorState editorState_menu(void) {
             if (line == buf_len(lines) + 1)
                 editorState_insertAfter(buf_len(lines));
             else editorState_insertBefore(line);
-            //printf("Unimplemented!\n");
         } break;
         case 'A':
         {
@@ -294,8 +291,7 @@ EditorState editorState_menu(void) {
         {
             char *end;
             int line = (int) strtol(rest, &end, 10);
-            
-            // TODO: if line == 0, then insert before line 1
+            ++end; // Don't include the space in between the line number and the string to replace
             
             char lineInput[MAXLENGTH / 4];
             int length;
@@ -307,9 +303,20 @@ EditorState editorState_menu(void) {
                 line = (int) strtol(lineInput, &end, 10);
             }
             
-            printf("Enter the string to replace: ");
             char str[MAXLENGTH / 4];
             int strLength = 0;
+            
+            // If a string was already given with the command
+            if (rest + restLength - end - 1 > 0) {
+                // Copy into str
+                strLength = rest + restLength - end;
+                strncpy(str, end, strLength);
+                // Use it instead of asking for a string to replace
+                editorState_replaceString(line, str, strLength - 1);
+                break;
+            }
+            
+            printf("Enter the string to replace: ");
             strLength = parsing_getLine(str, MAXLENGTH / 4, false);
             while (strLength == -1) {
                 printf("Enter the string to replace: ");
@@ -570,13 +577,15 @@ EditorState editorState_replaceString(int line, char *str, int strLength) {
         }
         
         // If string ends in a new line or 0 termination, subtract one from the string length so we don't match them
-        if ((str[strLength - 1] == '\0' || str[strLength - 1] == '\n') && ii == strLength - 1) {
-            break;
+        if (str[strLength - 1] == '\0' || str[strLength - 1] == '\n') {
+            if (ii == strLength - 1) break;
+        } else {
+            if (ii == strLength) break;
         }
     }
     
     if (index == -1) {
-        printf("No occurance found");
+        printf("No occurance of '%.*s' found\n", strLength, str);
         return ED_MENU;
     }
     
