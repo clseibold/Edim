@@ -711,13 +711,14 @@ EditorState editorState_replaceString(int line, char *str, int strLength) {
 }
 
 void editorState_deleteLine(int line) {
-    if (line == buf_len(lines)) {
-        printf("x%3d %.*s\n", line, (int) buf_len(lines[line - 1].chars), lines[line - 1].chars);
-        buf_free(buf_pop(lines)->chars);
+    if (line == buf_len(lines)) { // TODO: This isn't working correctly
+        printf("x%3d %.*s", line, (int) buf_len(lines[line - 1].chars), lines[line - 1].chars);
+        buf_free(lines[buf_len(lines) - 1].chars);
+        buf_pop(lines);
         return;
     }
     
-    printf("x%3d %.*s\n", line, (int) buf_len(lines[line - 1].chars), lines[line - 1].chars);
+    printf("x%3d %.*s", line, (int) buf_len(lines[line - 1].chars), lines[line - 1].chars);
     
     // Delete char stretchy buffer of line that's being deleted
     buf_free(lines[line - 1].chars);

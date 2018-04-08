@@ -27,6 +27,7 @@ A simple interactive lineeditor program.
 * For C and C++ files (.c, .cpp, and .h), parse the file to get function and variable definitions
   - Ability to list declarations - basically like an outline of the file
   - Ability to show line a declaration is on
+  - Ability to show all lines of a function
 * Support outline for markdown files
 * Simple syntax highlighting for C, C++, Bash, and Batch
 * Repeat the last operation
@@ -44,3 +45,6 @@ A simple interactive lineeditor program.
 * Ability to change setting on how many lines to show before the line you are currently modifying (to give context)
 * Add color
 * Tab completion for opening/saving files
+
+## Ideas
+* Ability to use relative line numbers based on what was shown previously (from any command that previews any amount of lines, including insert, delete, preview, etc.)
