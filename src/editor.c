@@ -173,7 +173,8 @@ EditorState editorState_menu(void) {
             else printf("An unnamed file is currently open.\n\n");
             
             printf("Use Ctrl-D or Ctrl-Z+Enter to denote end of input\n");
-            printf("Use Ctrl-X to cancel the current command/operation\n");
+            printf("Use Ctrl-X+Enter to cancel the current command/operation\n");
+            printf("\n");
             printf(" * 's' - Save\n");
             /* Edit - rewrite a specific line, group of lines, group of characters in a line (given column numbers), and word/group of words */
             //printf(" * 'e' - Edit\n");
@@ -414,6 +415,18 @@ EditorState editorState_insertAfter(int line) {
     
     printf("a%3d ", currentLine);
     while ((c = getchar()) != EOF) {
+        if (c == (char) 24) { // Ctrl-X (^X) - Cancel
+            // Free the new unused line buffers
+            buf_free(chars);
+            for (int i = 0; i < buf_len(insertLines); i++) {
+                buf_free(insertLines[i].chars);
+            }
+            buf_free(insertLines);
+            // Discard the new line character
+            getchar();
+            // Cancel the operation by returning
+            return ED_MENU;
+        }
         buf_push(chars, c);
         if (c == '\n') {
             buf_push(insertLines, ((Line) { chars, currentLine }));
@@ -465,6 +478,18 @@ EditorState editorState_insertBefore(int line) {
     
     printf("i%3d ", currentLine);
     while ((c = getchar()) != EOF) {
+        if (c == (char) 24) { // Ctrl-X (^X) - Cancel
+            // Free the new unused line buffers
+            buf_free(chars);
+            for (int i = 0; i < buf_len(insertLines); i++) {
+                buf_free(insertLines[i].chars);
+            }
+            buf_free(insertLines);
+            // Discard the new line character
+            getchar();
+            // Cancel the operation by returning
+            return ED_MENU;
+        }
         buf_push(chars, c);
         if (c == '\n') {
             buf_push(insertLines, ((Line) { chars, currentLine }));
@@ -504,9 +529,23 @@ EditorState editorState_appendTo(int line) {
     // Remove the new line character from the line
     buf_pop(lines[line - 1].chars);
     
+    int count = 0;
     printf("A%3d %.*s", line, (int) buf_len(lines[line - 1].chars), lines[line - 1].chars);
     while ((c = getchar()) != EOF) {
+        if (c == (char) 24) { // Ctrl-X (^X) - Cancel
+            // Pop off all of the characters that have been added thus far
+            for (int i = 0; i < count; i++) {
+                buf_pop(lines[line - 1].chars);
+            }
+            // Push back on the new line character the was previously removed
+            buf_push(lines[line - 1].chars, '\n');
+            // Discard the new line character that's typed after Ctrl-X
+            getchar();
+            // Cancel the operation by returning
+            return ED_MENU;
+        }
         buf_push(lines[line - 1].chars, c);
+        count++;
         if (c == '\n') break;
     }
     
@@ -523,6 +562,14 @@ EditorState editorState_prependTo(int line) {
     printf("I%3d _%.*s", line, (int) buf_len(lines[line - 1].chars), lines[line - 1].chars);
     printf("%4s ^- ", "");
     while ((c = getchar()) != EOF) {
+        if (c == (char) 24) { // Ctrl-X (^X) - Cancel
+            // Free the new unused line buffer
+            buf_free(chars);
+            // Discard the new line character
+            getchar();
+            // Cancel the operation by returning
+            return ED_MENU;
+        }
         if (c == '\n') break; // Make sure new line is not pushed onto the buffer
         buf_push(chars, c);
     }
@@ -548,6 +595,14 @@ EditorState editorState_replaceLine(int line) {
     printf("r%3d %.*s", line, (int) buf_len(lines[line - 1].chars), lines[line - 1].chars);
     printf("%4s ", "");
     while ((c = getchar()) != EOF) {
+        if (c == (char) 24) { // Ctrl-X (^X) - Cancel
+            // Free the new unused line buffer
+            buf_free(chars);
+            // Discard the new line character
+            getchar();
+            // Cancel the operation by returning
+            return ED_MENU;
+        }
         buf_push(chars, c);
         if (c == '\n') break;
     }
@@ -623,7 +678,7 @@ EditorState editorState_replaceString(int line, char *str, int strLength) {
     
     printf("%4s %.*s- ", "", strPointToMatchLength, strPointToMatch);
     while ((c = getchar()) != EOF) {
-        if (c == (char) 24) { // Ctrl-X (^X)
+        if (c == (char) 24) { // Ctrl-X (^X) - Cancel
             // Free the new unused line buffer
             buf_free(chars);
             // Discard the new line character
