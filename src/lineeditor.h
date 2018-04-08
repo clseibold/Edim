@@ -70,6 +70,20 @@ typedef struct Line {
 
 Line *lines;
 
+typedef enum OperationKind {
+    Undo, InsertAfter, InsertBefore, AppendTo, PrependTo, ReplaceLine, ReplaceString, DeleteLine
+} OperationKind;
+
+typedef struct Operation {
+    OperationKind kind;
+    int *lines; // Line(s) that have been modified/added/deleted by the operation
+    union {
+        Line original; // The original line that was modified/deleted
+    };
+} Operation;
+
+Operation lastOperation;
+
 // Stretchy Buffers (Invented by Sean Barrett?)
 
 typedef struct BufHdr {

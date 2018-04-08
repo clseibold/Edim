@@ -12,10 +12,8 @@ A simple interactive lineeditor program.
 * New File
 * Open File
 * Save File
-* Insert line(s) after line number
-* Insert line(s) before line number
-* Append to line
-* Prepend to line
+* Insert line(s) before/after line number
+* Prepend/Append to line
 * Replace line
 * Replace first occurance of string in line
 * Delete line
@@ -33,3 +31,14 @@ A simple interactive lineeditor program.
 * Repeat the last operation
 * Move line up or down 1
 * Better data structure for the lines that will allow easily moving lines around, deleting then, and inserting them
+* Add text before/after string in line
+* Find first occurance
+* Find all occurances
+* Replace all in line
+* Replace first occurance in file
+* Replace all in file
+* Better previewing of file
+  - A functionality similar to more/less
+  - Only the given line/range of lines
+* Ability to change setting on how many lines to show before the line you are currently modifying (to give context)
+* Add color

@@ -183,8 +183,9 @@ EditorState editorState_menu(void) {
             printf(" * 'A (line#)' - Appends to a line\n");
             printf(" * 'I (line#)' - Prepends to a line\n");
             printf(" * 'r (line#)' - Replace a line with a new line\n");
-            printf(" * 'R (line#) (string)' - Replace the first occurance of the string in the line\n"); // TODO
+            printf(" * 'R (line#) (string)' - Replace the first occurance of the string in the line\n");
             printf(" * 'x (line#)' - Deletes a line\n");
+            printf(" * 'u' - Undo the last operation, cannot undo an undo, cannot undo past 1 operation"); // TODO
             // Continue writing from last line of file.
             printf(" * 'c' - Continue\n");
             printf(" * 'p' - Preview whole file\n");
@@ -197,7 +198,8 @@ EditorState editorState_menu(void) {
         } break;
         case 'c':
         {
-            return ED_EDITOR;
+            editorState_insertAfter(buf_len(lines));
+            return ED_MENU;
         } break;
         case 'a':
         {
@@ -710,11 +712,12 @@ EditorState editorState_replaceString(int line, char *str, int strLength) {
 
 void editorState_deleteLine(int line) {
     if (line == buf_len(lines)) {
+        printf("x%3d %.*s\n", line, (int) buf_len(lines[line - 1].chars), lines[line - 1].chars);
         buf_free(buf_pop(lines)->chars);
         return;
     }
     
-    printf("Deleting line '%d'\n", line - 1);
+    printf("x%3d %.*s\n", line, (int) buf_len(lines[line - 1].chars), lines[line - 1].chars);
     
     // Delete char stretchy buffer of line that's being deleted
     buf_free(lines[line - 1].chars);
