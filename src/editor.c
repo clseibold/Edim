@@ -172,23 +172,23 @@ EditorState editorState_menu(void) {
                 printf("'%s' is currently open.\n\n", openedFilename);
             else printf("An unnamed file is currently open.\n\n");
             
+            printf("Use Ctrl-D or Ctrl-Z+Enter to denote end of input\n");
+            printf("Use Ctrl-X to cancel the current command/operation\n");
             printf(" * 's' - Save\n");
             /* Edit - rewrite a specific line, group of lines, group of characters in a line (given column numbers), and word/group of words */
             //printf(" * 'e' - Edit\n");
-            printf(" * 'a [line#]' - Insert after the line number\n");
-            printf(" * 'i [line#]' - Insert before the line number\n");
-            printf(" * 'A [line#]' - Appends to a line\n");
-            printf(" * 'I [line#]' - Prepends to a line\n");
-            printf(" * 'r [line#]' - Replace a line with a new line\n");
-            // printf(" * 'R [line#] word/phrase' - Replace the first occurance of the word/phrase in the line\n"); // TODO
+            printf(" * 'a (line#)' - Insert after the line number\n");
+            printf(" * 'i (line#)' - Insert before the line number\n");
+            printf(" * 'A (line#)' - Appends to a line\n");
+            printf(" * 'I (line#)' - Prepends to a line\n");
+            printf(" * 'r (line#)' - Replace a line with a new line\n");
+            printf(" * 'R (line#)' - Replace the first occurance of the word/phrase in the line\n"); // TODO
             printf(" * 'x [line#]' - Deletes a line\n");
             // Continue writing from last line of file.
             printf(" * 'c' - Continue\n");
-            printf(" * 'p' - Preview\n");
-            printf(" * 'd' - Save and Exit\n");
-            printf(" * 'D' - Exit (without save)\n");
-            printf(" * 'q' - Save and Quit\n");
-            printf(" * 'Q' - Quit (without save)\n");
+            printf(" * 'p' - Preview whole file\n");
+            printf(" * 'd / D' - Save and Exit / Exit (without save)\n");
+            printf(" * 'q / Q' - Save and Quit / Quit (without save)\n");
         } break;
         case 's':
         {
@@ -289,6 +289,34 @@ EditorState editorState_menu(void) {
             }
             
             editorState_replaceLine(line);
+        } break;
+        case 'R':
+        {
+            char *end;
+            int line = (int) strtol(rest, &end, 10);
+            
+            // TODO: if line == 0, then insert before line 1
+            
+            char lineInput[MAXLENGTH / 4];
+            int length;
+            while (line <= 0 || line > buf_len(lines) || length == -1) {
+                if (rest != end)
+                    printf("That line number exceeds the bounds of the file.\n");
+                printf("Enter a line number: ");
+                length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
+                line = (int) strtol(lineInput, &end, 10);
+            }
+            
+            printf("Enter the string to replace: ");
+            char str[MAXLENGTH / 4];
+            int strLength = 0;
+            strLength = parsing_getLine(str, MAXLENGTH / 4, false);
+            while (strLength == -1) {
+                printf("Enter the string to replace: ");
+                strLength = parsing_getLine(str, MAXLENGTH / 4, true);
+            }
+            
+            editorState_replaceString(line, str, strLength);
         } break;
         case 'x':
         {
@@ -515,6 +543,98 @@ EditorState editorState_replaceLine(int line) {
     while ((c = getchar()) != EOF) {
         buf_push(chars, c);
         if (c == '\n') break;
+    }
+    
+    // Free the original line buffer and set the new line buffer to the current line
+    buf_free(lines[line - 1].chars);
+    lines[line - 1].chars = chars;
+    
+    return ED_MENU;
+}
+
+// TODO: Problem with replacing only one character
+EditorState editorState_replaceString(int line, char *str, int strLength) {
+    char c;
+    
+    // Find the first occurance of the string in the line, -1 for no occurance
+    int index = -1;
+    int ii = 0;
+    for (int i = 0; i < buf_len(lines[line - 1].chars); i++) {
+        if (lines[line - 1].chars[i] == str[ii]) {
+            if (ii == 0)
+                index = i;
+            ++ii;
+        } else {
+            ii = 0;
+            index = -1;
+        }
+        
+        // If string ends in a new line or 0 termination, subtract one from the string length so we don't match them
+        if ((str[strLength - 1] == '\0' || str[strLength - 1] == '\n') && ii == strLength - 1) {
+            break;
+        }
+    }
+    
+    if (index == -1) {
+        printf("No occurance found");
+        return ED_MENU;
+    }
+    
+    // Print the previous line to give context
+    if (line - 2 >= 0 && line - 2 < buf_len(lines))
+        printLine(line - 2);
+    
+    // Print the string where the replacement is occuring
+    printf("R%3d %.*s", line, (int) buf_len(lines[line - 1].chars), lines[line - 1].chars);
+    
+    // Create a string (to be printed) with an arrow pointing to the beginning and end of the first occurance of the string being replaced.
+    int strPointToMatchLength;
+    if (str[strLength - 1] == '\0' || str[strLength - 1] == '\n') {
+        strPointToMatchLength = index + strLength - 1;
+    } else {
+        strPointToMatchLength = index + strLength;
+    }
+    char *strPointToMatch = alloca(sizeof(char) * (strPointToMatchLength));
+    for (int i = 0; i < strPointToMatchLength; i++) {
+        if (i == index || i == strPointToMatchLength - 1) {
+            strPointToMatch[i] = '^';
+            continue;
+        }
+        if (i > index && i < strPointToMatchLength - 1)
+            strPointToMatch[i] = '-';
+        else strPointToMatch[i] = ' ';
+    }
+    
+    char *chars = NULL; // What the string will be replaced with
+    
+    // Move the characters before the replacement from the original line buffer to the new one
+    for (int i = 0; i < index; i++) {
+        buf_push(chars, lines[line - 1].chars[i]);
+    }
+    
+    printf("%4s %.*s- ", "", strPointToMatchLength, strPointToMatch);
+    while ((c = getchar()) != EOF) {
+        if (c == (char) 24) { // Ctrl-X (^X)
+            // Free the new unused line buffer
+            buf_free(chars);
+            // Discard the new line character
+            getchar();
+            // Cancel the operation by returning
+            return ED_MENU;
+        }
+        if (c == '\n') break; // Make sure new line is not pushed onto the buffer
+        buf_push(chars, c);
+    }
+    
+    // Move the characters after the replacement from the original line buffer to the new one
+    int afterIndex; // Index of the next character after the last character of the string being replaced
+    if (str[strLength - 1] == '\0' || str[strLength - 1] == '\n') {
+        afterIndex = index + strLength - 1;
+    } else {
+        afterIndex = index + strLength;
+    }
+    for (int i = afterIndex; i < buf_len(lines[line - 1].chars); i++) {
+        buf_push(chars, lines[line - 1].chars[i]);
     }
     
     // Free the original line buffer and set the new line buffer to the current line

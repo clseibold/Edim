@@ -46,6 +46,7 @@ EditorState editorState_insertBefore(int line);
 EditorState editorState_appendTo(int line);
 EditorState editorState_prependTo(int line);
 EditorState editorState_replaceLine(int line);
+EditorState editorState_replaceString(int line, char *str, int strLength);
 void editorState_save(void);
 void editorState_deleteLine(int line);
 void printText(void);
