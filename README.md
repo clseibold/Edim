@@ -19,6 +19,7 @@ A simple interactive lineeditor program.
 * Delete line
 * Preview whole file
 * Cancel operation (using Ctrl-X+Enter)
+* Shows previous line of current line being operated on to give context
 
 ## TODO
 * Cancel Prompts for getting information for a command (for example, when it prompt you to enter a line number when one wasn't provided when the command was typed)
@@ -42,3 +43,4 @@ A simple interactive lineeditor program.
   - Only the given line/range of lines
 * Ability to change setting on how many lines to show before the line you are currently modifying (to give context)
 * Add color
+* Tab completion for opening/saving files
