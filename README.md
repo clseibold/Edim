@@ -17,6 +17,7 @@ A simple interactive lineeditor program.
 * Replace line
 * Replace first occurance of string in line
 * Delete line
+  - Will also show the line that was moved up into the deleted line's place
 * Preview whole file
 * Cancel operation (using Ctrl-X+Enter)
 * Shows previous line of current line being operated on to give context
@@ -45,13 +46,13 @@ A simple interactive lineeditor program.
 * Replace first occurance in file
 * Replace all in file
 * Better previewing of file
-  - A functionality similar to more/less
-  - Only the given line/range of lines
+  - Only the given range of lines
 * Ability to change setting on how many lines to show before the line you are currently modifying (to give context)
 * Add color
 * Tab completion for opening/saving files
 * UTF-8 Support
 * Ability to open multiple buffers (files) and switch between them.
+* Show the first line that was moved down due to appending before/after a line.
 
 ## Ideas
 * Ability to use relative line numbers based on what was shown previously (from any command that previews any amount of lines, including insert, delete, preview, etc.)

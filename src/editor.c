@@ -781,6 +781,10 @@ void editorState_deleteLine(int line) {
     
     // Decrease the length of the buffer, keeping the char stretchy buffer of this last line because it was moved down one.
     buf_pop(currentBuffer.lines);
+    
+    // Show the first line that was moved - the line # should be the same as the line that was deleted
+    if (line <= buf_len(currentBuffer.lines))
+        printf("^%3d %.*s", line, (int) buf_len(currentBuffer.lines[line - 1].chars), currentBuffer.lines[line - 1].chars);
 }
 
 /* Print the currently stored text with line numbers */
