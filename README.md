@@ -26,6 +26,7 @@ A simple interactive lineeditor program.
 * Ability to show file information
   - Filename
   - Number of lines
+* Show the first line that was moved down due to appending before/after a line.
 
 ## TODO
 * Cancel Prompts for getting information for a command (for example, when it prompt you to enter a line number when one wasn't provided when the command was typed)
@@ -52,7 +53,10 @@ A simple interactive lineeditor program.
 * Tab completion for opening/saving files
 * UTF-8 Support
 * Ability to open multiple buffers (files) and switch between them.
-* Show the first line that was moved down due to appending before/after a line.
+* Duplicating a line
+* Copying a line into clipboard
+* Cutting a line
+* Move a line to before/after a given line number
 
 ## Ideas
 * Ability to use relative line numbers based on what was shown previously (from any command that previews any amount of lines, including insert, delete, preview, etc.)

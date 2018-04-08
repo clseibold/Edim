@@ -516,6 +516,11 @@ EditorState editorState_insertAfter(int line) {
     // Free the old lines stretchy buffer
     buf_free(insertLines);
     
+    // Show the line that was moved due to inserting before it (and after the line before it)
+    int movedLine = lineStart + linesAddedAmt;
+    if (movedLine <= buf_len(currentBuffer.lines))
+        printf("v%3d %.*s", movedLine, (int) buf_len(currentBuffer.lines[movedLine - 1].chars), currentBuffer.lines[movedLine - 1].chars);
+    
     return ED_MENU;
 }
 
@@ -570,6 +575,11 @@ EditorState editorState_insertBefore(int line) {
     
     // Free the old lines stretchy buffer
     buf_free(insertLines);
+    
+    // Show the line that was moved due to the insertion before it
+    int movedLine = lineStart + linesAddedAmt;
+    if (movedLine <= buf_len(currentBuffer.lines))
+        printf("v%3d %.*s", movedLine, (int) buf_len(currentBuffer.lines[movedLine - 1].chars), currentBuffer.lines[movedLine - 1].chars);
     
     return ED_MENU;
 }
@@ -810,6 +820,10 @@ void printText(void) {
         }
     }
     offset = linesAtATime + offset + 1;
+    if (offset >= buf_len(currentBuffer.lines)) {
+        printf("\n");
+        return;
+    }
     printf("\n<%s | preview> ", currentBuffer.openedFilename);
     
     while ((c = getchar()) != EOF && offset < buf_len(currentBuffer.lines)) {
@@ -850,19 +864,6 @@ void printText(void) {
         printf("\n<%s | preview> ", currentBuffer.openedFilename);
     }
     
-    
-    /*for (int line = 0; line < buf_len(currentBuffer.lines); line++) {
-        printf("%4d ", line + 1);
-        for (int i = 0; i < buf_len(currentBuffer.lines[line].chars); i++) {
-            putchar(currentBuffer.lines[line].chars[i]);
-        }
-    }*/
-    
-    /*int last_line = buf_len(currentBuffer.lines) - 1;
-    int last_char = buf_len(currentBuffer.lines[last_line].chars) - 1;
-    if (currentBuffer.lines[last_line].chars[last_char] == '\n') {
-        printf("%4d ", last_line + 2);
-    }*/
     printf("\n");
 }
 
