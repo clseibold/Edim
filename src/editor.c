@@ -161,10 +161,10 @@ EditorState openFile(char *filename)
         }
     }
     
-    printText();
+    //printText();
+    printFileInfo();
     
     fclose(fp);
-    
     
     return ED_MENU;
 }
