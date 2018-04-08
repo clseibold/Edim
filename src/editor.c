@@ -202,6 +202,7 @@ EditorState editorState_menu(void) {
             printf(" * 's' - Save\n");
             /* Edit - rewrite a specific line, group of lines, group of characters in a line (given column numbers), and word/group of words */
             //printf(" * 'e' - Edit\n");
+            printf(" * '#' - Gives back information on the file, including number of lines, filename, number of characters, filetype, etc.");
             printf(" * 'a (line#)' - Insert after the line number\n");
             printf(" * 'i (line#)' - Insert before the line number\n");
             printf(" * 'A (line#)' - Appends to a line\n");
@@ -213,12 +214,17 @@ EditorState editorState_menu(void) {
             // Continue writing from last line of file.
             printf(" * 'c' - Continue\n");
             printf(" * 'p' - Preview whole file\n");
+            printf(" * 'P (line#:start) (line#:end)' - Preview a line or set of lines, including the line before and after\n");
             printf(" * 'd / D' - Save and Exit / Exit (without save)\n");
             printf(" * 'q / Q' - Save and Quit / Quit (without save)\n");
         } break;
         case 's':
         {
             editorState_save();
+        } break;
+        case '#':
+        {
+            printFileInfo();
         } break;
         case 'c':
         {
@@ -372,6 +378,27 @@ EditorState editorState_menu(void) {
         case 'p':
         {
             printText();
+        } break;
+        case 'P':
+        {
+            char *end;
+            int line = (int) strtol(rest, &end, 10);
+            
+            char lineInput[MAXLENGTH / 4];
+            int length;
+            while (line == 0 || line > buf_len(currentBuffer.lines) || length == -1) {
+                if (rest != end)
+                    printf("That line number exceeds the bounds of the file.\n");
+                printf("Enter a line number: ");
+                length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
+                line = (int) strtol(lineInput, &end, 10);
+            }
+            
+            if (line - 2 >= 0)
+                printLine(line - 2);
+            printLine(line - 1);
+            if (line < buf_len(currentBuffer.lines))
+                printLine(line);
         } break;
         case 'd':
         {
@@ -764,18 +791,74 @@ void printText(void) {
         return;
     }
     
-    for (int line = 0; line < buf_len(currentBuffer.lines); line++) {
+    int linesAtATime = 10; // TODO: Should have a setting for this.
+    int offset = 0;
+    char c;
+    
+    for (int line = offset; line < linesAtATime + offset + 1 && line <= buf_len(currentBuffer.lines); line++) {
+        if (line == buf_len(currentBuffer.lines)) {
+            printf("%4d ", line + 1);
+            break;
+        }
         printf("%4d ", line + 1);
         for (int i = 0; i < buf_len(currentBuffer.lines[line].chars); i++) {
             putchar(currentBuffer.lines[line].chars[i]);
         }
     }
+    offset = linesAtATime + offset + 1;
+    printf("\n<%s | preview> ", currentBuffer.openedFilename);
     
-    int last_line = buf_len(currentBuffer.lines) - 1;
+    while ((c = getchar()) != EOF && offset < buf_len(currentBuffer.lines)) {
+        if (c == '?') {
+            // Print help info about preview command here
+            printf("\nPreviewing '%s'\n", currentBuffer.openedFilename);
+            printf(" * 'q' or Ctrl-X to stop previewing\n");
+            printf(" * 'Q' to exit the whole program\n");
+            printf(" * Enter to show the next lines\n");
+            // Discard the enter key
+            getchar();
+            printf("\n<%s | preview> ", currentBuffer.openedFilename);
+            continue;
+        } else if (c == 'q' || c == 24) { // 26 is Ctrl-X, aka CANCEL
+            // Discard the enter key
+            getchar();
+            break;
+        } else if (c == 'Q') {
+            exit(0);
+        }
+        
+        printf("\n");
+        for (int line = offset; line < linesAtATime + offset + 1 && line <= buf_len(currentBuffer.lines); line++) {
+            if (line == buf_len(currentBuffer.lines)) {
+                printf("%4d ", line + 1);
+                break;
+            }
+            printf("%4d ", line + 1);
+            for (int i = 0; i < buf_len(currentBuffer.lines[line].chars); i++) {
+                putchar(currentBuffer.lines[line].chars[i]);
+            }
+        }
+        
+        offset = linesAtATime + offset + 1;
+        if (offset >= buf_len(currentBuffer.lines)) {
+            break;
+        }
+        printf("\n<%s | preview> ", currentBuffer.openedFilename);
+    }
+    
+    
+    /*for (int line = 0; line < buf_len(currentBuffer.lines); line++) {
+        printf("%4d ", line + 1);
+        for (int i = 0; i < buf_len(currentBuffer.lines[line].chars); i++) {
+            putchar(currentBuffer.lines[line].chars[i]);
+        }
+    }*/
+    
+    /*int last_line = buf_len(currentBuffer.lines) - 1;
     int last_char = buf_len(currentBuffer.lines[last_line].chars) - 1;
     if (currentBuffer.lines[last_line].chars[last_char] == '\n') {
         printf("%4d ", last_line + 2);
-    }
+    }*/
     printf("\n");
 }
 
@@ -796,6 +879,20 @@ void printLine(int line) {
     for (int i = 0; i < buf_len(currentBuffer.lines[line].chars); i++) {
         putchar(currentBuffer.lines[line].chars[i]);
     }
+}
+
+// TODO: number of chars, filetype, syntax highlighting enabled, outline enabled
+void printFileInfo(void) {
+    printf("File Information for '%s'\n", currentBuffer.openedFilename);
+    
+    int numOfLines = buf_len(currentBuffer.lines);
+    // If last character of last line ends with a new line, add one to the number of lines
+    Line lastLine = currentBuffer.lines[buf_len(currentBuffer.lines) - 1];
+    char lastChar = lastLine.chars[buf_len(lastLine.chars) - 1];
+    if (lastChar == '\n') {
+        numOfLines++;
+    }
+    printf("Number of Lines: %d\n", numOfLines);
 }
 
 /* Save the currently stored text in a new file (or the file that was opened or saved to previously) */

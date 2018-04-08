@@ -20,6 +20,11 @@ A simple interactive lineeditor program.
 * Preview whole file
 * Cancel operation (using Ctrl-X+Enter)
 * Shows previous line of current line being operated on to give context
+* Ability to preview whole file in a similar fashion to more/less
+* Ability to preview an individual line (along with the line before and after to give context)
+* Ability to show file information
+  - Filename
+  - Number of lines
 
 ## TODO
 * Cancel Prompts for getting information for a command (for example, when it prompt you to enter a line number when one wasn't provided when the command was typed)

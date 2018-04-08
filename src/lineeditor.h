@@ -48,6 +48,7 @@ void editorState_save(void);
 void editorState_deleteLine(int line);
 void printText(void);
 void printLine(int line);
+void printFileInfo(void);
 
 /* === parsing.c === */
 int parsing_getLine(char *line, int max, int trimSpace);
