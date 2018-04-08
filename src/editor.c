@@ -799,10 +799,18 @@ EditorState editorState_replaceString(int line, char *str, int strLength) {
 }
 
 void editorState_deleteLine(int line) {
+    // Show the line before the line that's being deleted
+    if (line - 1 > 0)
+        printf("%4d %.*s", line - 1, (int) buf_len(currentBuffer.lines[line - 2].chars), currentBuffer.lines[line - 2].chars);
+    
     if (line == buf_len(currentBuffer.lines)) { // TODO: This isn't working correctly
         printf("x%3d %.*s", line, (int) buf_len(currentBuffer.lines[line - 1].chars), currentBuffer.lines[line - 1].chars);
         buf_free(currentBuffer.lines[buf_len(currentBuffer.lines) - 1].chars);
         buf_pop(currentBuffer.lines);
+        
+        // Show the first line that was moved - the line # should be the same as the line that was deleted
+        if (line <= buf_len(currentBuffer.lines))
+            printf("^%3d %.*s", line, (int) buf_len(currentBuffer.lines[line - 1].chars), currentBuffer.lines[line - 1].chars);
         return;
     }
     
