@@ -210,6 +210,8 @@ EditorState editorState_menu(void) {
             printf(" * 'r (line#)' - Replace a line with a new line\n");
             printf(" * 'R (line#) (string)' - Replace the first occurance of the string in the line\n");
             printf(" * 'x (line#)' - Deletes a line\n");
+            printf(" * 'm (line#)' - Move the line up by one");
+            printf(" * 'M (line#)' - Move the line down by one");
             printf(" * 'u' - Undo the last operation, cannot undo an undo, cannot undo past 1 operation"); // TODO
             // Continue writing from last line of file.
             printf(" * 'c' - Continue\n");
@@ -374,6 +376,40 @@ EditorState editorState_menu(void) {
             }
             
             editorState_deleteLine(line);
+        } break;
+        case 'm':
+        {
+            char *end;
+            int line = (int) strtol(rest, &end, 10);
+            
+            char lineInput[MAXLENGTH / 4];
+            int length;
+            while (line == 0 || line > buf_len(currentBuffer.lines) || length == -1) {
+                if (rest != end)
+                    printf("That line number exceeds the bounds of the file.\n");
+                printf("Enter a line number: ");
+                length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
+                line = (int) strtol(lineInput, &end, 10);
+            }
+            
+            editorState_moveUp(line);
+        } break;
+        case 'M':
+        {
+            char *end;
+            int line = (int) strtol(rest, &end, 10);
+            
+            char lineInput[MAXLENGTH / 4];
+            int length;
+            while (line == 0 || line > buf_len(currentBuffer.lines) || length == -1) {
+                if (rest != end)
+                    printf("That line number exceeds the bounds of the file.\n");
+                printf("Enter a line number: ");
+                length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
+                line = (int) strtol(lineInput, &end, 10);
+            }
+            
+            editorState_moveDown(line);
         } break;
         case 'p':
         {
@@ -830,6 +866,50 @@ void editorState_deleteLine(int line) {
     // Show the first line that was moved - the line # should be the same as the line that was deleted
     if (line <= buf_len(currentBuffer.lines))
         printf("^%3d %.*s", line, (int) buf_len(currentBuffer.lines[line - 1].chars), currentBuffer.lines[line - 1].chars);
+}
+
+void editorState_moveUp(int line) {
+    // Show the line before the line being moved up to
+    if (line - 2 > 0)
+        printf("%4d %.*s", line - 2, (int) buf_len(currentBuffer.lines[line - 3].chars), currentBuffer.lines[line - 3].chars);
+    
+    // Store the line where the given line is being moved up to
+    Line tmp = currentBuffer.lines[line - 2];
+    
+    // Set the new position of the line being moved
+    currentBuffer.lines[line - 2] = currentBuffer.lines[line - 1];
+    
+    // Set the old position to the line stored in tmp (the line being moved down)
+    currentBuffer.lines[line - 1] = tmp;
+    
+    // Print the new position of the line that was moved and the old line that was moved down
+    printf("^%3d %.*s", line - 1, (int) buf_len(currentBuffer.lines[line - 2].chars), currentBuffer.lines[line - 2].chars);
+    printf("v%3d %.*s", line, (int) buf_len(currentBuffer.lines[line - 1].chars), currentBuffer.lines[line - 1].chars);
+    
+    // Print the next line to give context
+    printf("%4d %.*s", line + 1, (int) buf_len(currentBuffer.lines[line].chars), currentBuffer.lines[line].chars);
+}
+
+void editorState_moveDown(int line) {
+    // Show the line before the line being moved down
+    if (line - 1 > 0)
+        printf("%4d %.*s", line - 1, (int) buf_len(currentBuffer.lines[line - 2].chars), currentBuffer.lines[line - 2].chars);
+    
+    // Store the line where the given line is being moved down to
+    Line tmp = currentBuffer.lines[line];
+    
+    // Set the new position of the line being moved
+    currentBuffer.lines[line] = currentBuffer.lines[line - 1];
+    
+    // Set the old position to the line stored in tmp (the line being moved up)
+    currentBuffer.lines[line - 1] = tmp;
+    
+    // Print the new position of the line that was moved and the old line that was moved up
+    printf("^%3d %.*s", line, (int) buf_len(currentBuffer.lines[line - 1].chars), currentBuffer.lines[line - 1].chars);
+    printf("V%3d %.*s", line + 1, (int) buf_len(currentBuffer.lines[line].chars), currentBuffer.lines[line].chars);
+    
+    // Print the next line to give context
+    printf("%4d %.*s", line + 2, (int) buf_len(currentBuffer.lines[line + 1].chars), currentBuffer.lines[line + 1].chars);
 }
 
 /* Print the currently stored text with line numbers */

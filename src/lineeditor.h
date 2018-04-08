@@ -46,6 +46,8 @@ EditorState editorState_replaceLine(int line);
 EditorState editorState_replaceString(int line, char *str, int strLength);
 void editorState_save(void);
 void editorState_deleteLine(int line);
+void editorState_moveUp(int line);
+void editorState_moveDown(int line);
 void printText(void);
 void printLine(int line);
 void printFileInfo(void);
