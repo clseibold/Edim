@@ -8,6 +8,20 @@ A simple interactive lineeditor program.
 * To build on Linux
   - run `./build_linux` (uses gcc)
 
+## Current Features
+* New File
+* Open File
+* Save File
+* Insert line(s) after line number
+* Insert line(s) before line number
+* Append to line
+* Prepend to line
+* Replace line
+* Replace first occurance of string in line
+* Delete line
+* Preview whole file
+* Cancel operation (using Ctrl-X+Enter)
+
 ## TODO
 * Cancel Prompts for getting information for a command (for example, when it prompt you to enter a line number when one wasn't provided when the command was typed)
 * Simple Undo - Undo the last operation (cannot undo an undo; only undo the latest operation, no more; After an undo is done, must wait for another operation before can undo again)
