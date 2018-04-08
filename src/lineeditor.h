@@ -24,9 +24,6 @@ typedef enum State {
 /* === editor.c === */
 #define MAXLENGTH 200000 /* 2000000 was too big on Windows */
 
-// char Streatchy buffer for the currently opened filename
-char *openedFilename;
-
 typedef enum EditorState {
     ED_KEEP,
     ED_OPEN,
@@ -63,29 +60,6 @@ void *xrealloc(void *prt, size_t num_bytes);
 void *xmalloc(size_t num_bytes);
 void fatal(const char *fmt, ...);
 
-typedef struct Line {
-    char *chars;
-    int lineNum; // TODO: Insertion breaks this
-} Line;
-
-Line *lines;
-
-typedef enum OperationKind {
-    Undo, InsertAfter, InsertBefore, AppendTo, PrependTo, ReplaceLine, ReplaceString, DeleteLine
-} OperationKind;
-
-typedef struct Operation {
-    OperationKind kind;
-    int *lines; // Line(s) that have been modified/added/deleted by the operation
-    union {
-        Line original; // The original line that was modified/deleted
-    };
-} Operation;
-
-Operation lastOperation;
-
-// Stretchy Buffers (Invented by Sean Barrett?)
-
 typedef struct BufHdr {
     size_t len;
     size_t cap;
@@ -108,11 +82,30 @@ typedef struct BufHdr {
 
 void *buf__grow(const void *buf, size_t new_len, size_t elem_size);
 
+/* === Text Editing Data Structures === */
+
+typedef struct Line {
+    char *chars;
+} Line;
+
+typedef enum OperationKind {
+    Undo, InsertAfter, InsertBefore, AppendTo, PrependTo, ReplaceLine, ReplaceString, DeleteLine
+} OperationKind;
+
+typedef struct Operation {
+    OperationKind kind;
+    int *lines; // Line(s) that have been modified/added/deleted by the operation
+    union {
+        Line original; // The original line that was modified/deleted
+    };
+} Operation;
+
+typedef struct Buffer {
+    char *openedFilename; // char Streatchy buffer for the currently opened filename
+    Line *lines;
+    Operation lastOperation;
+} Buffer;
+
+Buffer currentBuffer;
+
 #endif
-
-//start at 3
-
-//0 1 2 3 4
-//1 2 3 4
-//1 2 3 4 5 // add 1 line, line added is now line 3
-

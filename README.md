@@ -45,6 +45,8 @@ A simple interactive lineeditor program.
 * Ability to change setting on how many lines to show before the line you are currently modifying (to give context)
 * Add color
 * Tab completion for opening/saving files
+* UTF-8 Support
+* Ability to open multiple buffers (files) and switch between them.
 
 ## Ideas
 * Ability to use relative line numbers based on what was shown previously (from any command that previews any amount of lines, including insert, delete, preview, etc.)
