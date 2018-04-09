@@ -49,7 +49,7 @@ void editorState_deleteLine(int line);
 void editorState_moveUp(int line);
 void editorState_moveDown(int line);
 void printText(void);
-void printLine(int line);
+void printLine(int line, char operation);
 void printFileInfo(void);
 
 /* === parsing.c === */
@@ -110,5 +110,54 @@ typedef struct Buffer {
 } Buffer;
 
 Buffer currentBuffer;
+
+/* === Colors === */
+
+#ifdef _WIN32
+#include <windows.h>
+
+#define FOREGROUND_YELLOW FOREGROUND_RED|FOREGROUND_GREEN
+#define FOREGROUND_CYAN FOREGROUND_GREEN|FOREGROUND_BLUE
+#define FOREGROUND_MAGENTA FOREGROUND_RED|FOREGROUND_BLUE
+#define FOREGROUND_WHITE FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE
+
+#define BACKGROUND_YELLOW BACKGROUND_RED|BACKGROUND_GREEN
+#define BACKGROUND_CYAN BACKGROUND_GREEN|BACKGROUND_BLUE
+#define BACKGROUND_MAGENTA BACKGROUND_RED|BACKGROUND_BLUE
+#define BACKGROUND_WHITE BACKGROUND_RED|BACKGROUND_GREEN|BACKGROUND_BLUE
+
+#endif
+
+#define COL_RED "\x1b[31m" // Error
+#define COL_GREEN "\x1b[32m" // Prompt, Success?
+#define COL_YELLOW "\x1b[33m" // Line Numbers
+#define COL_BLUE "\x1b[34m"
+#define COL_MAGENTA "\x1b[35m"
+#define COL_CYAN "\x1b[36m" // Information
+#define COL_RESET "\x1b[0m" // Input
+
+typedef enum COLOR
+{
+    COLOR_RED,
+    COLOR_GREEN,
+    COLOR_BLUE,
+    COLOR_YELLOW,
+    COLOR_CYAN,
+    COLOR_MAGENTA,
+    COLOR_WHITE,
+    COLOR_BLACK
+} COLOR;
+
+#ifdef _WIN32
+HANDLE hConsole; // Used for coloring output on Windows
+#endif
+
+void setColor(COLOR foreground);
+void resetColor(void);
+void colors_printf(COLOR foreground, const char *fmt, ...);
+void colors_puts(COLOR foreground, const char *fmt, ...);
+void printError(const char *fmt, ...);
+void printPrompt(const char *fmt, ...);
+void printLineNumber(const char *fmt, ...);
 
 #endif

@@ -5,7 +5,7 @@
 
 State mainMenu(char *args, int *argsLength) {
     /* Prompt */
-    printf("\n<> ");
+    printPrompt("\n<> ");
     
     /* get first character - the menu item */
     char c;
@@ -37,13 +37,18 @@ State mainMenu(char *args, int *argsLength) {
             return QUIT;
         } break;
         default:
-        printf("Unknown Command!");
+        printError("Unknown Command!");
     }
     
     return KEEP;
 }
 
 int main() {
+#ifdef _WIN32
+    // Used for printing in color on Windows
+    hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+#endif
+    
     char args[MAXLENGTH] = { 0 };
     int argsLength = 0;
     int running = true;
