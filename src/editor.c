@@ -214,8 +214,7 @@ EditorState editorState_menu(void) {
             printf(" * 'M (line#)' - Move the line down by one");
             printf(" * 'f (string)' - Finds the first occurance of the string in the file and prints the line it's on out\n");
             printf(" * 'u' - Undo the last operation, cannot undo an undo, cannot undo past 1 operation"); // TODO
-            // Continue writing from last line of file.
-            printf(" * 'c' - Continue\n");
+            printf(" * 'c' - Continue from last line\n");
             printf(" * 'p' - Preview whole file\n");
             printf(" * 'P (line#:start) (line#:end)' - Preview a line or set of lines, including the line before and after\n");
             printf(" * 'd / D' - Save and Exit / Exit (without save)\n");

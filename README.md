@@ -43,7 +43,7 @@ A simple interactive lineeditor program.
 * Repeat the last operation
 * Better data structure for the lines that will allow easily moving lines around, deleting then, and inserting them
 * Add text before/after string in line
-* Find first occurance
+* Find first occurance in line
 * Find all occurances
 * Replace all in line
 * Replace first occurance in file
