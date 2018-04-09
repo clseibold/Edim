@@ -61,7 +61,9 @@ void createOutline(void);
 void recreateOutline(void);
 void showOutline(void);
 void createMarkdownOutline(void);
+void createCOutline(void);
 void showMarkdownOutline(void);
+void showCOutline(void);
 
 /* == Streatchy Buffers (by Sean Barratt) === */
 
@@ -128,6 +130,11 @@ typedef struct MarkdownOutlineNode {
     int level;
 } MarkdownOutlineNode;
 
+typedef struct COutlineNode {
+    Line *line;
+    int lineNum;
+} COutlineNode;
+
 typedef struct Buffer {
     char *openedFilename; // char Streatchy buffer for the currently opened filename
     FileType fileType;
@@ -135,6 +142,7 @@ typedef struct Buffer {
     Operation lastOperation;
     union outline {
         MarkdownOutlineNode *markdown_nodes;
+        COutlineNode *c_nodes;
     } outline;
 } Buffer;
 

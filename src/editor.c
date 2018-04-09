@@ -595,13 +595,13 @@ EditorState editorState_editor(void) {
     
     char *chars = NULL;
     
-    printLineNumber("%4d ", line);
+    printLineNumber("%5d ", line);
     while ((c = getchar()) != EOF) {
         buf_push(chars, c);
         if (c == '\n') {
             buf_push(currentBuffer.lines, ((Line) { chars }));
             ++line;
-            printLineNumber("%4d ", line);
+            printLineNumber("%5d ", line);
             chars = NULL; // Create new char stretchy buffer for next line
         }
     }
@@ -620,7 +620,7 @@ EditorState editorState_insertAfter(int line) {
     Line *insertLines = NULL;
     char *chars = NULL;
     
-    printLineNumber("a%3d ", currentLine);
+    printLineNumber("a%4d ", currentLine);
     while ((c = getchar()) != EOF) {
         if (c == (char) 24) { // Ctrl-X (^X) - Cancel
             // Free the new unused line buffers
@@ -638,7 +638,7 @@ EditorState editorState_insertAfter(int line) {
         if (c == '\n') {
             buf_push(insertLines, ((Line) { chars }));
             ++currentLine;
-            printLineNumber("a%3d ", currentLine);
+            printLineNumber("a%4d ", currentLine);
             chars = NULL; // create new char stretchy buffer for next line
         }
     }
@@ -688,7 +688,7 @@ EditorState editorState_insertBefore(int line) {
     Line *insertLines = NULL;
     char *chars = NULL;
     
-    printLineNumber("i%3d ", currentLine);
+    printLineNumber("i%4d ", currentLine);
     while ((c = getchar()) != EOF) {
         if (c == (char) 24) { // Ctrl-X (^X) - Cancel
             // Free the new unused line buffers
@@ -706,7 +706,7 @@ EditorState editorState_insertBefore(int line) {
         if (c == '\n') {
             buf_push(insertLines, ((Line) { chars }));
             ++currentLine;
-            printLineNumber("i%3d ", currentLine);
+            printLineNumber("i%4d ", currentLine);
             chars = NULL; // create new char stretchy buffer for next line
         }
     }
@@ -1088,7 +1088,7 @@ void editorState_moveDown(int line) {
 /* Print the currently stored text with line numbers */
 void printText(int startLine) {
     if (buf_len(currentBuffer.lines) <= 0) {
-        printLineNumber("%4d ", 1);
+        printLineNumber("%5d ", 1);
         printf("\n");
         return;
     }
@@ -1099,7 +1099,7 @@ void printText(int startLine) {
     
     for (int line = offset; line < linesAtATime + offset + 1 && line <= buf_len(currentBuffer.lines); line++) {
         if (line == buf_len(currentBuffer.lines)) {
-            printLineNumber("%4d ", line + 1);
+            printLineNumber("%5d ", line + 1);
             break;
         }
         printLine(line, 0);
@@ -1133,7 +1133,7 @@ void printText(int startLine) {
         printf("\n");
         for (int line = offset; line < linesAtATime + offset + 1 && line <= buf_len(currentBuffer.lines); line++) {
             if (line == buf_len(currentBuffer.lines)) {
-                printLineNumber("%4d ", line + 1);
+                printLineNumber("%5d ", line + 1);
                 break;
             }
             printLine(line, 0);
@@ -1153,8 +1153,8 @@ void printText(int startLine) {
 void printLine(int line, char operation) {
     if (buf_len(currentBuffer.lines) <= 0 && line == 0) {
         if (operation != 0)
-            printLineNumber("%c%3d ", operation, 1);
-        else printLineNumber("%4d ", 1);
+            printLineNumber("%c%4d ", operation, 1);
+        else printLineNumber("%5d ", 1);
         printf("\n");
         return;
     }
@@ -1165,8 +1165,8 @@ void printLine(int line, char operation) {
     }
     
     if (operation != 0)
-        printLineNumber("%c%3d ", operation, line + 1);
-    else printLineNumber("%4d ", line + 1);
+        printLineNumber("%c%4d ", operation, line + 1);
+    else printLineNumber("%5d ", line + 1);
     for (int i = 0; i < buf_len(currentBuffer.lines[line].chars); i++) {
         putchar(currentBuffer.lines[line].chars[i]);
     }
@@ -1189,8 +1189,11 @@ void printFileInfo(void) {
     if (currentBuffer.fileType == FT_MARKDOWN) {
         if (buf_len(currentBuffer.outline.markdown_nodes) > 0)
             printf("Outline:\n");
-        showMarkdownOutline();
+    } else if (currentBuffer.fileType == FT_C) {
+        if (buf_len(currentBuffer.outline.c_nodes) > 0)
+            printf("Outline:\n");
     }
+    showOutline();
 }
 
 /* Save the currently stored text in a new file (or the file that was opened or saved to previously) */

@@ -42,7 +42,7 @@ A simple interactive lineeditor program.
   - Ability to show all lines of a function
 * Simple syntax highlighting for C, C++, Bash, and Batch
 * Repeat the last operation
-* Better data structure for the lines that will allow easily moving lines around, deleting then, and inserting them
+* Better data structure for the lines that will allow easily moving lines around, deleting them, and inserting them
 * Add text before/after string in line
 * Find first occurance in line
 * Find all occurances
@@ -65,13 +65,15 @@ A simple interactive lineeditor program.
   - Using bookmark in place of line number for all commands
   - Deleting bookmarks
   - Ability to save them in separate (projects/settings) file
+* Ability to split a line into two lines
 
 ## Ideas
 * Ability to use relative line numbers based on what was shown previously (from any command that previews any amount of lines, including insert, delete, preview, etc.)
 
 ## Commands
 * 's' - Save
-* '#' - Gives back information on the file, including number of lines, filename, number of characters, filetype, etc. * 'a (line#)' - Insert after the line number
+* '#' - Gives back information on the file, including number of lines, filename, number of characters, filetype, etc. 
+* 'a (line#)' - Insert after the line number
 * 'i (line#)' - Insert before the line number
 * 'A (line#)' - Appends to a line
 * 'I (line#)' - Prepends to a line
