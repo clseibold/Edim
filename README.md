@@ -29,6 +29,7 @@ A simple interactive lineeditor program.
 * Show the first line that was moved down due to appending before/after a line.
 * Move a line up or down one
 * Colored Output
+* Find first occurance of string in file (and print the line out)
 
 ## TODO
 * Cancel Prompts for getting information for a command (for example, when it prompt you to enter a line number when one wasn't provided when the command was typed)

@@ -212,6 +212,7 @@ EditorState editorState_menu(void) {
             printf(" * 'x (line#)' - Deletes a line\n");
             printf(" * 'm (line#)' - Move the line up by one");
             printf(" * 'M (line#)' - Move the line down by one");
+            printf(" * 'f (string)' - Finds the first occurance of the string in the file and prints the line it's on out\n");
             printf(" * 'u' - Undo the last operation, cannot undo an undo, cannot undo past 1 operation"); // TODO
             // Continue writing from last line of file.
             printf(" * 'c' - Continue\n");
@@ -460,6 +461,30 @@ EditorState editorState_menu(void) {
             printLine(line - 1, 0);
             if (line < buf_len(currentBuffer.lines))
                 printLine(line, 0);
+        } break;
+        case 'f':
+        {
+            char str[MAXLENGTH / 4];
+            int strLength = 0;
+            
+            // If a string was already given with the command
+            if (restLength - 1 > 0) {
+                // Copy into str
+                strLength = restLength;
+                strncpy(str, rest, strLength);
+                // Use it instead of asking for a string to replace
+                editorState_findStringInFile(str, strLength - 1);
+                break;
+            }
+            
+            printPrompt("Enter the string to find: ");
+            strLength = parsing_getLine(str, MAXLENGTH / 4, false);
+            while (strLength == -1) {
+                printPrompt("Enter the string to find: ");
+                strLength = parsing_getLine(str, MAXLENGTH / 4, true);
+            }
+            
+            editorState_findStringInFile(str, strLength);
         } break;
         case 'd':
         {
@@ -832,6 +857,88 @@ EditorState editorState_replaceString(int line, char *str, int strLength) {
     currentBuffer.lines[line - 1].chars = chars;
     
     return ED_MENU;
+}
+
+// Finds the first occrance of the string in the given line
+// Displays the line with an arrow pointing to the occurance
+// Will also show the line before it to give context and the column of the start of the occurance
+void editorState_findStringInLine(int line, char *str, int strLength) { // TODO: Low priority - less useful than finding in file
+    printError("Unimplemented!");
+}
+
+// Finds the first occurance of the string in the file
+// Displays the line it is on with an arrow pointing to the occurance
+// Will also show the line before it to give context
+void editorState_findStringInFile(char *str, int strLength) {
+    // The line number the string match was found on, -1 for no occurance
+    int foundIndex = -1;
+    // The column index the occurance starts on the line
+    int colIndex = -1;
+    
+    // For each line in file
+    for (int line = 0; line < buf_len(currentBuffer.lines); line++) {
+        // Find the first occurance of the string in current line, -1 for no occurance
+        int index = -1; // Column index
+        int ii = 0;
+        for (int i = 0; i < buf_len(currentBuffer.lines[line].chars); i++) {
+            if (currentBuffer.lines[line].chars[i] == str[ii]) {
+                if (ii == 0)
+                    index = i;
+                ++ii;
+            } else {
+                ii = 0;
+                index = -1;
+            }
+            
+            // If string ends in a new line or 0 termination, subtract one from the string length so we don't match them
+            if (str[strLength - 1] == '\0' || str[strLength - 1] == '\n') {
+                if (ii == strLength - 1) break;
+            } else {
+                if (ii == strLength) break;
+            }
+        }
+        
+        // If found, break out of for loop, otherwise, keep searching
+        if (index != -1) {
+            foundIndex = line;
+            colIndex = index;
+            break;
+        }
+    }
+    
+    // If no occurance found in file
+    if (foundIndex == -1) {
+        printError("No occurance of '%.*s' found\n", strLength, str);
+        return;
+    }
+    
+    // Print the previous line to give context
+    if (foundIndex - 1 >= 0 && foundIndex - 1 < buf_len(currentBuffer.lines))
+        printLine(foundIndex - 1, 0);
+    
+    // Print the string where the occurance was found
+    printLine(foundIndex, 0);
+    
+    // Create a string (to be printed) with an arrow pointing to the beginning and end of the first occurance of the string being matched.
+    int strPointToMatchLength;
+    if (str[strLength - 1] == '\0' || str[strLength - 1] == '\n') {
+        strPointToMatchLength = colIndex + strLength - 1;
+    } else {
+        strPointToMatchLength = colIndex + strLength;
+    }
+    char *strPointToMatch = alloca(sizeof(char) * (strPointToMatchLength));
+    for (int i = 0; i < strPointToMatchLength; i++) {
+        if (i == colIndex || i == strPointToMatchLength - 1) {
+            strPointToMatch[i] = '^';
+            continue;
+        }
+        if (i > colIndex && i < strPointToMatchLength - 1)
+            strPointToMatch[i] = '-';
+        else strPointToMatch[i] = ' ';
+    }
+    
+    // Print out the string that's points to the occurance
+    printf("%4s %.*s- \n", "", strPointToMatchLength, strPointToMatch); // TODO: printInfo
 }
 
 void editorState_deleteLine(int line) {
