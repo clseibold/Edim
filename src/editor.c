@@ -267,7 +267,7 @@ EditorState editorState_menu(void) {
             printf(" * 'f (string)' - Finds the first occurance of the string in the file and prints the line it's on out\n");
             printf(" * 'u' - Undo the last operation, cannot undo an undo, cannot undo past 1 operation"); // TODO
             printf(" * 'c' - Continue from last line\n");
-            printf(" * 'p' - Preview whole file\n");
+            printf(" * 'p (line#:start)' - Preview whole file (optionally starting at given line)\n");
             printf(" * 'P (line#:start) (line#:end)' - Preview a line or set of lines, including the line before and after\n");
             printf(" * 'd / D' - Save and Exit / Exit (without save)\n");
             printf(" * 'q / Q' - Save and Quit / Quit (without save)\n");
@@ -475,7 +475,12 @@ EditorState editorState_menu(void) {
         } break;
         case 'p':
         {
-            printText();
+            char *end;
+            int line = (int) strtol(rest, &end, 10);
+            
+            if (line <= 0 || line > buf_len(currentBuffer.lines))
+                printText(0);
+            else printText(line - 1);
         } break;
         case 'P':
         {
@@ -1081,7 +1086,7 @@ void editorState_moveDown(int line) {
 }
 
 /* Print the currently stored text with line numbers */
-void printText(void) {
+void printText(int startLine) {
     if (buf_len(currentBuffer.lines) <= 0) {
         printLineNumber("%4d ", 1);
         printf("\n");
@@ -1089,7 +1094,7 @@ void printText(void) {
     }
     
     int linesAtATime = 10; // TODO: Should have a setting for this.
-    int offset = 0;
+    int offset = startLine;
     char c;
     
     for (int line = offset; line < linesAtATime + offset + 1 && line <= buf_len(currentBuffer.lines); line++) {

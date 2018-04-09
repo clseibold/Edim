@@ -50,7 +50,7 @@ void editorState_save(void);
 void editorState_deleteLine(int line);
 void editorState_moveUp(int line);
 void editorState_moveDown(int line);
-void printText(void);
+void printText(int startLine);
 void printLine(int line, char operation);
 void printFileInfo(void);
 
@@ -114,7 +114,7 @@ typedef struct Operation {
     OperationKind kind;
     int *lines; // Line(s) that have been modified/added/deleted by the operation
     union {
-        Line original; // The original line that was modified/deleted
+        Line original; // The original line that was modified/deleted - TODO: Not very memory efficient
     };
 } Operation;
 
