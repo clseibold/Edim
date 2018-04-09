@@ -57,6 +57,11 @@ void printFileInfo(void);
 /* === parsing.c === */
 
 int parsing_getLine(char *line, int max, int trimSpace);
+void createOutline(void);
+void recreateOutline(void);
+void showOutline(void);
+void createMarkdownOutline(void);
+void showMarkdownOutline(void);
 
 /* == Streatchy Buffers (by Sean Barratt) === */
 
@@ -83,12 +88,19 @@ typedef struct BufHdr {
 
 #define buf_add(b, n) (buf__fit((b), n), buf__hdr(b)->len += n, &(b)[buf__hdr(b)->len - n]) // TODO: Not sure if I should be returning the address or not
 #define buf_pop(b) (buf__hdr(b)->len--, &(b)[buf__hdr(b)->len + 1]) // TODO: Check that array exists and length doesn't go below 0
+#define buf_pop_all(b) (buf__hdr(b)->len = 0)
 
 #define buf_free(b) ((b) ? (free(buf__hdr(b)), (b) = NULL) : 0)
 
 void *buf__grow(const void *buf, size_t new_len, size_t elem_size);
 
 /* === Text Editing Data Structures === */
+
+typedef enum FileType {
+    FT_UNKNOWN, FT_TEXT, FT_MARKDOWN, FT_C, FT_CPP, FT_C_HEADER // TODO: Add Batch and Bash files
+} FileType;
+
+void getFileTypeExtension(FileType ft, char **ftExt);
 
 typedef struct Line {
     char *chars;
@@ -106,10 +118,24 @@ typedef struct Operation {
     };
 } Operation;
 
+// Levels:
+//  0 for #
+//  1 for ##
+//  ...
+typedef struct MarkdownOutlineNode {
+    Line *line;
+    int lineNum;
+    int level;
+} MarkdownOutlineNode;
+
 typedef struct Buffer {
     char *openedFilename; // char Streatchy buffer for the currently opened filename
+    FileType fileType;
     Line *lines;
     Operation lastOperation;
+    union outline {
+        MarkdownOutlineNode *markdown_nodes;
+    } outline;
 } Buffer;
 
 Buffer currentBuffer;

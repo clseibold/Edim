@@ -30,6 +30,7 @@ A simple interactive lineeditor program.
 * Move a line up or down one
 * Colored Output
 * Find first occurance of string in file (and print the line out)
+* Show outline of markdown files (shown when file is opened and with fileinfo command, '#')
 
 ## TODO
 * Cancel Prompts for getting information for a command (for example, when it prompt you to enter a line number when one wasn't provided when the command was typed)
@@ -38,7 +39,6 @@ A simple interactive lineeditor program.
   - Ability to list declarations - basically like an outline of the file
   - Ability to show line a declaration is on
   - Ability to show all lines of a function
-* Support outline for markdown files
 * Simple syntax highlighting for C, C++, Bash, and Batch
 * Repeat the last operation
 * Better data structure for the lines that will allow easily moving lines around, deleting then, and inserting them
@@ -58,6 +58,30 @@ A simple interactive lineeditor program.
 * Copying a line into clipboard
 * Cutting a line
 * Move a line to before/after a given line number
+* Better prompt command parsing
+* Insert before/after character in line
+* Bookmarks
+  - Creating a bookmarks
+  - Listing all bookmarks
+  - Using bookmark in place of line number for all commands
+  - Deleting bookmarks
+  - Ability to save them in separate (projects/settings) file
 
 ## Ideas
 * Ability to use relative line numbers based on what was shown previously (from any command that previews any amount of lines, including insert, delete, preview, etc.)
+
+## Commands
+* 's' - Save
+* '#' - Gives back information on the file, including number of lines, filename, number of characters, filetype, etc. * 'a (line#)' - Insert after the line number
+* 'i (line#)' - Insert before the line number
+* 'A (line#)' - Appends to a line
+* 'I (line#)' - Prepends to a line
+* 'r (line#)' - Replace a line with a new line
+* 'R (line#) (string)' - Replace the first occurance of the string in the line
+* 'x (line#)' - Deletes a line
+* 'm (line#)' - Move the line up by one * 'M (line#)' - Move the line down by one * 'f (string)' - Finds the first occurance of the string in the file and prints the line it's on out
+* 'u' - Undo the last operation, cannot undo an undo, cannot undo past 1 operation * 'c' - Continue from last line
+* 'p' - Preview whole file
+* 'P (line#:start) (line#:end)' - Preview a line or set of lines, including the line before and after
+* 'd / D' - Save and Exit / Exit (without save)
+* 'q / Q' - Save and Quit / Quit (without save)

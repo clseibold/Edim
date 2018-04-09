@@ -31,6 +31,7 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
             emptyOperation.original = emptyLine;
             
             currentBuffer.openedFilename = NULL;
+            currentBuffer.fileType = FT_UNKNOWN;
             currentBuffer.lines = NULL;
             currentBuffer.lastOperation = emptyOperation;
             
@@ -63,6 +64,7 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
             emptyOperation.original = emptyLine;
             
             currentBuffer.openedFilename = NULL;
+            currentBuffer.fileType = FT_UNKNOWN;
             currentBuffer.lines = NULL;
             currentBuffer.lastOperation = emptyOperation;
             
@@ -142,6 +144,53 @@ EditorState openFile(char *filename)
     FILE *fp;
     fp = fopen(filename, "r");
     
+    // Find last occurance of '.' in filename
+    int dotIndex;
+    for (int i = 0; i < strlen(filename); i++) {
+        if (filename[i] == '.') {
+            dotIndex = i;
+        }
+    }
+    
+    // Determine filetype based on extension
+    // TODO: Doesn't handle CPP files yet.
+    FileType ft;
+    switch (filename[dotIndex + 1])
+    {
+        case 't':
+        ft = FT_TEXT;
+        break;
+        case 'm':
+        ft = FT_MARKDOWN;
+        break;
+        case 'c':
+        ft = FT_C;
+        break;
+        case 'h':
+        ft = FT_C_HEADER;
+        break;
+        default:
+        ft = FT_UNKNOWN;
+        break;
+    }
+    if (ft != FT_UNKNOWN) {
+        int isType = true;
+        char *ftExt;
+        getFileTypeExtension(ft, &ftExt);
+        for (int i = dotIndex + 1; i < strlen(filename); i++) {
+            if (filename[i] != ftExt[i - dotIndex - 1]) {
+                isType = false;
+                break;
+            }
+        }
+        
+        if (isType) {
+            currentBuffer.fileType = ft;
+        } else {
+            currentBuffer.fileType = FT_UNKNOWN;
+        }
+    }
+    
     printf("Opening file '%s'.\n", filename);
     
     for (int i = 0; i < strlen(filename) + 1; i++) {
@@ -160,6 +209,9 @@ EditorState openFile(char *filename)
             chars = NULL; // Create new char Stretchy Buffer for next line
         }
     }
+    
+    // Create the outline
+    createOutline();
     
     //printText();
     printFileInfo();
@@ -231,6 +283,7 @@ EditorState editorState_menu(void) {
         case 'c':
         {
             editorState_insertAfter(buf_len(currentBuffer.lines));
+            recreateOutline();
             return ED_MENU;
         } break;
         case 'a':
@@ -251,6 +304,7 @@ EditorState editorState_menu(void) {
             if (line == 0)
                 editorState_insertBefore(1);
             else editorState_insertAfter(line);
+            recreateOutline();
         } break;
         case 'i':
         {
@@ -270,6 +324,7 @@ EditorState editorState_menu(void) {
             if (line == buf_len(currentBuffer.lines) + 1)
                 editorState_insertAfter(buf_len(currentBuffer.lines));
             else editorState_insertBefore(line);
+            recreateOutline();
         } break;
         case 'A':
         {
@@ -287,6 +342,7 @@ EditorState editorState_menu(void) {
             }
             
             editorState_appendTo(line);
+            recreateOutline();
         } break;
         case 'I':
         {
@@ -304,6 +360,7 @@ EditorState editorState_menu(void) {
             }
             
             editorState_prependTo(line);
+            recreateOutline();
         } break;
         case 'r':
         {
@@ -321,6 +378,7 @@ EditorState editorState_menu(void) {
             }
             
             editorState_replaceLine(line);
+            recreateOutline();
         } break;
         case 'R':
         {
@@ -359,6 +417,7 @@ EditorState editorState_menu(void) {
             }
             
             editorState_replaceString(line, str, strLength);
+            recreateOutline();
         } break;
         case 'x':
         {
@@ -376,6 +435,7 @@ EditorState editorState_menu(void) {
             }
             
             editorState_deleteLine(line);
+            recreateOutline();
         } break;
         case 'm':
         {
@@ -393,6 +453,7 @@ EditorState editorState_menu(void) {
             }
             
             editorState_moveUp(line);
+            recreateOutline();
         } break;
         case 'M':
         {
@@ -410,6 +471,7 @@ EditorState editorState_menu(void) {
             }
             
             editorState_moveDown(line);
+            recreateOutline();
         } break;
         case 'p':
         {
@@ -1117,6 +1179,13 @@ void printFileInfo(void) {
         numOfLines++;
     }
     printf("Number of Lines: %d\n", numOfLines);
+    
+    // If markdown file, print outline
+    if (currentBuffer.fileType == FT_MARKDOWN) {
+        if (buf_len(currentBuffer.outline.markdown_nodes) > 0)
+            printf("Outline:\n");
+        showMarkdownOutline();
+    }
 }
 
 /* Save the currently stored text in a new file (or the file that was opened or saved to previously) */
@@ -1138,6 +1207,54 @@ void editorState_save(void) {
         // Copy filename into openedFilename
         for (int i = 0; i < filenameLength; i++) {
             buf_push(currentBuffer.openedFilename, filename[i]);
+        }
+        
+        
+        // Find last occurance of '.' in filename
+        int dotIndex;
+        for (int i = 0; i < strlen(filename); i++) {
+            if (filename[i] == '.') {
+                dotIndex = i;
+            }
+        }
+        
+        // Determine filetype based on extension
+        // TODO: Doesn't handle CPP files yet.
+        FileType ft;
+        switch (filename[dotIndex + 1])
+        {
+            case 't':
+            ft = FT_TEXT;
+            break;
+            case 'm':
+            ft = FT_MARKDOWN;
+            break;
+            case 'c':
+            ft = FT_C;
+            break;
+            case 'h':
+            ft = FT_C_HEADER;
+            break;
+            default:
+            ft = FT_UNKNOWN;
+            break;
+        }
+        if (ft != FT_UNKNOWN) {
+            int isType = true;
+            char *ftExt;
+            getFileTypeExtension(ft, &ftExt);
+            for (int i = dotIndex + 1; i < strlen(filename); i++) {
+                if (filename[i] != ftExt[i - dotIndex - 1]) {
+                    isType = false;
+                    break;
+                }
+            }
+            
+            if (isType) {
+                currentBuffer.fileType = ft;
+            } else {
+                currentBuffer.fileType = FT_UNKNOWN;
+            }
         }
     }
     
