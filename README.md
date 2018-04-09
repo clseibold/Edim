@@ -32,6 +32,7 @@ A simple interactive lineeditor program.
 * Colored Output
 * Find first occurance of string in file (and print the line out)
 * Show outline of markdown files (shown when file is opened and with fileinfo command, '#')
+* Show outline of C files (shows function implementations)
 
 ## TODO
 * Cancel Prompts for getting information for a command (for example, when it prompt you to enter a line number when one wasn't provided when the command was typed)
