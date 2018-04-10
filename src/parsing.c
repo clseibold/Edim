@@ -44,7 +44,7 @@ int parsing_getLine(char *line, int max, int trimSpace) {
 
 // Gets input, trims leading space, and puts into a char stretchy buffer (dynamic array). Does not add null character at end.
 // Returns the length of the buffer.
-int parsing_getLine_dynamic(char *chars, int trimSpace) {
+int parsing_getLine_dynamic(char **chars, int trimSpace) {
     int c;
     
     /* Trim whitespace */
@@ -60,11 +60,11 @@ int parsing_getLine_dynamic(char *chars, int trimSpace) {
     
     /* Push input characters onto buffer */
     while (c != EOF && c != '\n') {
-        buf_push(chars, (char) c);
+        buf_push(*chars, (char) c);
         c = getchar();
     }
     
-    return buf_len(chars);
+    return buf_len(*chars);
 }
 
 void getFileTypeExtension(FileType ft, char **ftExt) {

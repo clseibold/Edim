@@ -37,7 +37,6 @@ typedef enum EditorState {
 } EditorState;
 
 State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength);
-void openFile(char *filename);
 EditorState editorState_menu(void);
 EditorState editorState_editor(void);
 
@@ -48,7 +47,7 @@ void printFileInfo(void);
 /* === parsing.c === */
 
 int parsing_getLine(char *line, int max, int trimSpace);
-int parsing_getLine_dynamic(char *chars, int trimSpace);
+int parsing_getLine_dynamic(char **chars, int trimSpace);
 void createOutline(void);
 void recreateOutline(void);
 void showOutline(void);

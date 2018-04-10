@@ -108,73 +108,73 @@ void buffer_openFile(Buffer *buffer, char *filename) {
 
 // If openedFilename is not set in the buffer, then filename is used.
 void buffer_saveFile(Buffer *buffer, char *filename) {
-	FILE *fp;
-	if (buffer->openedFilename && buf_len(buffer->openedFilename) > 0) {
-		fp = fopen(buffer->openedFilename, "w");
-	} else {
-		fp = fopen(filename, "w");
-		// Copy filename into openedFilename
-		for (int i = 0; i < strlen(filename); i++) {
-			buf_push(buffer->openedFilename, filename[i]);
-		}
-
-		// Find last occurance of '.' in filename
-		int dotIndex;
-		for (int i = 0; i < strlen(filename); i++) {
-			if (filename[i] == '.') {
-				dotIndex = i;
-			}
-		}
-
-		// Determine filetype based on extension
-		// TODO: Doesn't handle CPP files yet.
-		FileType ft;
-		switch (filename[dotIndex + 1])
-		{
-			case 't':
-			ft = FT_TEXT;
-			break;
-			case 'm':
-			ft = FT_MARKDOWN;
-			break;
-			case 'c':
-			ft = FT_C;
-			break;
-			case 'h':
-			ft = FT_C_HEADER;
-			break;
-			default:
-			ft = FT_UNKNOWN;
-			break;
-		}
-		if (ft != FT_UNKNOWN) {
-			int isType = true;
-			char *ftExt;
-			getFileTypeExtension(ft, &ftExt);
-			for (int i = dotIndex + 1; i < strlen(filename); i++) {
-				if (filename[i] != ftExt[i - dotIndex - 1]) {
-					isType = false;
-					break;
-				}
-			}
-
-			if (isType) {
-				buffer->fileType = ft;
-			} else {
-				buffer->fileType = FT_UNKNOWN;
-			}
-			free(ftExt);
-		}
-	}
-
-	// Write the characters out to the file
-	for (int line = 0; line < buf_len(buffer->lines); line++) {
-		for (int i = 0; i < buf_len(buffer->lines[line].chars); i++) {
-			fprintf(fp, "%c", buffer->lines[line].chars[i]);
-		}
-	}
-
-	fclose(fp);
+    FILE *fp;
+    if (buffer->openedFilename && buf_len(buffer->openedFilename) > 0) {
+        fp = fopen(buffer->openedFilename, "w");
+    } else {
+        fp = fopen(filename, "w");
+        // Copy filename into openedFilename
+        for (int i = 0; i < strlen(filename) + 1; i++) {
+            buf_push(buffer->openedFilename, filename[i]);
+        }
+        
+        // Find last occurance of '.' in filename
+        int dotIndex;
+        for (int i = 0; i < strlen(filename); i++) {
+            if (filename[i] == '.') {
+                dotIndex = i;
+            }
+        }
+        
+        // Determine filetype based on extension
+        // TODO: Doesn't handle CPP files yet.
+        FileType ft;
+        switch (filename[dotIndex + 1])
+        {
+            case 't':
+            ft = FT_TEXT;
+            break;
+            case 'm':
+            ft = FT_MARKDOWN;
+            break;
+            case 'c':
+            ft = FT_C;
+            break;
+            case 'h':
+            ft = FT_C_HEADER;
+            break;
+            default:
+            ft = FT_UNKNOWN;
+            break;
+        }
+        if (ft != FT_UNKNOWN) {
+            int isType = true;
+            char *ftExt;
+            getFileTypeExtension(ft, &ftExt);
+            for (int i = dotIndex + 1; i < strlen(filename); i++) {
+                if (filename[i] != ftExt[i - dotIndex - 1]) {
+                    isType = false;
+                    break;
+                }
+            }
+            
+            if (isType) {
+                buffer->fileType = ft;
+            } else {
+                buffer->fileType = FT_UNKNOWN;
+            }
+            free(ftExt);
+        }
+    }
+    
+    // Write the characters out to the file
+    for (int line = 0; line < buf_len(buffer->lines); line++) {
+        for (int i = 0; i < buf_len(buffer->lines[line].chars); i++) {
+            fprintf(fp, "%c", buffer->lines[line].chars[i]);
+        }
+    }
+    
+    fclose(fp);
 }
 
 void buffer_insertAfterLine(Buffer *buffer, int line) { // TODO

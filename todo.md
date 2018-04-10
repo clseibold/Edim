@@ -21,4 +21,5 @@
 * Line numbers that are relative to the current line position; to make them, append '+' or '-' to number
 * Ability to run shell commands from within the editor and show the command's output
 * Ability to show contents of a function from C outline
+  - Show outline of an individual function
 * Autoindentation on text input
