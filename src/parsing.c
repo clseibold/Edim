@@ -163,18 +163,35 @@ void createCOutline(void) {
         int lineLength = buf_len(currentBuffer.lines[line].chars);
         
         // Skip whitespace
-        while (*current == ' ' || *current == '\t') {
+        while ((current - start < lineLength) && *current == ' ' || *current == '\t') {
             ++current;
         }
         
-        // Support optional 'internal' before function declaration
+        // Support optional 'internal' or 'static' before function declaration
         // TODO: This is hacky
         if (*current == 'i' && *(current + 1) == 'n' && *(current + 2) == 't' && *(current + 3) == 'e' && *(current + 4) == 'r' && *(current + 5) == 'n' && *(current + 6) == 'a' && *(current + 7) == 'l' && *(current + 8) == ' ')
         {
             current += 8;
             
             // Skip whitespace
-            while (*current == ' ' || *current == '\t') ++current;
+            while ((current - start < lineLength) &&*current == ' ' || *current == '\t') ++current;
+        } else if (*current == 's') {
+            char str[7] = "static ";
+            int i = 0;
+            int startsWithStatic = true;
+            while (i < 7 && (current + i) - start < lineLength) {
+                if (*(current + i) != str[i]) {
+                    startsWithStatic = false;
+                    break;
+                }
+                ++i;
+            }
+            if (startsWithStatic) {
+                current += 7;
+            }
+            
+            // Skip whitespace
+            while ((current - start < lineLength) &&*current == ' ' || *current == '\t') ++current;
         }
         
         int isDeclaration = true;
