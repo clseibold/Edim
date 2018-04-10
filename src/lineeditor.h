@@ -13,6 +13,8 @@
 #define false 0
 #define forever for(;;)
 
+#define internal static
+
 typedef enum State {
     KEEP,
     MAIN_MENU,
@@ -35,21 +37,10 @@ typedef enum EditorState {
 } EditorState;
 
 State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength);
-EditorState openFile(char *filename);
+void openFile(char *filename);
 EditorState editorState_menu(void);
 EditorState editorState_editor(void);
-EditorState editorState_insertAfter(int line);
-EditorState editorState_insertBefore(int line);
-EditorState editorState_appendTo(int line);
-EditorState editorState_prependTo(int line);
-EditorState editorState_replaceLine(int line);
-EditorState editorState_replaceString(int line, char *str, int strLength);
-void editorState_findStringInLine(int line, char *str, int strLength);
-void editorState_findStringInFile(char *str, int strLength);
-void editorState_save(void);
-void editorState_deleteLine(int line);
-void editorState_moveUp(int line);
-void editorState_moveDown(int line);
+
 void printText(int startLine);
 void printLine(int line, char operation);
 void printFileInfo(void);
@@ -96,7 +87,7 @@ typedef struct BufHdr {
 
 void *buf__grow(const void *buf, size_t new_len, size_t elem_size);
 
-/* === Text Editing Data Structures === */
+/* === buffer.c - Text Editing Data Structures === */
 
 typedef enum FileType {
     FT_UNKNOWN, FT_TEXT, FT_MARKDOWN, FT_C, FT_CPP, FT_C_HEADER // TODO: Add Batch and Bash files
@@ -147,6 +138,22 @@ typedef struct Buffer {
 } Buffer;
 
 Buffer currentBuffer;
+
+// Passing NULL into buffer will use the current buffer
+void buffer_initEmptyBuffer(Buffer *buffer);
+void buffer_openFile(Buffer *buffer, char *filename);
+void buffer_saveFile(Buffer *buffer, char *filename);
+void buffer_insertAfterLine(Buffer *buffer, int line); // TODO
+void buffer_insertBeforeLine(Buffer *buffer, int line); // TODO
+void buffer_appendToLine(Buffer *buffer, int line, char *chars);
+void buffer_prependToLine(Buffer *buffer, int line, char *chars);
+void buffer_replaceLine(Buffer *buffer, int line, char *chars);
+void buffer_replaceInLine(Buffer *buffer, int line, int startIndex, int endIndex, char *chars);
+void buffer_moveLineUp(Buffer *buffer, int line);
+void buffer_moveLineDown(Buffer *buffer, int line);
+void buffer_deleteLine(Buffer *buffer, int line);
+int buffer_findStringInLine(Buffer *buffer, int line, char *str, int strLength);
+Line *buffer_findStringInFile(Buffer *buffer, char *str, int strLength, int *index);
 
 /* === Colors === */
 

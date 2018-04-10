@@ -164,7 +164,17 @@ void createCOutline(void) {
         
         // Skip whitespace
         while (*current == ' ' || *current == '\t') {
-            current++;
+            ++current;
+        }
+        
+        // Support optional 'internal' before function declaration
+        // TODO: This is hacky
+        if (*current == 'i' && *(current + 1) == 'n' && *(current + 2) == 't' && *(current + 3) == 'e' && *(current + 4) == 'r' && *(current + 5) == 'n' && *(current + 6) == 'a' && *(current + 7) == 'l' && *(current + 8) == ' ')
+        {
+            current += 8;
+            
+            // Skip whitespace
+            while (*current == ' ' || *current == '\t') ++current;
         }
         
         int isDeclaration = true;

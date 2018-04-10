@@ -6,6 +6,20 @@
 
 #include "lineeditor.h"
 
+internal void editorState_insertAfter(int line);
+internal void editorState_insertBefore(int line);
+internal void editorState_appendTo(int line);
+internal void editorState_prependTo(int line);
+internal void editorState_replaceLine(int line);
+internal void editorState_replaceString(int line, char *str, int strLength);
+
+internal void editorState_findStringInLine(int line, char *str, int strLength);
+internal void editorState_findStringInFile(char *str, int strLength);
+internal void editorState_save(void);
+internal void editorState_deleteLine(int line);
+internal void editorState_moveUp(int line);
+internal void editorState_moveDown(int line);
+
 /* Get input for new file */
 State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
     static EditorState subState = ED_EDITOR;
@@ -22,18 +36,7 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
     switch (subState) {
         case ED_NEW:
         {
-            Line emptyLine;
-            emptyLine.chars = NULL;
-            
-            Operation emptyOperation;
-            emptyOperation.kind = Undo;
-            emptyOperation.lines = NULL;
-            emptyOperation.original = emptyLine;
-            
-            currentBuffer.openedFilename = NULL;
-            currentBuffer.fileType = FT_UNKNOWN;
-            currentBuffer.lines = NULL;
-            currentBuffer.lastOperation = emptyOperation;
+            buffer_initEmptyBuffer(&currentBuffer);
             
             if (argsLength > 1) {
                 int i = 0;
@@ -55,18 +58,7 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
         } break;
         case ED_OPEN:
         {
-            Line emptyLine;
-            emptyLine.chars = NULL;
-            
-            Operation emptyOperation;
-            emptyOperation.kind = Undo;
-            emptyOperation.lines = NULL;
-            emptyOperation.original = emptyLine;
-            
-            currentBuffer.openedFilename = NULL;
-            currentBuffer.fileType = FT_UNKNOWN;
-            currentBuffer.lines = NULL;
-            currentBuffer.lastOperation = emptyOperation;
+            buffer_initEmptyBuffer(&currentBuffer);
             
             // Get arg for filename or Prompt for filename if no args provided
             if (argsLength <= 1) {
@@ -78,7 +70,7 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
                     printPrompt("Enter the filename: ");
                     filenameLength = parsing_getLine(filename, MAXLENGTH / 4, true);
                 }
-                subState = openFile(filename);
+                openFile(filename);
             } else {
                 char *filename = malloc((argsLength + 1) * sizeof(char));
                 int i = 0;
@@ -91,11 +83,11 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
                     ++ii;
                 }
                 filename[ii] = '\0';
-                subState = openFile(filename);
+                openFile(filename);
                 free(filename);
                 filename = 0;
             }
-            if (subState == ED_KEEP) subState = subStatePrev;
+            subState = ED_MENU;
         } break;
         case ED_EDITOR:
         {
@@ -134,7 +126,7 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
     return KEEP;
 }
 
-EditorState openFile(char *filename)
+void openFile(char *filename)
 {
     // Open the file, then
     // Take all characters from file and put into lines streatchy buffer each Line with a chars streatchy buffer.
@@ -217,8 +209,6 @@ EditorState openFile(char *filename)
     printFileInfo();
     
     fclose(fp);
-    
-    return ED_MENU;
 }
 
 /* Menu for Editor */
@@ -284,7 +274,6 @@ EditorState editorState_menu(void) {
         {
             editorState_insertAfter(buf_len(currentBuffer.lines));
             recreateOutline();
-            return ED_MENU;
         } break;
         case 'a':
         {
@@ -610,7 +599,7 @@ EditorState editorState_editor(void) {
 }
 
 // Insert lines after a specific line. Denote end of input by typing Ctrl-D (or Ctrl-Z+Enter on Windows) on new line.
-EditorState editorState_insertAfter(int line) {
+internal void editorState_insertAfter(int line) {
     char c;
     if (line - 1 >= 0 && line - 1 < buf_len(currentBuffer.lines))
         printLine(line - 1, 0);
@@ -632,7 +621,7 @@ EditorState editorState_insertAfter(int line) {
             // Discard the new line character
             getchar();
             // Cancel the operation by returning
-            return ED_MENU;
+            return;
         }
         buf_push(chars, c);
         if (c == '\n') {
@@ -674,11 +663,9 @@ EditorState editorState_insertAfter(int line) {
     int movedLine = lineStart + linesAddedAmt;
     if (movedLine <= buf_len(currentBuffer.lines))
         printLine(movedLine - 1, 'v');
-    
-    return ED_MENU;
 }
 
-EditorState editorState_insertBefore(int line) {
+internal void editorState_insertBefore(int line) {
     char c;
     if (line - 2 >= 0 && line - 1 < buf_len(currentBuffer.lines))
         printLine(line - 2, 0);
@@ -700,7 +687,7 @@ EditorState editorState_insertBefore(int line) {
             // Discard the new line character
             getchar();
             // Cancel the operation by returning
-            return ED_MENU;
+            return;
         }
         buf_push(chars, c);
         if (c == '\n') {
@@ -734,11 +721,9 @@ EditorState editorState_insertBefore(int line) {
     int movedLine = lineStart + linesAddedAmt;
     if (movedLine <= buf_len(currentBuffer.lines))
         printLine(movedLine - 1, 'v');
-    
-    return ED_MENU;
 }
 
-EditorState editorState_appendTo(int line) {
+internal void editorState_appendTo(int line) {
     char c;
     if (line - 2 >= 0 && line - 2 < buf_len(currentBuffer.lines))
         printLine(line - 2, 0);
@@ -759,17 +744,15 @@ EditorState editorState_appendTo(int line) {
             // Discard the new line character that's typed after Ctrl-X
             getchar();
             // Cancel the operation by returning
-            return ED_MENU;
+            return;
         }
         buf_push(currentBuffer.lines[line - 1].chars, c);
         count++;
         if (c == '\n') break;
     }
-    
-    return ED_MENU;
 }
 
-EditorState editorState_prependTo(int line) {
+internal void editorState_prependTo(int line) {
     char c;
     if (line - 2 >= 0 && line - 2 < buf_len(currentBuffer.lines))
         printLine(line - 2, 0);
@@ -785,7 +768,7 @@ EditorState editorState_prependTo(int line) {
             // Discard the new line character
             getchar();
             // Cancel the operation by returning
-            return ED_MENU;
+            return;
         }
         if (c == '\n') break; // Make sure new line is not pushed onto the buffer
         buf_push(chars, c);
@@ -799,11 +782,9 @@ EditorState editorState_prependTo(int line) {
     // Free the original line buffer and set the new line buffer to the current line
     buf_free(currentBuffer.lines[line - 1].chars);
     currentBuffer.lines[line - 1].chars = chars;
-    
-    return ED_MENU;
 }
 
-EditorState editorState_replaceLine(int line) {
+internal void editorState_replaceLine(int line) {
     char c;
     if (line - 2 >= 0 && line - 2 < buf_len(currentBuffer.lines))
         printLine(line - 2, 0);
@@ -818,7 +799,7 @@ EditorState editorState_replaceLine(int line) {
             // Discard the new line character
             getchar();
             // Cancel the operation by returning
-            return ED_MENU;
+            return;
         }
         buf_push(chars, c);
         if (c == '\n') break;
@@ -827,12 +808,10 @@ EditorState editorState_replaceLine(int line) {
     // Free the original line buffer and set the new line buffer to the current line
     buf_free(currentBuffer.lines[line - 1].chars);
     currentBuffer.lines[line - 1].chars = chars;
-    
-    return ED_MENU;
 }
 
 // TODO: Problem with replacing only one character
-EditorState editorState_replaceString(int line, char *str, int strLength) {
+internal void editorState_replaceString(int line, char *str, int strLength) {
     char c;
     
     // Find the first occurance of the string in the line, -1 for no occurance
@@ -858,7 +837,7 @@ EditorState editorState_replaceString(int line, char *str, int strLength) {
     
     if (index == -1) {
         printError("No occurance of '%.*s' found\n", strLength, str);
-        return ED_MENU;
+        return;
     }
     
     // Print the previous line to give context
@@ -901,7 +880,7 @@ EditorState editorState_replaceString(int line, char *str, int strLength) {
             // Discard the new line character
             getchar();
             // Cancel the operation by returning
-            return ED_MENU;
+            return;
         }
         if (c == '\n') break; // Make sure new line is not pushed onto the buffer
         buf_push(chars, c);
@@ -921,21 +900,19 @@ EditorState editorState_replaceString(int line, char *str, int strLength) {
     // Free the original line buffer and set the new line buffer to the current line
     buf_free(currentBuffer.lines[line - 1].chars);
     currentBuffer.lines[line - 1].chars = chars;
-    
-    return ED_MENU;
 }
 
 // Finds the first occrance of the string in the given line
 // Displays the line with an arrow pointing to the occurance
 // Will also show the line before it to give context and the column of the start of the occurance
-void editorState_findStringInLine(int line, char *str, int strLength) { // TODO: Low priority - less useful than finding in file
+internal void editorState_findStringInLine(int line, char *str, int strLength) { // TODO: Low priority - less useful than finding in file
     printError("Unimplemented!");
 }
 
 // Finds the first occurance of the string in the file
 // Displays the line it is on with an arrow pointing to the occurance
 // Will also show the line before it to give context
-void editorState_findStringInFile(char *str, int strLength) {
+internal void editorState_findStringInFile(char *str, int strLength) {
     // The line number the string match was found on, -1 for no occurance
     int foundIndex = -1;
     // The column index the occurance starts on the line
@@ -1007,7 +984,7 @@ void editorState_findStringInFile(char *str, int strLength) {
     printf("%4s %.*s- \n", "", strPointToMatchLength, strPointToMatch); // TODO: printInfo
 }
 
-void editorState_deleteLine(int line) {
+internal void editorState_deleteLine(int line) {
     // Show the line before the line that's being deleted
     if (line - 1 > 0)
         printLine(line - 2, 0);
@@ -1041,7 +1018,7 @@ void editorState_deleteLine(int line) {
         printLine(line - 1, '^');
 }
 
-void editorState_moveUp(int line) {
+internal void editorState_moveUp(int line) {
     // Show the line before the line being moved up to
     if (line - 2 > 0)
         printLine(line - 3, 0);
@@ -1063,7 +1040,7 @@ void editorState_moveUp(int line) {
     printLine(line, 0);
 }
 
-void editorState_moveDown(int line) {
+internal void editorState_moveDown(int line) {
     // Show the line before the line being moved down
     if (line - 1 > 0)
         printLine(line - 2, 0);
