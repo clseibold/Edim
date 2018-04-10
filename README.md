@@ -1,5 +1,6 @@
 # Edim Line Editor
 A simple interactive line editor program inspired by vim, ed, and modern editors.
+This readme was written using Edim.
 
 * To build on Windows
   - `build.bat clang` for 64-bit clang, add "x86" for 32-bit.

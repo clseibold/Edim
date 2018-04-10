@@ -196,7 +196,7 @@ EditorState editorState_menu(void) {
                 printf("Saving '%s'\n", filename);
                 buffer_saveFile(&currentBuffer, filename);
             } else {
-                printf("'%s'", currentBuffer.openedFilename);
+                printf("Saving '%s'", currentBuffer.openedFilename);
                 buffer_saveFile(&currentBuffer, currentBuffer.openedFilename);
             }
         } break;
@@ -492,7 +492,7 @@ EditorState editorState_menu(void) {
                 printf("Saving '%s'\n", filename);
                 buffer_saveFile(&currentBuffer, filename);
             } else {
-                printf("'%s'", currentBuffer.openedFilename);
+                printf("Saving '%s'", currentBuffer.openedFilename);
                 buffer_saveFile(&currentBuffer, currentBuffer.openedFilename);
             }
             
@@ -520,7 +520,7 @@ EditorState editorState_menu(void) {
                 printf("Saving '%s'\n", filename);
                 buffer_saveFile(&currentBuffer, filename);
             } else {
-                printf("'%s'", currentBuffer.openedFilename);
+                printf("Saving '%s'", currentBuffer.openedFilename);
                 buffer_saveFile(&currentBuffer, currentBuffer.openedFilename);
             }
             
