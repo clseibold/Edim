@@ -37,7 +37,7 @@ State mainMenu(char *args, int *argsLength) {
             return QUIT;
         } break;
         default:
-        printError("Unknown Command!");
+        printError("Unknown command");
     }
     
     return KEEP;

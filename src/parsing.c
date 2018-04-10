@@ -42,6 +42,31 @@ int parsing_getLine(char *line, int max, int trimSpace) {
     return i;
 }
 
+// Gets input, trims leading space, and puts into a char stretchy buffer (dynamic array). Does not add null character at end.
+// Returns the length of the buffer.
+int parsing_getLine_dynamic(char *chars, int trimSpace) {
+    int c;
+    
+    /* Trim whitespace */
+    while (trimSpace && ((c = getchar()) == ' ' || c == '\t'))
+        ;
+    
+    if (!trimSpace) c = getchar();
+    
+    /* If there's nothing left, return */
+    if (c == '\n') {
+        return 0;
+    }
+    
+    /* Push input characters onto buffer */
+    while (c != EOF && c != '\n') {
+        buf_push(chars, (char) c);
+        c = getchar();
+    }
+    
+    return buf_len(chars);
+}
+
 void getFileTypeExtension(FileType ft, char **ftExt) {
     switch (ft) {
         case FT_TEXT:
@@ -98,14 +123,16 @@ void recreateOutline(void) {
         case FT_MARKDOWN:
         {
             // Pop off all of the current nodes
-            buf_pop_all(currentBuffer.outline.markdown_nodes);
+            if (buf_len(currentBuffer.outline.markdown_nodes) > 0)
+                buf_pop_all(currentBuffer.outline.markdown_nodes);
             assert(buf_len(currentBuffer.outline.markdown_nodes) == 0);
             createMarkdownOutline();
         } break;
         case FT_C:
         {
             // Pop off all of the current nodes
-            buf_pop_all(currentBuffer.outline.c_nodes);
+            if (buf_len(currentBuffer.outline.c_nodes))
+                buf_pop_all(currentBuffer.outline.c_nodes);
             assert(buf_len(currentBuffer.outline.c_nodes) == 0);
             createCOutline();
         } break;
@@ -387,7 +414,7 @@ void showMarkdownOutline(void) {
 void showCOutline(void) {
     assert(currentBuffer.fileType == FT_C);
     
-    // GO through each node
+    // Go through each node
     for (int node_i = 0; node_i < buf_len(currentBuffer.outline.c_nodes); node_i++) {
         int linenum = currentBuffer.outline.c_nodes[node_i].line - currentBuffer.lines;
         printLine(linenum, 0);

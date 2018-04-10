@@ -48,6 +48,7 @@ void printFileInfo(void);
 /* === parsing.c === */
 
 int parsing_getLine(char *line, int max, int trimSpace);
+int parsing_getLine_dynamic(char *chars, int trimSpace);
 void createOutline(void);
 void recreateOutline(void);
 void showOutline(void);
@@ -148,10 +149,14 @@ void buffer_insertBeforeLine(Buffer *buffer, int line); // TODO
 void buffer_appendToLine(Buffer *buffer, int line, char *chars);
 void buffer_prependToLine(Buffer *buffer, int line, char *chars);
 void buffer_replaceLine(Buffer *buffer, int line, char *chars);
+// TODO: This will basically just delete the lines and then insert before the line number
+// void buffer_replaceLines(Buffer *buffer, int lineStart, int lineEnd, Line *lines);
 void buffer_replaceInLine(Buffer *buffer, int line, int startIndex, int endIndex, char *chars);
 void buffer_moveLineUp(Buffer *buffer, int line);
 void buffer_moveLineDown(Buffer *buffer, int line);
 void buffer_deleteLine(Buffer *buffer, int line);
+// TODO
+// void buffer_deleteLines(Buffer *buffer, int lineStart, int lineEnd);
 int buffer_findStringInLine(Buffer *buffer, int line, char *str, int strLength);
 Line *buffer_findStringInFile(Buffer *buffer, char *str, int strLength, int *index);
 

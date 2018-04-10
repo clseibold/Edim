@@ -70,7 +70,8 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
                     printPrompt("Enter the filename: ");
                     filenameLength = parsing_getLine(filename, MAXLENGTH / 4, true);
                 }
-                openFile(filename);
+                buffer_openFile(&currentBuffer, filename);
+                //openFile(filename);
             } else {
                 char *filename = malloc((argsLength + 1) * sizeof(char));
                 int i = 0;
@@ -83,10 +84,12 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
                     ++ii;
                 }
                 filename[ii] = '\0';
-                openFile(filename);
+                buffer_openFile(&currentBuffer, filename);
+                //openFile(filename);
                 free(filename);
                 filename = 0;
             }
+            printFileInfo();
             subState = ED_MENU;
         } break;
         case ED_EDITOR:
@@ -120,7 +123,7 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
             return QUIT;
         } break;
         default:
-        printError("Unknown Command!");
+        printError("Unknown command");
     }
     
     return KEEP;
@@ -181,6 +184,7 @@ void openFile(char *filename)
         } else {
             currentBuffer.fileType = FT_UNKNOWN;
         }
+        free(ftExt);
     }
     
     printf("Opening file '%s'.\n", filename);
@@ -259,7 +263,7 @@ EditorState editorState_menu(void) {
             printf(" * 'c' - Continue from last line\n");
             printf(" * 'p (line#:start)' - Preview whole file (optionally starting at given line)\n");
             printf(" * 'P (line#:start) (line#:end)' - Preview a line or set of lines, including the line before and after\n");
-            printf(" * 'd / D' - Save and Exit / Exit (without save)\n");
+            printf(" * 'e / E' - Save and Exit / Exit (without save)\n");
             printf(" * 'q / Q' - Save and Quit / Quit (without save)\n");
         } break;
         case 's':
@@ -541,12 +545,12 @@ EditorState editorState_menu(void) {
             
             editorState_findStringInFile(str, strLength);
         } break;
-        case 'd':
+        case 'e':
         {
             editorState_save();
             return ED_EXIT;
         } break;
-        case 'D':
+        case 'E':
         {
             return ED_EXIT;
         } break;
@@ -561,7 +565,7 @@ EditorState editorState_menu(void) {
         } break;
         default:
         {
-            printError("Unknown Command!");
+            printError("Unknown command");
         } break;
     }
     
@@ -791,7 +795,7 @@ internal void editorState_replaceLine(int line) {
     char *chars = NULL; // The new char stretchy buffer
     
     printLine(line - 1, 'r');
-    printf("%4s ", "");
+    printf("%5s ", "");
     while ((c = getchar()) != EOF) {
         if (c == (char) 24) { // Ctrl-X (^X) - Cancel
             // Free the new unused line buffer
@@ -872,7 +876,7 @@ internal void editorState_replaceString(int line, char *str, int strLength) {
         buf_push(chars, currentBuffer.lines[line - 1].chars[i]);
     }
     
-    printPrompt("%4s %.*s- ", "", strPointToMatchLength, strPointToMatch); // TODO
+    printPrompt("%5s %.*s- ", "", strPointToMatchLength, strPointToMatch); // TODO
     while ((c = getchar()) != EOF) {
         if (c == (char) 24) { // Ctrl-X (^X) - Cancel
             // Free the new unused line buffer
@@ -906,7 +910,7 @@ internal void editorState_replaceString(int line, char *str, int strLength) {
 // Displays the line with an arrow pointing to the occurance
 // Will also show the line before it to give context and the column of the start of the occurance
 internal void editorState_findStringInLine(int line, char *str, int strLength) { // TODO: Low priority - less useful than finding in file
-    printError("Unimplemented!");
+    printError("Unimplemented");
 }
 
 // Finds the first occurance of the string in the file
@@ -981,7 +985,7 @@ internal void editorState_findStringInFile(char *str, int strLength) {
     }
     
     // Print out the string that's points to the occurance
-    printf("%4s %.*s- \n", "", strPointToMatchLength, strPointToMatch); // TODO: printInfo
+    printf("%5s %.*s- \n", "", strPointToMatchLength, strPointToMatch); // TODO: printInfo()
 }
 
 internal void editorState_deleteLine(int line) {
@@ -1240,6 +1244,7 @@ void editorState_save(void) {
             } else {
                 currentBuffer.fileType = FT_UNKNOWN;
             }
+            free(ftExt);
         }
     }
     
