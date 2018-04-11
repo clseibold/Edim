@@ -434,23 +434,23 @@ EditorState editorState_menu(void) {
                 if (endLine != -1) {
                     // Print the range of lines along with the line before and after
                     if (line - 2 >= 0)
-                        printLine(line - 2, 0);
+                        printLine(line - 2, 0, true);
                     for (int i = line; i <= endLine; i++) {
                         if (i - 1 >= 0 && i - 1 < buf_len(currentBuffer.lines))
-                            printLine(i - 1, 0);
+                            printLine(i - 1, 0, true);
                     }
                     if (endLine < buf_len(currentBuffer.lines))
-                        printLine(endLine, 0);
+                        printLine(endLine, 0, true);
                     break;
                 }
             }
             
             // Otherwise, just print that one line
             if (line - 2 >= 0)
-                printLine(line - 2, 0);
-            printLine(line - 1, 0);
+                printLine(line - 2, 0, true);
+            printLine(line - 1, 0, true);
             if (line < buf_len(currentBuffer.lines))
-                printLine(line, 0);
+                printLine(line, 0, true);
         } break;
         case 'f':
         {
@@ -552,7 +552,7 @@ EditorState editorState_editor(void) {
     }
     
     // Show the previous line to give context.
-    printLine(line - 2, 0);
+    printLine(line - 2, 0, true);
     
     char *chars = NULL;
     
@@ -574,7 +574,7 @@ EditorState editorState_editor(void) {
 internal void editorState_insertAfter(int line) {
     char c;
     if (line - 1 >= 0 && line - 1 < buf_len(currentBuffer.lines))
-        printLine(line - 1, 0);
+        printLine(line - 1, 0, true);
     int currentLine = line + 1;
     int lineStart = currentLine;
     
@@ -634,13 +634,16 @@ internal void editorState_insertAfter(int line) {
     // Show the line that was moved due to inserting before it (and after the line before it)
     int movedLine = lineStart + linesAddedAmt;
     if (movedLine <= buf_len(currentBuffer.lines))
-        printLine(movedLine - 1, 'v');
+        printLine(movedLine - 1, 'v', true);
+    
+    currentBuffer.currentLine = lineStart + linesAddedAmt - 1;
+    printf("New current Line: %d\n", currentBuffer.currentLine);
 }
 
 internal void editorState_insertBefore(int line) {
     char c;
     if (line - 2 >= 0 && line - 1 < buf_len(currentBuffer.lines))
-        printLine(line - 2, 0);
+        printLine(line - 2, 0, true);
     int currentLine = line;
     int lineStart = currentLine;
     
@@ -692,47 +695,50 @@ internal void editorState_insertBefore(int line) {
     // Show the line that was moved due to the insertion before it
     int movedLine = lineStart + linesAddedAmt;
     if (movedLine <= buf_len(currentBuffer.lines))
-        printLine(movedLine - 1, 'v');
+        printLine(movedLine - 1, 'v', true);
+    
+    currentBuffer.currentLine = lineStart + linesAddedAmt - 1;
+    printf("New current Line: %d\n", currentBuffer.currentLine);
 }
 
 internal void editorState_appendTo(int line) {
     char c;
+    char *chars = NULL;
     if (line - 2 >= 0 && line - 2 < buf_len(currentBuffer.lines))
-        printLine(line - 2, 0);
+        printLine(line - 2, 0, true);
     
     // Remove the new line character from the line
-    buf_pop(currentBuffer.lines[line - 1].chars);
+    //buf_pop(currentBuffer.lines[line - 1].chars);
     
-    int count = 0;
-    printLine(line - 1, 'A');
+    //int count = 0;
+    printLine(line - 1, 'A', false);
     while ((c = getchar()) != EOF) {
         if (c == (char) 24) { // Ctrl-X (^X) - Cancel
-            // Pop off all of the characters that have been added thus far
-            for (int i = 0; i < count; i++) {
-                buf_pop(currentBuffer.lines[line - 1].chars);
-            }
-            // Push back on the new line character the was previously removed
-            buf_push(currentBuffer.lines[line - 1].chars, '\n');
+            // Delete the chars buffer
+            buf_free(chars);
             // Discard the new line character that's typed after Ctrl-X
             getchar();
             // Cancel the operation by returning
             return;
         }
-        buf_push(currentBuffer.lines[line - 1].chars, c);
-        count++;
+        buf_push(chars, c);
+        //count++;
         if (c == '\n') break;
     }
+    
+    buffer_appendToLine(&currentBuffer, line, chars);
+    buf_free(chars);
 }
 
 internal void editorState_prependTo(int line) {
     char c;
     if (line - 2 >= 0 && line - 2 < buf_len(currentBuffer.lines))
-        printLine(line - 2, 0);
+        printLine(line - 2, 0, true);
     
     char *chars = NULL; // The new char stretchy buffer
     
-    printLine(line - 1, 'I');
-    printPrompt("%4s ^- ", ""); // TODO
+    printLine(line - 1, 'I', true);
+    printPrompt("%4s ^- ", "");
     while ((c = getchar()) != EOF) {
         if (c == (char) 24) { // Ctrl-X (^X) - Cancel
             // Free the new unused line buffer
@@ -746,23 +752,17 @@ internal void editorState_prependTo(int line) {
         buf_push(chars, c);
     }
     
-    // Move all the characters from the original line buffer to the new one
-    for (int i = 0; i < buf_len(currentBuffer.lines[line - 1].chars); i++) {
-        buf_push(chars, currentBuffer.lines[line - 1].chars[i]);
-    }
-    
-    // Free the original line buffer and set the new line buffer to the current line
-    buf_free(currentBuffer.lines[line - 1].chars);
-    currentBuffer.lines[line - 1].chars = chars;
+    buffer_prependToLine(&currentBuffer, line, chars);
 }
 
 internal void editorState_replaceLine(int line) {
     char c;
     if (line - 2 >= 0 && line - 2 < buf_len(currentBuffer.lines))
-        printLine(line - 2, 0);
+        printLine(line - 2, 0, true);
+    
     char *chars = NULL; // The new char stretchy buffer
     
-    printLine(line - 1, 'r');
+    printLine(line - 1, 'r', true);
     printf("%5s ", "");
     while ((c = getchar()) != EOF) {
         if (c == (char) 24) { // Ctrl-X (^X) - Cancel
@@ -777,13 +777,11 @@ internal void editorState_replaceLine(int line) {
         if (c == '\n') break;
     }
     
-    // Free the original line buffer and set the new line buffer to the current line
-    buf_free(currentBuffer.lines[line - 1].chars);
-    currentBuffer.lines[line - 1].chars = chars;
+    buffer_replaceLine(&currentBuffer, line, chars);
 }
 
 // TODO: Problem with replacing only one character
-internal void editorState_replaceString(int line, char *str, int strLength) {
+internal void editorState_replaceString(int line, char *str, int strLength) { // TODO: Use buffer_replaceInLine
     char c;
     
     // Find the first occurance of the string in the line, -1 for no occurance
@@ -814,10 +812,10 @@ internal void editorState_replaceString(int line, char *str, int strLength) {
     
     // Print the previous line to give context
     if (line - 2 >= 0 && line - 2 < buf_len(currentBuffer.lines))
-        printLine(line - 2, 0);
+        printLine(line - 2, 0, true);
     
     // Print the string where the replacement is occuring
-    printLine(line - 1, 'R');
+    printLine(line - 1, 'R', true);
     
     // Create a string (to be printed) with an arrow pointing to the beginning and end of the first occurance of the string being replaced.
     int strPointToMatchLength;
@@ -929,10 +927,10 @@ internal void editorState_findStringInFile(char *str, int strLength) {
     
     // Print the previous line to give context
     if (foundIndex - 1 >= 0 && foundIndex - 1 < buf_len(currentBuffer.lines))
-        printLine(foundIndex - 1, 0);
+        printLine(foundIndex - 1, 0, true);
     
     // Print the string where the occurance was found
-    printLine(foundIndex, 0);
+    printLine(foundIndex, 0, true);
     
     // Create a string (to be printed) with an arrow pointing to the beginning and end of the first occurance of the string being matched.
     int strPointToMatchLength;
@@ -959,79 +957,55 @@ internal void editorState_findStringInFile(char *str, int strLength) {
 internal void editorState_deleteLine(int line) {
     // Show the line before the line that's being deleted
     if (line - 1 > 0)
-        printLine(line - 2, 0);
+        printLine(line - 2, 0, true);
     
     if (line == buf_len(currentBuffer.lines)) { // TODO: This isn't working correctly
-        printLine(line - 1, 'x');
-        buf_free(currentBuffer.lines[buf_len(currentBuffer.lines) - 1].chars);
-        buf_pop(currentBuffer.lines);
+        printLine(line - 1, 'x', true);
+        buffer_deleteLine(&currentBuffer, buf_len(currentBuffer.lines));
         
         // Show the first line that was moved - the line # should be the same as the line that was deleted
         if (line <= buf_len(currentBuffer.lines))
-            printLine(line - 1, '^');
+            printLine(line - 1, '^', true);
         return;
     }
     
-    printLine(line - 1, 'x');
+    printLine(line - 1, 'x', true);
     
-    // Delete char stretchy buffer of line that's being deleted
-    buf_free(currentBuffer.lines[line - 1].chars);
-    
-    // Move all lines down one
-    for (int i = line - 1; i < buf_len(currentBuffer.lines) - 1; i++) {
-        currentBuffer.lines[i] = currentBuffer.lines[i + 1];
-    }
-    
-    // Decrease the length of the buffer, keeping the char stretchy buffer of this last line because it was moved down one.
-    buf_pop(currentBuffer.lines);
+    buffer_deleteLine(&currentBuffer, line);
     
     // Show the first line that was moved - the line # should be the same as the line that was deleted
     if (line <= buf_len(currentBuffer.lines))
-        printLine(line - 1, '^');
+        printLine(line - 1, '^', true);
 }
 
 internal void editorState_moveUp(int line) {
     // Show the line before the line being moved up to
     if (line - 2 > 0)
-        printLine(line - 3, 0);
+        printLine(line - 3, 0, true);
     
-    // Store the line where the given line is being moved up to
-    Line tmp = currentBuffer.lines[line - 2];
-    
-    // Set the new position of the line being moved
-    currentBuffer.lines[line - 2] = currentBuffer.lines[line - 1];
-    
-    // Set the old position to the line stored in tmp (the line being moved down)
-    currentBuffer.lines[line - 1] = tmp;
+    buffer_moveLineUp(&currentBuffer, line);
     
     // Print the new position of the line that was moved and the old line that was moved down
-    printLine(line - 2, '^');
-    printLine(line - 1, 'v');
+    printLine(line - 2, '^', true);
+    printLine(line - 1, 'v', true);
     
     // Print the next line to give context
-    printLine(line, 0);
+    printLine(line, 0, true);
 }
 
 internal void editorState_moveDown(int line) {
     // Show the line before the line being moved down
     if (line - 1 > 0)
-        printLine(line - 2, 0);
+        printLine(line - 2, 0, true);
     
-    // Store the line where the given line is being moved down to
-    Line tmp = currentBuffer.lines[line];
-    
-    // Set the new position of the line being moved
-    currentBuffer.lines[line] = currentBuffer.lines[line - 1];
-    
-    // Set the old position to the line stored in tmp (the line being moved up)
-    currentBuffer.lines[line - 1] = tmp;
+    buffer_moveLineDown(&currentBuffer, line);
     
     // Print the new position of the line that was moved and the old line that was moved up
-    printLine(line - 1, '^');
-    printLine(line, 'v');
+    printLine(line - 1, '^', true);
+    printLine(line, 'v', true);
     
     // Print the next line to give context
-    printLine(line + 1, 0);
+    printLine(line + 1, 0, true);
 }
 
 /* Print the currently stored text with line numbers */
@@ -1048,10 +1022,12 @@ void printText(int startLine) {
     
     for (int line = offset; line < linesAtATime + offset + 1 && line <= buf_len(currentBuffer.lines); line++) {
         if (line == buf_len(currentBuffer.lines)) {
-            printLineNumber("%5d ", line + 1);
+            if (line + 1 == currentBuffer.currentLine)
+                printLineNumber("%c%4d ", '*', line + 1);
+            else printLineNumber("%5d ", line + 1);
             break;
         }
-        printLine(line, 0);
+        printLine(line, 0, true);
     }
     offset = linesAtATime + offset + 1;
     if (offset >= buf_len(currentBuffer.lines)) {
@@ -1082,10 +1058,12 @@ void printText(int startLine) {
         printf("\n");
         for (int line = offset; line < linesAtATime + offset + 1 && line <= buf_len(currentBuffer.lines); line++) {
             if (line == buf_len(currentBuffer.lines)) {
-                printLineNumber("%5d ", line + 1);
+                if (line + 1 == currentBuffer.currentLine)
+                    printLineNumber("%c%4d ", '*', line + 1);
+                else printLineNumber("%5d ", line + 1);
                 break;
             }
-            printLine(line, 0);
+            printLine(line, 0, true);
         }
         
         offset = linesAtATime + offset + 1;
@@ -1098,12 +1076,20 @@ void printText(int startLine) {
     printf("\n");
 }
 
-/* Prints one line of text given the line number. Note that the line numbers start at 0 (although they are displayed to the user starting at 1). */
-void printLine(int line, char operation) {
+/*
+Prints one line of text given the line number. Note that the line numbers start at 0 (although they are displayed to the user starting at 1).
+Pass false into printNewLine so the new line at the end is not printed
+*/
+void printLine(int line, char operation, int printNewLine) {
+    //printf("Current Line: %d\n", currentBuffer.currentLine);
     if (buf_len(currentBuffer.lines) <= 0 && line == 0) {
         if (operation != 0)
             printLineNumber("%c%4d ", operation, 1);
-        else printLineNumber("%5d ", 1);
+        else {
+            if (line + 1 == currentBuffer.currentLine)
+                printLineNumber("%c%4d ", '*', 1);
+            else printLineNumber("%5d ", 1);
+        }
         printf("\n");
         return;
     }
@@ -1115,10 +1101,20 @@ void printLine(int line, char operation) {
     
     if (operation != 0)
         printLineNumber("%c%4d ", operation, line + 1);
-    else printLineNumber("%5d ", line + 1);
-    for (int i = 0; i < buf_len(currentBuffer.lines[line].chars); i++) {
-        putchar(currentBuffer.lines[line].chars[i]);
+    else {
+        if (line + 1 == currentBuffer.currentLine)
+            printLineNumber("%c%4d ", '*', line + 1);
+        else printLineNumber("%5d ", line + 1);
     }
+    
+    int length = buf_len(currentBuffer.lines[line].chars);
+    // If shouldn't print new line and end of line is a new line, subtract it off from the length
+    if (!printNewLine && currentBuffer.lines[line].chars[length - 1] == '\n')
+        --length;
+    printf("%.*s", length, currentBuffer.lines[line].chars);
+    /*for (int i = 0; i < buf_len(currentBuffer.lines[line].chars); i++) {
+    putchar(currentBuffer.lines[line].chars[i]);
+    }*/
 }
 
 // TODO: number of chars, filetype, syntax highlighting enabled, outline enabled

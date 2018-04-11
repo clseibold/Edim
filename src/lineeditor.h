@@ -41,7 +41,7 @@ EditorState editorState_menu(void);
 EditorState editorState_editor(void);
 
 void printText(int startLine);
-void printLine(int line, char operation);
+void printLine(int line, char operation, int printNewLine);
 void printFileInfo(void);
 
 /* === parsing.c === */
@@ -131,6 +131,9 @@ typedef struct Buffer {
     FileType fileType;
     Line *lines;
     Operation lastOperation;
+    // Used by default when no line passed into a command.
+    // Commands that modify the file will change the currentLine to the last line it modified. Some commands, like 'c', don't modify the file based on the current line, but will change the current line to what it's modifying ('c' will change the current line to the last line in the file and start inserting from there).
+    int currentLine;
     int modified;
     union outline {
         MarkdownOutlineNode *markdown_nodes;

@@ -23,3 +23,5 @@
 * Ability to show contents of a function from C outline
   - Show outline of an individual function
 * Autoindentation on text input
+* On main menu (or in editor), add command to show listing in current directory (or directory of file)
+  - also allow showing tree of current directory (or directory of file)

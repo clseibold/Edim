@@ -405,9 +405,9 @@ void showMarkdownOutline(void) {
     // Go though each node
     for (int node_i = 0; node_i < buf_len(currentBuffer.outline.markdown_nodes); node_i++) {
         int linenum = currentBuffer.outline.markdown_nodes[node_i].line - currentBuffer.lines;
-        printLine(linenum, 0);
+        printLine(linenum, 0, true);
         // Print out the line
-        //printLine(currentBuffer.outline.markdown_nodes[node_i].lineNum, 0);
+        //printLine(currentBuffer.outline.markdown_nodes[node_i].lineNum, 0, true);
     }
 }
 
@@ -417,6 +417,6 @@ void showCOutline(void) {
     // Go through each node
     for (int node_i = 0; node_i < buf_len(currentBuffer.outline.c_nodes); node_i++) {
         int linenum = currentBuffer.outline.c_nodes[node_i].line - currentBuffer.lines;
-        printLine(linenum, 0);
+        printLine(linenum, 0, true);
     }
 }
