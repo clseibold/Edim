@@ -36,6 +36,7 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
         case ED_NEW:
         {
             buffer_initEmptyBuffer(&currentBuffer);
+            currentBuffer.modified = true;
             
             if (argsLength > 1) {
                 int i = 0;
@@ -161,7 +162,7 @@ EditorState editorState_menu(void) {
             printf(" * 's' - Save\n");
             /* Edit - rewrite a specific line, group of lines, group of characters in a line (given column numbers), and word/group of words */
             //printf(" * 'e' - Edit\n");
-            printf(" * '#' - Gives back information on the file, including number of lines, filename, number of characters, filetype, etc.");
+            printf(" * '#' - Gives back information on the file, including number of lines, filename, number of characters, filetype, etc.\n");
             printf(" * 'a (line#)' - Insert after the line number\n");
             printf(" * 'i (line#)' - Insert before the line number\n");
             printf(" * 'A (line#)' - Appends to a line\n");
@@ -169,10 +170,10 @@ EditorState editorState_menu(void) {
             printf(" * 'r (line#)' - Replace a line with a new line\n");
             printf(" * 'R (line#) (string)' - Replace the first occurance of the string in the line\n");
             printf(" * 'x (line#)' - Deletes a line\n");
-            printf(" * 'm (line#)' - Move the line up by one");
-            printf(" * 'M (line#)' - Move the line down by one");
+            printf(" * 'm (line#)' - Move the line up by one\n");
+            printf(" * 'M (line#)' - Move the line down by one\n");
             printf(" * 'f (string)' - Finds the first occurance of the string in the file and prints the line it's on out\n");
-            printf(" * 'u' - Undo the last operation, cannot undo an undo, cannot undo past 1 operation"); // TODO
+            printf(" * 'u' - Undo the last operation, cannot undo an undo, cannot undo past 1 operation\n"); // TODO
             printf(" * 'c' - Continue from last line\n");
             printf(" * 'p (line#:start)' - Preview whole file (optionally starting at given line)\n");
             printf(" * 'P (line#:start) (line#:end)' - Preview a line or set of lines, including the line before and after\n");

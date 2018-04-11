@@ -19,6 +19,7 @@ void buffer_initEmptyBuffer(Buffer *buffer) {
     (*buffer).fileType = FT_UNKNOWN;
     (*buffer).lines = NULL;
     (*buffer).lastOperation = emptyOperation;
+    (*buffer).modified = false;
 }
 
 // filename should be zero-terminated
@@ -100,6 +101,8 @@ void buffer_openFile(Buffer *buffer, char *filename) {
     
     fclose(fp);
     
+    buffer->modified = false;
+    
     // Create the outline
     createOutline(); // TODO
     
@@ -174,43 +177,54 @@ void buffer_saveFile(Buffer *buffer, char *filename) {
         }
     }
     
+    buffer->modified = false;
+    
     fclose(fp);
 }
 
 void buffer_insertAfterLine(Buffer *buffer, int line) { // TODO
     
+    buffer->modified = true;
 }
 
 void buffer_insertBeforeLine(Buffer *buffer, int line) { // TODO
     
+    buffer->modified = true;
 }
 
 void buffer_appendToLine(Buffer *buffer, int line, char *chars) {
     
+    buffer->modified = true;
 }
 
 void buffer_prependToLine(Buffer *buffer, int line, char *chars) {
     
+    buffer->modified = true;
 }
 
 void buffer_replaceLine(Buffer *buffer, int line, char *chars) {
     
+    buffer->modified = true;
 }
 
 void buffer_replaceInLine(Buffer *buffer, int line, int startIndex, int endIndex, char *chars) {
     
+    buffer->modified = true;
 }
 
 void buffer_moveLineUp(Buffer *buffer, int line) {
     
+    buffer->modified = true;
 }
 
 void buffer_moveLineDown(Buffer *buffer, int line) {
     
+    buffer->modified = true;
 }
 
 void buffer_deleteLine(Buffer *buffer, int line) {
     
+    buffer->modified = true;
 }
 
 // Returns index of first occurance of string

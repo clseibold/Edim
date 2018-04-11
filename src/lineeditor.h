@@ -131,6 +131,7 @@ typedef struct Buffer {
     FileType fileType;
     Line *lines;
     Operation lastOperation;
+    int modified;
     union outline {
         MarkdownOutlineNode *markdown_nodes;
         COutlineNode *c_nodes;
