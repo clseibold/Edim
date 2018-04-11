@@ -181,6 +181,8 @@ void buffer_saveFile(Buffer *buffer, char *filename) {
     fclose(fp);
 }
 
+// The lines buffer isn't freed.
+// Returns the line after the lines that were added.
 int buffer_insertAfterLine(Buffer *buffer, int line, Line *lines) {
     int lineToInsertAfter = line;
     if (line == -1) {
@@ -193,7 +195,7 @@ int buffer_insertAfterLine(Buffer *buffer, int line, Line *lines) {
     // Add space for the new lines into the buffer
     buf_add(buffer->lines, linesAddedAmt);
     
-    // Move the lines after the line inserting after up by how many lines were inserted
+    // Move the lines after the line inserting after up by how many lines were inserted // TODO: Make this message clearer
     Line *moveSource = &(buffer->lines[lineToInsertAfter - 1 + 1]);
     Line *moveDestination = moveSource + linesAddedAmt;
     memmove(moveDestination, moveSource, amtToMove * sizeof(Line));
@@ -212,9 +214,37 @@ int buffer_insertAfterLine(Buffer *buffer, int line, Line *lines) {
     return buffer->currentLine + 1;
 }
 
-void buffer_insertBeforeLine(Buffer *buffer, int line, Line *lines) { // TODO
+// The lines buffer isn't freed.
+// Returns the line after the lines that were added.
+int buffer_insertBeforeLine(Buffer *buffer, int line, Line *lines) {
+    int lineToInsertBefore = line;
+    if (line == -1) {
+        lineToInsertBefore = buffer->currentLine;
+    }
     
+    int linesAddedAmt = buf_len(lines);
+    int amtToMove = buf_len(buffer->lines) - (line - 1);
+    
+    // Add space for the new lines into the buffer
+    buf_add(buffer->lines, linesAddedAmt);
+    
+    // Move the lines after the passed in line (and including it) up by how many lines are being inserted before
+    Line *moveSource = &(buffer->lines[lineToInsertBefore - 1]);
+    Line *moveDestination = moveSource + linesAddedAmt;
+    memmove(moveDestination, moveSource, amtToMove * sizeof(Line));
+    
+    // Copy the lines that were inserted to the newly created space
+    Line *copySource = lines;
+    Line *copyDestination = moveSource;
+    size_t copyAmt = linesAddedAmt * sizeof(Line);
+    memcpy(copyDestination, copySource, copyAmt);
+    
+    // Set the current line to the line that the lines were inserted before
     buffer->modified = true;
+    buffer->currentLine = lineToInsertBefore + linesAddedAmt;
+    
+    // Return the first line that was moved to make room for the inserted lines
+    return buffer->currentLine;
 }
 
 // Pass in a char buffer to append to line
