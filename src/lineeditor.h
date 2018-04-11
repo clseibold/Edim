@@ -162,7 +162,7 @@ void buffer_deleteLine(Buffer *buffer, int line);
 // TODO
 // void buffer_deleteLines(Buffer *buffer, int lineStart, int lineEnd);
 int buffer_findStringInLine(Buffer *buffer, int line, char *str, int strLength);
-Line *buffer_findStringInFile(Buffer *buffer, char *str, int strLength, int *index);
+int buffer_findStringInFile(Buffer *buffer, char *str, int strLength, int *colIndex);
 
 /* === Colors === */
 

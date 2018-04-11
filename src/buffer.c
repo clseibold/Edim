@@ -320,7 +320,6 @@ void buffer_replaceLine(Buffer *buffer, int line, char *chars) {
 }
 
 // Replace in the line from the startIndex to the endIndex (inclusive) with the provided char buffer
-// TODO
 void buffer_replaceInLine(Buffer *buffer, int line, int startIndex, int endIndex, char *chars) {
     int lineToReplaceIn = line;
     if (line == -1) {
@@ -428,12 +427,51 @@ void buffer_deleteLine(Buffer *buffer, int line) {
     else buffer->currentLine = lineToDelete;
 }
 
-// Returns index of first occurance of string
+// The string must not be null terminated and can be or not be a stretchy buffer. The length should be passed in.
+// Returns index of first occurance of string, -1 for no occurance
 int buffer_findStringInLine(Buffer *buffer, int line, char *str, int strLength) {
+    int lineToSearch = line;
+    if (line == -1) {
+        lineToSearch = buffer->currentLine;
+    }
+    // Find the first occurance of the string in the current line
+    int index = -1; // Column index
+    int ii = 0;
     
+    for (int i = 0; i < buf_len(buffer->lines[lineToSearch - 1].chars); i++) {
+        if (buffer->lines[lineToSearch - 1].chars[i] == str[ii]) {
+            if (ii == 0)
+                index = i;
+            ++ii;
+        } else {
+            ii = 0;
+            index = -1;
+        }
+        
+        // If string ends in a new line or 0 termination, subtract one from the string length so we don't match them
+        if (str[strLength - 1] == '\0' || str[strLength - 1] == '\n') {
+            if (ii == strLength - 1) break;
+        } else {
+            if (ii == strLength) break;
+        }
+    }
+    
+    // Return the index
+    return index;
 }
 
-// Returns the pointer to the line where the string was found. Also sets the index passed in to the index of the first occurance in that line.
-Line *buffer_findStringInFile(Buffer *buffer, char *str, int strLength, int *index) {
+// The string must not be null terminated and can be or not be a stretchy buffer. The length should be passed in.
+// Returns the index to the line where the string was found. Also sets the column index, that was passed in, to the index of the first occurance in that line (this index counts from 0).
+int buffer_findStringInFile(Buffer *buffer, char *str, int strLength, int *colIndex) {
+    // Go though all lines in buffer
+    for (int line = 0; line < buf_len(buffer->lines); line++) {
+        int index = buffer_findStringInLine(&currentBuffer, line + 1, str, strLength);
+        
+        if (index != -1) {
+            (*colIndex) = index;
+            return line;
+        }
+    }
     
+    return -1;
 }

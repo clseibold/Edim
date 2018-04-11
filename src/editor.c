@@ -848,41 +848,8 @@ internal void editorState_findStringInLine(int line, char *str, int strLength) {
 // Displays the line it is on with an arrow pointing to the occurance
 // Will also show the line before it to give context
 internal void editorState_findStringInFile(char *str, int strLength) {
-    // The line number the string match was found on, -1 for no occurance
-    int foundIndex = -1;
-    // The column index the occurance starts on the line
     int colIndex = -1;
-    
-    // For each line in file
-    for (int line = 0; line < buf_len(currentBuffer.lines); line++) {
-        // Find the first occurance of the string in current line, -1 for no occurance
-        int index = -1; // Column index
-        int ii = 0;
-        for (int i = 0; i < buf_len(currentBuffer.lines[line].chars); i++) {
-            if (currentBuffer.lines[line].chars[i] == str[ii]) {
-                if (ii == 0)
-                    index = i;
-                ++ii;
-            } else {
-                ii = 0;
-                index = -1;
-            }
-            
-            // If string ends in a new line or 0 termination, subtract one from the string length so we don't match them
-            if (str[strLength - 1] == '\0' || str[strLength - 1] == '\n') {
-                if (ii == strLength - 1) break;
-            } else {
-                if (ii == strLength) break;
-            }
-        }
-        
-        // If found, break out of for loop, otherwise, keep searching
-        if (index != -1) {
-            foundIndex = line;
-            colIndex = index;
-            break;
-        }
-    }
+    int foundIndex = buffer_findStringInFile(&currentBuffer, str, strLength, &colIndex);
     
     // If no occurance found in file
     if (foundIndex == -1) {
