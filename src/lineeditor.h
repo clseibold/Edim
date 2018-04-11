@@ -141,6 +141,8 @@ typedef struct Buffer {
     } outline;
 } Buffer;
 
+// Stretchy buffer of Buffers
+Buffer *buffers;
 Buffer currentBuffer;
 
 void buffer_initEmptyBuffer(Buffer *buffer);

@@ -189,6 +189,7 @@ EditorState editorState_menu(void) {
             printf(" * 'm (line#)' - Move the line up by one\n");
             printf(" * 'M (line#)' - Move the line down by one\n");
             printf(" * 'f (string)' - Finds the first occurance of the string in the file and prints the line it's on out\n");
+            printf(" * 'F (line#) (string)' - Find the first occurance of the string in the line and prints the line out showing you where the occurance is\n");
             printf(" * 'u' - Undo the last operation, cannot undo an undo, cannot undo past 1 operation\n"); // TODO
             printf(" * 'c' - Continue from last line\n");
             printf(" * 'p (line#:start)' - Preview whole file (optionally starting at given line)\n");
@@ -491,6 +492,45 @@ EditorState editorState_menu(void) {
             }
             
             editorState_findStringInFile(str, strLength);
+        } break;
+        case 'F':
+        {
+            char *end;
+            int line = (int) strtol(rest, &end, 10);
+            ++end; // Don't include the space in between the line number and the string to replace
+            
+            char lineInput[MAXLENGTH / 4];
+            int length;
+            while (line <= 0 || line > buf_len(currentBuffer.lines) || length == -1) {
+                if (rest != end)
+                    printError("That line number exceeds the bounds of the file.\n");
+                printPrompt("Enter a line number: ");
+                length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
+                line = (int) strtol(lineInput, &end, 10);
+            }
+            
+            char str[MAXLENGTH / 4];
+            int strLength = 0;
+            
+            // If a string was already given with the command
+            if (rest + restLength - end - 1 > 0) {
+                // Copy into str
+                strLength = rest + restLength - end;
+                strncpy(str, end, strLength);
+                // Use it instead of asking for a string to replace
+                //editorState_replaceString(line, str, strLength - 1);
+                editorState_findStringInLine(line, str, strLength);
+                break;
+            }
+            
+            printPrompt("Enter the string to find: ");
+            strLength = parsing_getLine(str, MAXLENGTH / 4, false);
+            while (strLength == -1) {
+                printPrompt("Enter the string to find: ");
+                strLength = parsing_getLine(str, MAXLENGTH / 4, true);
+            }
+            
+            editorState_findStringInLine(line, str, strLength);
         } break;
         case 'e':
         {
@@ -820,8 +860,42 @@ internal void editorState_replaceString(int line, char *str, int strLength) {
 // Finds the first occrance of the string in the given line
 // Displays the line with an arrow pointing to the occurance
 // Will also show the line before it to give context and the column of the start of the occurance
-internal void editorState_findStringInLine(int line, char *str, int strLength) { // TODO: Low priority - less useful than finding in file
-    printError("Unimplemented");
+internal void editorState_findStringInLine(int line, char *str, int strLength) {
+    int index = buffer_findStringInLine(&currentBuffer, line, str, strLength);
+    
+    if (index == -1) {
+        printError("No occurance of '%.*s' was found in line %d\n", strLength, str, line);
+        return;
+    }
+    
+    // Print the previous line to give context
+    if (line - 1 >= 0 && line - 1 < buf_len(currentBuffer.lines))
+        printLine(line - 2, 0, true);
+    
+    // Print the line
+    printLine(line - 1, 0, true);
+    
+    // Create a string (to be printed) with an arrow pointing to the beginning and end of the first occurance of the string being matched.
+    int strPointToMatchLength;
+    if (str[strLength - 1] == '\0' || str[strLength - 1] == '\n') {
+        strPointToMatchLength = index + strLength - 1;
+    } else {
+        strPointToMatchLength = index + strLength;
+    }
+    
+    char *strPointToMatch = alloca(sizeof(char) * (strPointToMatchLength));
+    for (int i = 0; i < strPointToMatchLength; i++) {
+        if (i == index || i == strPointToMatchLength - 1) {
+            strPointToMatch[i] = '^';
+            continue;
+        }
+        if (i > index && i < strPointToMatchLength - 1)
+            strPointToMatch[i] = '-';
+        else strPointToMatch[i] = ' ';
+    }
+    
+    // Print out the string that's points to the occurance
+    printf("%5s %.*s- \n", "", strPointToMatchLength, strPointToMatch); // TODO: printInfo()
 }
 
 // Finds the first occurance of the string in the file

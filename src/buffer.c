@@ -427,7 +427,7 @@ void buffer_deleteLine(Buffer *buffer, int line) {
     else buffer->currentLine = lineToDelete;
 }
 
-// The string must not be null terminated and can be or not be a stretchy buffer. The length should be passed in.
+// The string may be or not be a stretchy buffer. The length should be passed in.
 // Returns index of first occurance of string, -1 for no occurance
 int buffer_findStringInLine(Buffer *buffer, int line, char *str, int strLength) {
     int lineToSearch = line;
