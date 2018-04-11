@@ -753,10 +753,10 @@ internal void editorState_replaceLine(int line) {
     buffer_replaceLine(&currentBuffer, line, chars);
 }
 
-// TODO: Problem with replacing only one character
-internal void editorState_replaceString(int line, char *str, int strLength) { // TODO: Use buffer_replaceInLine
+internal void editorState_replaceString(int line, char *str, int strLength) {
     char c;
     
+    // TODO: Use buffer_findStringInLine
     // Find the first occurance of the string in the line, -1 for no occurance
     int index = -1;
     int ii = 0;
@@ -810,11 +810,6 @@ internal void editorState_replaceString(int line, char *str, int strLength) { //
     
     char *chars = NULL; // What the string will be replaced with
     
-    // Move the characters before the replacement from the original line buffer to the new one
-    for (int i = 0; i < index; i++) {
-        buf_push(chars, currentBuffer.lines[line - 1].chars[i]);
-    }
-    
     printPrompt("%5s %.*s- ", "", strPointToMatchLength, strPointToMatch); // TODO
     while ((c = getchar()) != EOF) {
         if (c == (char) 24) { // Ctrl-X (^X) - Cancel
@@ -829,20 +824,7 @@ internal void editorState_replaceString(int line, char *str, int strLength) { //
         buf_push(chars, c);
     }
     
-    // Move the characters after the replacement from the original line buffer to the new one
-    int afterIndex; // Index of the next character after the last character of the string being replaced
-    if (str[strLength - 1] == '\0' || str[strLength - 1] == '\n') {
-        afterIndex = index + strLength - 1;
-    } else {
-        afterIndex = index + strLength;
-    }
-    for (int i = afterIndex; i < buf_len(currentBuffer.lines[line - 1].chars); i++) {
-        buf_push(chars, currentBuffer.lines[line - 1].chars[i]);
-    }
-    
-    // Free the original line buffer and set the new line buffer to the current line
-    buf_free(currentBuffer.lines[line - 1].chars);
-    currentBuffer.lines[line - 1].chars = chars;
+    buffer_replaceInLine(&currentBuffer, line, index, index + strLength - 1, chars);
 }
 
 // Finds the first occrance of the string in the given line

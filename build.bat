@@ -124,7 +124,7 @@ cd %projDirectory%
 mkdir build\debug
 rem.cd build\debug
 echo Using MSVC
-cl /D_CRT_SECURE_NO_WARNINGS /nologo /Oi /Gm- /MP /FC /fp:fast /fp:except- /Zi %projDirectory%\src\*.c %win32sources% %libc%  /I%projDirectory%\src\headers\ %msvclibh% /link -OUT:%projDirectory%\build\debug\\%name%.exe -incremental:no -opt:ref -subsystem:console
+cl /D_CRT_SECURE_NO_WARNINGS /nologo /Oi /Gm- /MP /FC /fp:fast /fp:except- /Zi /Zo /DEBUG %projDirectory%\src\*.c %win32sources% %libc%  /I%projDirectory%\src\headers\ %msvclibh% /link -OUT:%projDirectory%\build\debug\\%name%.exe -incremental:no -opt:ref -subsystem:console
 rem.cd ..\.. 
 goto :end
 
