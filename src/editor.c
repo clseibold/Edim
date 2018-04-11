@@ -579,7 +579,7 @@ internal void editorState_insertAfter(int line) {
     if (line - 1 >= 0 && line - 1 < buf_len(currentBuffer.lines))
         printLine(line - 1, 0, true);
     int currentLine = line + 1;
-    int lineStart = currentLine;
+    //int lineStart = currentLine;
     
     Line *insertLines = NULL;
     char *chars = NULL;
@@ -607,40 +607,14 @@ internal void editorState_insertAfter(int line) {
         }
     }
     
-    int linesAddedAmt = buf_len(insertLines);
-    
-    // Insert the new lines into the lines buffer
-    buf_add(currentBuffer.lines, linesAddedAmt);
-    
-    int linesLeft = buf_len(currentBuffer.lines) - linesAddedAmt - (lineStart - 1);
-    // Move lines up by how many lines have been inserted
-    for (int i = 0; i < linesLeft; i++) {
-        currentBuffer.lines[buf_len(currentBuffer.lines) - i - 1] = currentBuffer.lines[lineStart - 2 + (linesLeft - i)];
-        //    V
-        // 0 1|2 3 4
-        // 1 2|3 4
-        //    -V
-        // 1 2 3 4 5
-        
-        // 4 <- 3
-        // 3 <- 2
-    }
-    
-    // Copy over new lines
-    for (int i = 0; i < linesAddedAmt; i++) {
-        currentBuffer.lines[lineStart - 1 + i] = insertLines[i];
-    }
+    int firstMovedLine = buffer_insertAfterLine(&currentBuffer, line, insertLines);
     
     // Free the old lines stretchy buffer
     buf_free(insertLines);
     
     // Show the line that was moved due to inserting before it (and after the line before it)
-    int movedLine = lineStart + linesAddedAmt;
-    if (movedLine <= buf_len(currentBuffer.lines))
-        printLine(movedLine - 1, 'v', true);
-    
-    currentBuffer.currentLine = lineStart + linesAddedAmt - 1;
-    printf("New current Line: %d\n", currentBuffer.currentLine);
+    if (firstMovedLine <= buf_len(currentBuffer.lines))
+        printLine(firstMovedLine - 1, 'v', true);
 }
 
 internal void editorState_insertBefore(int line) {

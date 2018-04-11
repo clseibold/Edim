@@ -143,11 +143,10 @@ typedef struct Buffer {
 
 Buffer currentBuffer;
 
-// Passing NULL into buffer will use the current buffer
 void buffer_initEmptyBuffer(Buffer *buffer);
 void buffer_openFile(Buffer *buffer, char *filename);
 void buffer_saveFile(Buffer *buffer, char *filename);
-void buffer_insertAfterLine(Buffer *buffer, int line, Line *lines); // TODO
+int buffer_insertAfterLine(Buffer *buffer, int line, Line *lines); // TODO
 void buffer_insertBeforeLine(Buffer *buffer, int line, Line *lines); // TODO
 void buffer_appendToLine(Buffer *buffer, int line, char *chars);
 void buffer_prependToLine(Buffer *buffer, int line, char *chars);
@@ -155,7 +154,9 @@ void buffer_replaceLine(Buffer *buffer, int line, char *chars);
 // TODO: This will basically just delete the lines and then insert before the line number
 // void buffer_replaceLines(Buffer *buffer, int lineStart, int lineEnd, Line *lines);
 void buffer_replaceInLine(Buffer *buffer, int line, int startIndex, int endIndex, char *chars);
+// TODO: Add the number to move up by
 void buffer_moveLineUp(Buffer *buffer, int line);
+// TODO: Add the number to move up by
 void buffer_moveLineDown(Buffer *buffer, int line);
 void buffer_deleteLine(Buffer *buffer, int line);
 // TODO
