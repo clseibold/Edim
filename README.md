@@ -93,8 +93,11 @@ To run the release executable, on Windows run `build run release`.
 * 'r (line#)' - Replace a line with a new line
 * 'R (line#) (string)' - Replace the first occurance of the string in the line
 * 'x (line#)' - Deletes a line
-* 'm (line#)' - Move the line up by one * 'M (line#)' - Move the line down by one * 'f (string)' - Finds the first occurance of the string in the file and prints the line it's on out
-* 'u' - Undo the last operation, cannot undo an undo, cannot undo past 1 operation * 'c' - Continue from last line
+* 'm (line#)' - Move the line up by one
+* 'M (line#)' - Move the line down by one
+* 'f (string)' - Finds the first occurance of the string in the file and prints the line it's on out
+* 'u' - Undo the last operation, cannot undo an undo, cannot undo past 1 operation
+* 'c' - Continue from last line in file
 * 'p' - Preview whole file
 * 'P (line#:start) (line#:end)' - Preview a line or set of lines, including the line before and after
 * 'd / D' - Save and Exit / Exit (without save)
