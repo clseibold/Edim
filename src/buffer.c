@@ -331,15 +331,16 @@ void buffer_replaceInLine(Buffer *buffer, int line, int startIndex, int endIndex
     int addedAmt = buf_len(chars) - lengthOfStringToReplace - 1;
     int amtToMove = buf_len(buffer->lines[lineToReplaceIn - 1].chars) - endIndex;
     
+    // If replacement string is bigger than string to replace, add characters to the buffer. Otherwise, if replacement string is smaller, pop off the correct amount
     if (addedAmt > 0)
         buf_add(buffer->lines[lineToReplaceIn - 1].chars, addedAmt);
     else if (addedAmt < 0) {
-        for (int i = 0; i < addedAmt; i++) {
+        for (int i = addedAmt; i < 0; i++) {
             buf_pop(buffer->lines[lineToReplaceIn - 1].chars);
         }
     }
     
-    // Move over the characters due to the replacement string being bigger than the string being replaced
+    // Move over the characters due to the replacement string being bigger/smaller than the string being replaced
     char *moveSource = &(buffer->lines[lineToReplaceIn - 1].chars[endIndex + 1]);
     char *moveDestination = &(buffer->lines[lineToReplaceIn - 1].chars[endIndex + 1 + addedAmt]);
     size_t bytes = sizeof(char) * amtToMove;
