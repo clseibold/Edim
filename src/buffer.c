@@ -184,11 +184,11 @@ void buffer_saveFile(Buffer *buffer, char *filename) {
     fclose(fp);
 }
 
-void buffer_insertAfterLine(Buffer *buffer, int line) { // TODO
+void buffer_insertAfterLine(Buffer *buffer, int line, Line *lines) { // TODO
     buffer->modified = true;
 }
 
-void buffer_insertBeforeLine(Buffer *buffer, int line) { // TODO
+void buffer_insertBeforeLine(Buffer *buffer, int line, Line *lines) { // TODO
     
     buffer->modified = true;
 }
@@ -204,10 +204,10 @@ void buffer_appendToLine(Buffer *buffer, int line, char *chars) {
     buf_pop(buffer->lines[lineToAppendTo - 1].chars);
     
     // Copy from the passed-in chars buffer to the line's chars buffer
-    // TODO: Switch to using memmove/memcpy
-    for (int i = 0; i < buf_len(chars); i++) {
-        buf_push(buffer->lines[lineToAppendTo - 1].chars, chars[i]);
-    }
+    //char *destination = buf_end(buffer->lines[lineToAppendTo - 1].chars);
+    size_t num = buf_len(chars);
+    char *destination = buf_add(buffer->lines[lineToAppendTo - 1].chars, num);
+    strncpy(destination, chars, num);
     
     buffer->modified = true;
 }
@@ -227,10 +227,9 @@ void buffer_prependToLine(Buffer *buffer, int line, char *chars) {
     buffer->lines[lineToPrependTo - 1].chars = chars;
     
     // Push onto the buffer the chars of the old buffer
-    // TODO: Switch to using memmove/memcpy
-    for (int i = 0; i < buf_len(oldBuffer); i++) {
-        buf_push(buffer->lines[lineToPrependTo - 1].chars, oldBuffer[i]);
-    }
+    size_t num = buf_len(oldBuffer);
+    char *destination = buf_add(buffer->lines[lineToPrependTo - 1].chars, num);
+    strncpy(destination, oldBuffer, num);
     
     // Free the old buffer
     buf_free(oldBuffer);
@@ -320,10 +319,10 @@ void buffer_deleteLine(Buffer *buffer, int line) {
         buf_free(buffer->lines[lineToDelete - 1].chars);
         
         // Move all lines down one
-        // TODO: Switch to memmove (which allows overlapping)
-        for (int i = lineToDelete - 1; i < buf_len(buffer->lines) - 1; i++) {
-            buffer->lines[i] = buffer->lines[i + 1];
-        }
+        void *source = &(buffer->lines[lineToDelete - 1 + 1]);
+        void *destination = &(buffer->lines[lineToDelete - 1]);
+        size_t bytes = sizeof(Line) * (buf_len(buffer->lines) - lineToDelete);
+        memmove(destination, source, bytes);
         
         // Decrease the length of the buffer, keeping the char buffer of this last line because is was moved down one.
         buf_pop(buffer->lines);
