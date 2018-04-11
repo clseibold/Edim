@@ -144,7 +144,7 @@ typedef struct Buffer {
 Buffer currentBuffer;
 
 void buffer_initEmptyBuffer(Buffer *buffer);
-void buffer_openFile(Buffer *buffer, char *filename);
+int buffer_openFile(Buffer *buffer, char *filename);
 void buffer_saveFile(Buffer *buffer, char *filename);
 int buffer_insertAfterLine(Buffer *buffer, int line, Line *lines); // TODO
 int buffer_insertBeforeLine(Buffer *buffer, int line, Line *lines); // TODO

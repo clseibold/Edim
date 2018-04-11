@@ -60,6 +60,8 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
         {
             buffer_initEmptyBuffer(&currentBuffer);
             
+            int newFile = false;
+            
             // Get arg for filename or Prompt for filename if no args provided
             if (argsLength <= 1) {
                 printPrompt("Enter the filename: ");
@@ -70,8 +72,12 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
                     printPrompt("Enter the filename: ");
                     filenameLength = parsing_getLine(filename, MAXLENGTH / 4, true);
                 }
-                buffer_openFile(&currentBuffer, filename);
-                //openFile(filename);
+                if (!buffer_openFile(&currentBuffer, filename)) {
+                    printf("File doesn't exist... Creating it.\n\n");
+                    subState = editorState_editor();
+                    if (subState == ED_KEEP) subState = subStatePrev;
+                    newFile = true;
+                }
             } else {
                 char *filename = malloc((argsLength + 1) * sizeof(char));
                 int i = 0;
@@ -84,12 +90,17 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
                     ++ii;
                 }
                 filename[ii] = '\0';
-                buffer_openFile(&currentBuffer, filename);
-                //openFile(filename);
+                if (!buffer_openFile(&currentBuffer, filename)) {
+                    printf("File doesn't exist... Creating it.\n\n");
+                    subState = editorState_editor();
+                    if (subState == ED_KEEP) subState = subStatePrev;
+                    newFile = true;
+                }
                 free(filename);
                 filename = 0;
             }
-            printFileInfo();
+            if (!newFile)
+                printFileInfo();
             subState = ED_MENU;
         } break;
         case ED_EDITOR:
@@ -134,7 +145,12 @@ EditorState editorState_menu(void) {
     /* Prompt */
     if (buf_len(currentBuffer.openedFilename) > 0) {
         // TODO: This will also print out the directory, so I should get rid of everything before the last slash
-        printPrompt("\n<%.*s> ", (int) buf_len(currentBuffer.openedFilename), currentBuffer.openedFilename);
+        if (currentBuffer.modified) {
+            printPrompt("\n<%d|%.*s*> ", currentBuffer.currentLine, (int) buf_len(currentBuffer.openedFilename), currentBuffer.openedFilename);
+        } else {
+            printPrompt("\n<%d|%.*s> ", currentBuffer.currentLine, (int) buf_len(currentBuffer.openedFilename), currentBuffer.openedFilename);
+        }
+        
     } else printPrompt("\n<new file> ");
     
     /* get first character - the menu item */

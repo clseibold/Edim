@@ -23,7 +23,8 @@ void buffer_initEmptyBuffer(Buffer *buffer) {
 }
 
 // filename should be zero-terminated
-void buffer_openFile(Buffer *buffer, char *filename) {
+// Returns 0 (false) if couldn't open file - however, the filetype is still set to the buffer.
+int buffer_openFile(Buffer *buffer, char *filename) {
     FILE *fp;
     fp = fopen(filename, "r");
     
@@ -89,6 +90,12 @@ void buffer_openFile(Buffer *buffer, char *filename) {
     int line = 1;
     char c;
     
+    // If fp is NULL, file doesn't exist. Return false after having set the fileType.
+    if (fp == NULL) {
+        buffer->modified = true;
+        return false;
+    }
+    
     while ((c = fgetc(fp)) != EOF) {
         buf_push(chars, c);
         if (c == '\n') {
@@ -106,6 +113,8 @@ void buffer_openFile(Buffer *buffer, char *filename) {
     
     // Create the outline
     createOutline();
+    
+    return true;
 }
 
 // If openedFilename is not set in the buffer, then filename is used.
@@ -263,6 +272,7 @@ void buffer_appendToLine(Buffer *buffer, int line, char *chars) {
     strncpy(destination, chars, num);
     
     buffer->modified = true;
+    buffer->currentLine = lineToAppendTo;
 }
 
 // Pass in a char buffer that will be used in place of the new line. This buffer should not end in a new line.
@@ -288,6 +298,7 @@ void buffer_prependToLine(Buffer *buffer, int line, char *chars) {
     buf_free(oldBuffer);
     
     buffer->modified = true;
+    buffer->currentLine = lineToPrependTo;
 }
 
 // Pass in a char buffer that the line's char buffer will be replaced with. This buffer should likely end in a new line.
@@ -305,6 +316,7 @@ void buffer_replaceLine(Buffer *buffer, int line, char *chars) {
     buffer->lines[lineToReplace - 1].chars = chars;
     
     buffer->modified = true;
+    buffer->currentLine = lineToReplace;
 }
 
 // Replace in the line from the startIndex to the endIndex (inclusive) with the provided char buffer
@@ -316,6 +328,7 @@ void buffer_replaceInLine(Buffer *buffer, int line, int startIndex, int endIndex
     }
     
     buffer->modified = true;
+    buffer->currentLine = lineToReplaceIn;
 }
 
 // TODO: Add the number to move up by
