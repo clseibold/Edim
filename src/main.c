@@ -55,7 +55,7 @@ int main() {
     State state = MAIN_MENU;
     State statePrev = state;
     
-    printf("Line Editor: Main Menu\n");
+    printf("Edim - Ed Improved\n");
     printf("Copyright (c) Christian Seibold. All Rights Reserved.\n\n");
     
     printf("Press '?' for help.\n");
