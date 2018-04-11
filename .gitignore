@@ -2,3 +2,4 @@
 *.exe
 .vscode
 *.pdb
+*.dbg
