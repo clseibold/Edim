@@ -547,6 +547,16 @@ EditorState editorState_menu(void) {
         {
             return ED_QUIT;
         } break;
+        // Hacked in - change filetype to FT_C because of how poor my filetype extension matching is
+        case 't':
+        {
+            currentBuffer.fileType = FT_C;
+            recreateOutline();
+        } break;
+        case 'T':
+        {
+            printf("FileType: %d\n", currentBuffer.fileType);
+        } break;
         default:
         {
             printError("Unknown command");
