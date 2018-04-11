@@ -1,8 +1,11 @@
 @echo off
 
+set name="edim"
+
 set compiler=%1
 set command=%compiler%
 set arch=%2
+set type=%3
 rem.TODO- Fix these:
 if exist "..\..\src\win32\NUL" (
    set win32sources="..\..\src\win32\*.c"
@@ -36,7 +39,7 @@ goto :end
 mkdir build\debug >NUL 2>NUL
 cd build\debug
 echo Using GCC
-gcc -m32 -Wall -g -D_CRT_SECURE_NO_WARNINGS ..\..\src\*.c %win32sources% %libc% -I..\..\src\headers\ %libh% -o main.exe
+gcc -m32 -Wall -g -D_CRT_SECURE_NO_WARNINGS ..\..\src\*.c %win32sources% %libc% -I..\..\src\headers\ %libh% -o %name%.exe
 cd ..\.. 
 goto :end
 
@@ -44,7 +47,7 @@ goto :end
 mkdir build\debug >NUL 2>NUL
 cd build\debug
 echo Using GCC
-gcc -m64 -Wall -g -D_CRT_SECURE_NO_WARNINGS ..\..\src\*.c %win32sources% %libc% -I..\..\src\headers\ %libh% -o main.exe
+gcc -m64 -Wall -g -D_CRT_SECURE_NO_WARNINGS ..\..\src\*.c %win32sources% %libc% -I..\..\src\headers\ %libh% -o %name%.exe
 cd ..\.. 
 goto :end
 
@@ -60,7 +63,7 @@ goto :end
 mkdir build\debug >NUL 2>NUL
 cd build\debug
 echo Using Clang for Windows
-clang -m32 -Wall -g -D_CRT_SECURE_NO_WARNINGS ..\..\src\*.c %win32sources% %libc% -I..\..\src\headers\ %libh% -o main.exe
+clang -m32 -Wall -g -D_CRT_SECURE_NO_WARNINGS ..\..\src\*.c %win32sources% %libc% -I..\..\src\headers\ %libh% -o %name%.exe
 cd ..\.. 
 goto :end
 
@@ -68,7 +71,7 @@ goto :end
 mkdir build\debug >NUL 2>NUL
 cd build\debug
 echo Using Clang for Windows
-clang -m64 -Wall -g -D_CRT_SECURE_NO_WARNINGS ..\..\src\*.c %win32sources% %libc%  -I..\..\src\headers\ %libh% -o main.exe
+clang -m64 -Wall -g -D_CRT_SECURE_NO_WARNINGS ..\..\src\*.c %win32sources% %libc%  -I..\..\src\headers\ %libh% -o %name%.exe
 cd ..\.. 
 goto :end
 
@@ -116,11 +119,21 @@ echo Error: Failed to find MSVC 2015 or 2017. Make sure it is installed!
 goto :end
 
 :msvcdo
+if /i "%type%"=="release" goto :msvcdorelease
 cd %projDirectory%
 mkdir build\debug
 rem.cd build\debug
 echo Using MSVC
-cl /D_CRT_SECURE_NO_WARNINGS /nologo /Oi /Gm- /MP /FC /fp:fast /fp:except- /Zi %projDirectory%\src\*.c %win32sources% %libc%  /I%projDirectory%\src\headers\ %msvclibh% /link -OUT:%projDirectory%\build\debug\main.exe -incremental:no -opt:ref -subsystem:console
+cl /D_CRT_SECURE_NO_WARNINGS /nologo /Oi /Gm- /MP /FC /fp:fast /fp:except- /Zi %projDirectory%\src\*.c %win32sources% %libc%  /I%projDirectory%\src\headers\ %msvclibh% /link -OUT:%projDirectory%\build\debug\\%name%.exe -incremental:no -opt:ref -subsystem:console
+rem.cd ..\.. 
+goto :end
+
+:msvcdorelease
+cd %projDirectory%
+mkdir build\release
+rem.cd build\release
+echo Using MSVC
+cl /D_CRT_SECURE_NO_WARNINGS /nologo /O2i /Gm- /MP /FC /fp:fast /fp:except- %projDirectory%\src\*.c %win32sources% %libc%  /I%projDirectory%\src\headers\ %msvclibh% /link -OUT:%projDirectory%\build\release\\%name%.exe -incremental:no -opt:ref -subsystem:console
 rem.cd ..\.. 
 goto :end
 
@@ -156,11 +169,21 @@ goto :end
 
 
 :run
-if not exist build\debug\main.exe (
+if "%arch%"=="release" goto runrelease
+if "%type%"=="release" goto runrelease
+if not exist build\debug\%name%.exe (
    echo Must compile project before you can run it.
    goto :end
 )
-call build\debug\main.exe
+call build\debug\%name%.exe
+goto :end
+
+:runrelease
+if not exist build\release\%name%.exe (
+   echo Must compile project before you can run it.
+   goto :end
+)
+call build\release\%name%.exe
 goto :end
 
 

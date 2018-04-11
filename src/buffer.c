@@ -79,7 +79,6 @@ void buffer_openFile(Buffer *buffer, char *filename) {
         free(ftExt);
     }
     
-    //printf("Opening file '%s'.\n", filename);
     for (int i = 0; i < strlen(filename) + 1; i++) {
         buf_push(buffer->openedFilename, filename[i]);
     }
@@ -106,9 +105,7 @@ void buffer_openFile(Buffer *buffer, char *filename) {
     buffer->currentLine = buf_len(buffer->lines);
     
     // Create the outline
-    createOutline(); // TODO
-    
-    //printFileInfo();
+    createOutline();
 }
 
 // If openedFilename is not set in the buffer, then filename is used.
@@ -204,7 +201,6 @@ void buffer_appendToLine(Buffer *buffer, int line, char *chars) {
     buf_pop(buffer->lines[lineToAppendTo - 1].chars);
     
     // Copy from the passed-in chars buffer to the line's chars buffer
-    //char *destination = buf_end(buffer->lines[lineToAppendTo - 1].chars);
     size_t num = buf_len(chars);
     char *destination = buf_add(buffer->lines[lineToAppendTo - 1].chars, num);
     strncpy(destination, chars, num);

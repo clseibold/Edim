@@ -2,12 +2,21 @@
 A simple interactive line editor program inspired by vim, ed, and modern editors.
 This readme was written using Edim.
 
+## Build Debug Executable
 * To build on Windows
   - `build.bat clang` for 64-bit clang, add "x86" for 32-bit.
   - `build.bat gcc` for 64-bit gcc, add "x86" for 32-bit.
   - `build.bat` or `build.bat msvc` for msvc, use `build.bat msvc x86` for 32-bit.
 * To build on Linux
   - run `./build_linux` (uses gcc)
+
+To run the debug executable, on Windows run `build run`. On Linux, the executable is in the `build/debug` directory.
+
+## Build Release Executable
+* To build on Windows
+  - `build.bat msvc x64 release` for msvc 64-bit, change "x64" to "x86" for 32-bit
+
+To run the release executable, on Windows run `build run release`.
 
 ## Current Features
 * New File
