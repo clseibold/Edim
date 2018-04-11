@@ -1097,7 +1097,17 @@ void printLine(int line, char operation, int printNewLine) {
         return;
     }
     
-    if (line > buf_len(currentBuffer.lines)) {
+    // If line is last line in file (one above the length of the lines)
+    if (line == buf_len(currentBuffer.lines)) {
+        if (operation != 0)
+            printLineNumber("%c%4d ", operation, line + 1);
+        else {
+            if (line + 1 == currentBuffer.currentLine)
+                printLineNumber("%c%4d ", '*', line + 1);
+            else printLineNumber("%5d ", line + 1);
+        }
+        return;
+    } else if (line > buf_len(currentBuffer.lines)) {
         // Error!
         return;
     }
