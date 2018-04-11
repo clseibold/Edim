@@ -766,27 +766,7 @@ internal void editorState_replaceLine(int line) {
 internal void editorState_replaceString(int line, char *str, int strLength) {
     char c;
     
-    // TODO: Use buffer_findStringInLine
-    // Find the first occurance of the string in the line, -1 for no occurance
-    int index = -1;
-    int ii = 0;
-    for (int i = 0; i < buf_len(currentBuffer.lines[line - 1].chars); i++) {
-        if (currentBuffer.lines[line - 1].chars[i] == str[ii]) {
-            if (ii == 0)
-                index = i;
-            ++ii;
-        } else {
-            ii = 0;
-            index = -1;
-        }
-        
-        // If string ends in a new line or 0 termination, subtract one from the string length so we don't match them
-        if (str[strLength - 1] == '\0' || str[strLength - 1] == '\n') {
-            if (ii == strLength - 1) break;
-        } else {
-            if (ii == strLength) break;
-        }
-    }
+    int index = buffer_findStringInLine(&currentBuffer, line, str, strLength);
     
     if (index == -1) {
         printError("No occurance of '%.*s' found\n", strLength, str);
