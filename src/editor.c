@@ -567,6 +567,9 @@ EditorState editorState_editor(void) {
         }
     }
     
+    // Set cursor to end of file
+    currentBuffer.currentLine = buf_len(currentBuffer.lines);
+    
     return ED_MENU;
 }
 

@@ -329,7 +329,11 @@ void buffer_deleteLine(Buffer *buffer, int line) {
         buf_pop(buffer->lines);
     }
     
+    // Set the cursor the the line before the line that was deleted
     buffer->modified = true;
+    if (lineToDelete - 1 > 0)
+        buffer->currentLine = lineToDelete - 1;
+    else buffer->currentLine = lineToDelete;
 }
 
 // Returns index of first occurance of string
