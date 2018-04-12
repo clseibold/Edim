@@ -103,7 +103,7 @@ void getFileTypeExtension(FileType ft, char **ftExt) {
 }
 
 void createOutline(void) {
-    switch (currentBuffer.fileType) {
+    switch (currentBuffer->fileType) {
         case FT_MARKDOWN:
         {
             createMarkdownOutline();
@@ -119,28 +119,28 @@ void createOutline(void) {
 // TODO: Perhaps it would be more efficient to only change the line a node points to when
 // that line is moved/changed by using some type of hash table for integer keys.
 void recreateOutline(void) {
-    switch (currentBuffer.fileType) {
+    switch (currentBuffer->fileType) {
         case FT_MARKDOWN:
         {
             // Pop off all of the current nodes
-            if (buf_len(currentBuffer.outline.markdown_nodes) > 0)
-                buf_pop_all(currentBuffer.outline.markdown_nodes);
-            assert(buf_len(currentBuffer.outline.markdown_nodes) == 0);
+            if (buf_len(currentBuffer->outline.markdown_nodes) > 0)
+                buf_pop_all(currentBuffer->outline.markdown_nodes);
+            assert(buf_len(currentBuffer->outline.markdown_nodes) == 0);
             createMarkdownOutline();
         } break;
         case FT_C:
         {
             // Pop off all of the current nodes
-            if (buf_len(currentBuffer.outline.c_nodes))
-                buf_pop_all(currentBuffer.outline.c_nodes);
-            assert(buf_len(currentBuffer.outline.c_nodes) == 0);
+            if (buf_len(currentBuffer->outline.c_nodes))
+                buf_pop_all(currentBuffer->outline.c_nodes);
+            assert(buf_len(currentBuffer->outline.c_nodes) == 0);
             createCOutline();
         } break;
     }
 }
 
 void showOutline(void) {
-    switch (currentBuffer.fileType) {
+    switch (currentBuffer->fileType) {
         case FT_MARKDOWN:
         {
             showMarkdownOutline();
@@ -153,27 +153,27 @@ void showOutline(void) {
 }
 
 void createMarkdownOutline(void) {
-    assert(currentBuffer.fileType == FT_MARKDOWN);
+    assert(currentBuffer->fileType == FT_MARKDOWN);
     
     // Go through each line
-    for (int line = 0; line < buf_len(currentBuffer.lines); line++) {
+    for (int line = 0; line < buf_len(currentBuffer->lines); line++) {
         // If starts with a hash, then it's a heading
-        if (currentBuffer.lines[line].chars[0] == '#') {
+        if (currentBuffer->lines[line].chars[0] == '#') {
             int level = 0;
             // Increment level with each successive '#'
-            for (int i = 1; i < buf_len(currentBuffer.lines[line].chars); i++) {
-                if (currentBuffer.lines[line].chars[i] == '#') {
+            for (int i = 1; i < buf_len(currentBuffer->lines[line].chars); i++) {
+                if (currentBuffer->lines[line].chars[i] == '#') {
                     level++;
                 } else break;
             }
             
             // create the node and push it
             MarkdownOutlineNode node;
-            node.line = &(currentBuffer.lines[line]);
+            node.line = &(currentBuffer->lines[line]);
             node.lineNum = line;
             node.level = level;
             
-            buf_push(currentBuffer.outline.markdown_nodes, node);
+            buf_push(currentBuffer->outline.markdown_nodes, node);
         }
     }
 }
@@ -181,13 +181,13 @@ void createMarkdownOutline(void) {
 // TODO: This will be greatly improved once I have a lexer
 // and some general parser utils
 void createCOutline(void) {
-    assert(currentBuffer.fileType == FT_C);
+    assert(currentBuffer->fileType == FT_C);
     
     // Go through each line
-    for (int line = 0; line < buf_len(currentBuffer.lines); line++) {
-        char *start = &(currentBuffer.lines[line].chars[0]);
+    for (int line = 0; line < buf_len(currentBuffer->lines); line++) {
+        char *start = &(currentBuffer->lines[line].chars[0]);
         char *current = start;
-        int lineLength = buf_len(currentBuffer.lines[line].chars);
+        int lineLength = buf_len(currentBuffer->lines[line].chars);
         
         // Skip whitespace
         while ((current - start < lineLength) && *current == ' ' || *current == '\t') {
@@ -372,7 +372,7 @@ void createCOutline(void) {
                         isFunctionDeclaration = true;
                     } else {
                         // Check next line
-                        char *startNextLine = &(currentBuffer.lines[line + 1].chars[0]);
+                        char *startNextLine = &(currentBuffer->lines[line + 1].chars[0]);
                         char *currentNextLine = startNextLine;
                         
                         // Skip whitespace
@@ -390,33 +390,33 @@ void createCOutline(void) {
             // Only add Function declarations
             if (isFunctionDeclaration) {
                 COutlineNode node;
-                node.line = &(currentBuffer.lines[line]);
+                node.line = &(currentBuffer->lines[line]);
                 node.lineNum = line;
                 
-                buf_push(currentBuffer.outline.c_nodes, node);
+                buf_push(currentBuffer->outline.c_nodes, node);
             }
         }
     }
 }
 
 void showMarkdownOutline(void) {
-    assert(currentBuffer.fileType == FT_MARKDOWN);
+    assert(currentBuffer->fileType == FT_MARKDOWN);
     
     // Go though each node
-    for (int node_i = 0; node_i < buf_len(currentBuffer.outline.markdown_nodes); node_i++) {
-        int linenum = currentBuffer.outline.markdown_nodes[node_i].line - currentBuffer.lines;
+    for (int node_i = 0; node_i < buf_len(currentBuffer->outline.markdown_nodes); node_i++) {
+        int linenum = currentBuffer->outline.markdown_nodes[node_i].line - currentBuffer->lines;
         printLine(linenum, 0, true);
         // Print out the line
-        //printLine(currentBuffer.outline.markdown_nodes[node_i].lineNum, 0, true);
+        //printLine(currentBuffer->outline.markdown_nodes[node_i].lineNum, 0, true);
     }
 }
 
 void showCOutline(void) {
-    assert(currentBuffer.fileType == FT_C);
+    assert(currentBuffer->fileType == FT_C);
     
     // Go through each node
-    for (int node_i = 0; node_i < buf_len(currentBuffer.outline.c_nodes); node_i++) {
-        int linenum = currentBuffer.outline.c_nodes[node_i].line - currentBuffer.lines;
+    for (int node_i = 0; node_i < buf_len(currentBuffer->outline.c_nodes); node_i++) {
+        int linenum = currentBuffer->outline.c_nodes[node_i].line - currentBuffer->lines;
         printLine(linenum, 0, true);
     }
 }

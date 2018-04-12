@@ -43,6 +43,7 @@ To run the release executable, on Windows run `build run release`.
 * Move a line up or down one
 * Colored Output
 * Find first occurance of string in file (and print the line out)
+* Find first occurance of string in a given line
 * Show outline of markdown files (shown when file is opened and with fileinfo command, '#')
 * Show outline of C files (shows function implementations)
 * When opening file, if it doesn't exist, go straight to the editor to create the file.
@@ -58,7 +59,6 @@ To run the release executable, on Windows run `build run release`.
 * Repeat the last operation
 * Better data structure for the lines that will allow easily moving lines around, deleting them, and inserting them
 * Add text before/after string in line
-* Find first occurance in line
 * Find all occurances
 * Replace all in line
 * Replace first occurance in file

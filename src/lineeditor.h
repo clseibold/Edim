@@ -145,7 +145,7 @@ typedef struct Buffer {
 
 // Stretchy buffer of Buffers
 Buffer *buffers;
-Buffer currentBuffer;
+Buffer *currentBuffer;
 
 void buffer_initEmptyBuffer(Buffer *buffer);
 int buffer_openFile(Buffer *buffer, char *filename);

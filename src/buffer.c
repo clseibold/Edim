@@ -477,7 +477,7 @@ int buffer_findStringInLine(Buffer *buffer, int line, char *str, int strLength) 
 int buffer_findStringInFile(Buffer *buffer, char *str, int strLength, int *colIndex) {
     // Go though all lines in buffer
     for (int line = 0; line < buf_len(buffer->lines); line++) {
-        int index = buffer_findStringInLine(&currentBuffer, line + 1, str, strLength);
+        int index = buffer_findStringInLine(buffer, line + 1, str, strLength);
         
         if (index != -1) {
             (*colIndex) = index;

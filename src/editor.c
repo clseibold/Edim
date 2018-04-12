@@ -35,22 +35,29 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
     switch (subState) {
         case ED_NEW:
         {
-            buffer_initEmptyBuffer(&currentBuffer);
-            currentBuffer.modified = true;
+            {
+                Buffer buffer;
+                buffer_initEmptyBuffer(&buffer);
+                buffer.modified = true;
+                buf_push(buffers, buffer);
+                currentBuffer = buf_end(buffers) - 1;
+            }
             
             if (argsLength > 1) {
                 int i = 0;
                 while (args[i] != ' ' && args[i] != '\n' && args[i] != '\0') {
-                    buf_push(currentBuffer.openedFilename, args[i]);
+                    buf_push(currentBuffer->openedFilename, args[i]);
                     ++i;
                 }
             }
             
-            printf("Opening a new file.\n");
-            printf("Press Ctrl-D (or Ctrl-Z on Windows) on new line to denote End Of Input\n\n");
+            if (initialSet) {
+                printf("Opening a new file.\n");
+                printf("Press Ctrl-D (or Ctrl-Z on Windows) on new line to denote End Of Input\n\n");
+            }
             
             // Make sure currently stored text has been cleared out.
-            assert(buf_len(currentBuffer.lines) == 0);
+            assert(buf_len(currentBuffer->lines) == 0);
             
             subState = ED_EDITOR;
             subState = editorState_editor();
@@ -58,7 +65,12 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
         } break;
         case ED_OPEN:
         {
-            buffer_initEmptyBuffer(&currentBuffer);
+            {
+                Buffer buffer;
+                buffer_initEmptyBuffer(&buffer);
+                buf_push(buffers, buffer);
+                currentBuffer = buf_end(buffers) - 1;
+            }
             
             int newFile = false;
             
@@ -72,7 +84,7 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
                     printPrompt("Enter the filename: ");
                     filenameLength = parsing_getLine(filename, MAXLENGTH / 4, true);
                 }
-                if (!buffer_openFile(&currentBuffer, filename)) {
+                if (!buffer_openFile(currentBuffer, filename)) {
                     printf("File doesn't exist... Creating it.\n\n");
                     subState = editorState_editor();
                     if (subState == ED_KEEP) subState = subStatePrev;
@@ -90,7 +102,7 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
                     ++ii;
                 }
                 filename[ii] = '\0';
-                if (!buffer_openFile(&currentBuffer, filename)) {
+                if (!buffer_openFile(currentBuffer, filename)) {
                     printf("File doesn't exist... Creating it.\n\n");
                     subState = editorState_editor();
                     if (subState == ED_KEEP) subState = subStatePrev;
@@ -117,24 +129,24 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
         {
             subState = ED_EDITOR;
             
-            if (currentBuffer.modified) {
+            if (currentBuffer->modified) {
                 printError("There are unsaved changes. Use 'E' or 'Q' to close without changes.");
                 subState = ED_MENU;
             } else {
-                buffer_close(&currentBuffer);
+                buffer_close(currentBuffer);
                 initialSet = 0;
                 return MAIN_MENU;
             }
         } break;
         case ED_FORCE_EXIT:
         {
-            buffer_close(&currentBuffer);
+            buffer_close(currentBuffer);
             initialSet = 0;
             return MAIN_MENU;
         }
         case ED_QUIT:
         {
-            if (currentBuffer.modified) {
+            if (currentBuffer->modified) {
                 printError("There are unsaved changes. Use 'E' or 'Q' to close without changes.");
                 subState = ED_MENU;
             } else return QUIT;
@@ -154,15 +166,15 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
 /* Menu for Editor */
 EditorState editorState_menu(void) {
     /* Prompt */
-    if (buf_len(currentBuffer.openedFilename) > 0) {
+    if (buf_len(currentBuffer->openedFilename) > 0) {
         // TODO: This will also print out the directory, so I should get rid of everything before the last slash
-        if (currentBuffer.modified) {
-            printPrompt("\n<%d|%.*s*> ", currentBuffer.currentLine, (int) buf_len(currentBuffer.openedFilename), currentBuffer.openedFilename);
+        if (currentBuffer->modified) {
+            printPrompt("\n<%d: %.*s*|%d> ", currentBuffer - buffers, (int) buf_len(currentBuffer->openedFilename), currentBuffer->openedFilename, currentBuffer->currentLine);
         } else {
-            printPrompt("\n<%d|%.*s> ", currentBuffer.currentLine, (int) buf_len(currentBuffer.openedFilename), currentBuffer.openedFilename);
+            printPrompt("\n<%d: %.*s|%d> ", currentBuffer - buffers, (int) buf_len(currentBuffer->openedFilename), currentBuffer->openedFilename, currentBuffer->currentLine);
         }
         
-    } else printPrompt("\n<%d|new file> ", currentBuffer.currentLine);
+    } else printPrompt("\n<%d: new file|%d> ", currentBuffer - buffers, currentBuffer->currentLine);
     
     /* get first character - the menu item */
     char c;
@@ -179,8 +191,8 @@ EditorState editorState_menu(void) {
     switch (c) {
         case '?': // TODO: Add new file and open file.
         {
-            if (buf_len(currentBuffer.openedFilename) > 0)
-                printf("'%s' is currently open.\n\n", currentBuffer.openedFilename);
+            if (buf_len(currentBuffer->openedFilename) > 0)
+                printf("'%s' is currently open.\n\n", currentBuffer->openedFilename);
             else printf("An unnamed file is currently open.\n\n");
             
             printf("Use Ctrl-D or Ctrl-Z+Enter to denote end of input\n");
@@ -205,12 +217,13 @@ EditorState editorState_menu(void) {
             printf(" * 'c' - Continue from last line\n");
             printf(" * 'p (line#:start)' - Preview whole file (optionally starting at given line)\n");
             printf(" * 'P (line#:start) (line#:end)' - Preview a line or set of lines, including the line before and after\n");
+            printf(" * 'b' - List all currently open buffers\n");
             printf(" * 'e / E' - Exit / Exit (without save)\n");
             printf(" * 'q / Q' - Quit / Quit (without save)\n");
         } break;
         case 's':
         {
-            if (!currentBuffer.openedFilename && buf_len(currentBuffer.openedFilename) <= 0) {
+            if (!currentBuffer->openedFilename && buf_len(currentBuffer->openedFilename) <= 0) {
                 printPrompt("Enter a filename: ");
                 char *filename = NULL;
                 int length = parsing_getLine_dynamic(&filename, true);
@@ -223,10 +236,10 @@ EditorState editorState_menu(void) {
                 buf_push(filename, '\0');
                 
                 printf("Saving '%s'\n", filename);
-                buffer_saveFile(&currentBuffer, filename);
+                buffer_saveFile(currentBuffer, filename);
             } else {
-                printf("Saving '%s'", currentBuffer.openedFilename);
-                buffer_saveFile(&currentBuffer, currentBuffer.openedFilename);
+                printf("Saving '%s'", currentBuffer->openedFilename);
+                buffer_saveFile(currentBuffer, currentBuffer->openedFilename);
             }
         } break;
         case '#':
@@ -235,7 +248,7 @@ EditorState editorState_menu(void) {
         } break;
         case 'c':
         {
-            editorState_insertAfter(buf_len(currentBuffer.lines));
+            editorState_insertAfter(buf_len(currentBuffer->lines));
             recreateOutline();
         } break;
         case 'a':
@@ -245,7 +258,7 @@ EditorState editorState_menu(void) {
             
             char lineInput[MAXLENGTH / 4];
             int length;
-            while (line < 0 || line > buf_len(currentBuffer.lines) || length == -1) {
+            while (line < 0 || line > buf_len(currentBuffer->lines) || length == -1) {
                 if (rest != end)
                     printError("That line number exceeds the bounds of the file.\n");
                 printPrompt("Enter a line number: ");
@@ -265,7 +278,7 @@ EditorState editorState_menu(void) {
             
             char lineInput[MAXLENGTH / 4];
             int length;
-            while (line <= 0 || line > buf_len(currentBuffer.lines) + 1 || length == -1) {
+            while (line <= 0 || line > buf_len(currentBuffer->lines) + 1 || length == -1) {
                 if (rest != end)
                     printError("That line number exceeds the bounds of the file.\n");
                 printPrompt("Enter a line number: ");
@@ -273,8 +286,8 @@ EditorState editorState_menu(void) {
                 line = (int) strtol(lineInput, &end, 10);
             }
             
-            if (line == buf_len(currentBuffer.lines) + 1)
-                editorState_insertAfter(buf_len(currentBuffer.lines));
+            if (line == buf_len(currentBuffer->lines) + 1)
+                editorState_insertAfter(buf_len(currentBuffer->lines));
             else editorState_insertBefore(line);
             recreateOutline();
         } break;
@@ -285,7 +298,7 @@ EditorState editorState_menu(void) {
             
             char lineInput[MAXLENGTH / 4];
             int length;
-            while (line <= 0 || line > buf_len(currentBuffer.lines) || length == -1) {
+            while (line <= 0 || line > buf_len(currentBuffer->lines) || length == -1) {
                 if (rest != end)
                     printError("That line number exceeds the bounds of the file.\n");
                 printPrompt("Enter a line number: ");
@@ -303,7 +316,7 @@ EditorState editorState_menu(void) {
             
             char lineInput[MAXLENGTH / 4];
             int length;
-            while (line <= 0 || line > buf_len(currentBuffer.lines) || length == -1) {
+            while (line <= 0 || line > buf_len(currentBuffer->lines) || length == -1) {
                 if (rest != end)
                     printError("That line number exceeds the bounds of the file.\n");
                 printPrompt("Enter a line number: ");
@@ -321,7 +334,7 @@ EditorState editorState_menu(void) {
             
             char lineInput[MAXLENGTH / 4];
             int length;
-            while (line <= 0 || line > buf_len(currentBuffer.lines) || length == -1) {
+            while (line <= 0 || line > buf_len(currentBuffer->lines) || length == -1) {
                 if (rest != end)
                     printError("That line number exceeds the bounds of the file.\n");
                 printPrompt("Enter a line number: ");
@@ -340,7 +353,7 @@ EditorState editorState_menu(void) {
             
             char lineInput[MAXLENGTH / 4];
             int length;
-            while (line <= 0 || line > buf_len(currentBuffer.lines) || length == -1) {
+            while (line <= 0 || line > buf_len(currentBuffer->lines) || length == -1) {
                 if (rest != end)
                     printError("That line number exceeds the bounds of the file.\n");
                 printPrompt("Enter a line number: ");
@@ -378,7 +391,7 @@ EditorState editorState_menu(void) {
             
             char lineInput[MAXLENGTH / 4];
             int length;
-            while (line == 0 || line > buf_len(currentBuffer.lines) || length == -1) {
+            while (line == 0 || line > buf_len(currentBuffer->lines) || length == -1) {
                 if (rest != end)
                     printError("That line number exceeds the bounds of the file.\n");
                 printPrompt("Enter a line number: ");
@@ -396,7 +409,7 @@ EditorState editorState_menu(void) {
             
             char lineInput[MAXLENGTH / 4];
             int length;
-            while (line == 0 || line > buf_len(currentBuffer.lines) || length == -1) {
+            while (line == 0 || line > buf_len(currentBuffer->lines) || length == -1) {
                 if (rest != end)
                     printError("That line number exceeds the bounds of the file.\n");
                 printPrompt("Enter a line number: ");
@@ -414,7 +427,7 @@ EditorState editorState_menu(void) {
             
             char lineInput[MAXLENGTH / 4];
             int length;
-            while (line == 0 || line > buf_len(currentBuffer.lines) || length == -1) {
+            while (line == 0 || line > buf_len(currentBuffer->lines) || length == -1) {
                 if (rest != end)
                     printError("That line number exceeds the bounds of the file.\n");
                 printPrompt("Enter a line number: ");
@@ -430,7 +443,7 @@ EditorState editorState_menu(void) {
             char *end;
             int line = (int) strtol(rest, &end, 10);
             
-            if (line <= 0 || line > buf_len(currentBuffer.lines))
+            if (line <= 0 || line > buf_len(currentBuffer->lines))
                 printText(0);
             else printText(line - 1);
         } break;
@@ -442,7 +455,7 @@ EditorState editorState_menu(void) {
             
             char lineInput[MAXLENGTH / 4];
             int length;
-            while (line == 0 || line > buf_len(currentBuffer.lines) || length == -1) {
+            while (line == 0 || line > buf_len(currentBuffer->lines) || length == -1) {
                 if (rest != end)
                     printError("That line number exceeds the bounds of the file.\n");
                 printPrompt("Enter a line number: ");
@@ -464,10 +477,10 @@ EditorState editorState_menu(void) {
                     if (line - 2 >= 0)
                         printLine(line - 2, 0, true);
                     for (int i = line; i <= endLine; i++) {
-                        if (i - 1 >= 0 && i - 1 < buf_len(currentBuffer.lines))
+                        if (i - 1 >= 0 && i - 1 < buf_len(currentBuffer->lines))
                             printLine(i - 1, 0, true);
                     }
-                    if (endLine < buf_len(currentBuffer.lines))
+                    if (endLine < buf_len(currentBuffer->lines))
                         printLine(endLine, 0, true);
                     break;
                 }
@@ -477,7 +490,7 @@ EditorState editorState_menu(void) {
             if (line - 2 >= 0)
                 printLine(line - 2, 0, true);
             printLine(line - 1, 0, true);
-            if (line < buf_len(currentBuffer.lines))
+            if (line < buf_len(currentBuffer->lines))
                 printLine(line, 0, true);
         } break;
         case 'f':
@@ -512,7 +525,7 @@ EditorState editorState_menu(void) {
             
             char lineInput[MAXLENGTH / 4];
             int length;
-            while (line <= 0 || line > buf_len(currentBuffer.lines) || length == -1) {
+            while (line <= 0 || line > buf_len(currentBuffer->lines) || length == -1) {
                 if (rest != end)
                     printError("That line number exceeds the bounds of the file.\n");
                 printPrompt("Enter a line number: ");
@@ -543,6 +556,22 @@ EditorState editorState_menu(void) {
             
             editorState_findStringInLine(line, str, strLength);
         } break;
+        case 'b':
+        {
+            for (int i = 0; i < buf_len(buffers); i++) {
+                if (buf_len(buffers[i].openedFilename) <= 0) {
+                    // We can assume this is the current buffer because you can't switch or close a buffer with unsaved changes
+                    printf("*%3d: new file\n", i);
+                }
+                else {
+                    if (currentBuffer == &(buffers[i])) {
+                        printf("*%3d: %.*s\n", i, (int) buf_len(buffers[i].openedFilename), buffers[i].openedFilename);
+                    } else {
+                        printf("%4d: %.*s\n", i, (int) buf_len(buffers[i].openedFilename), buffers[i].openedFilename);
+                    }
+                }
+            }
+        } break;
         case 'e':
         {
             return ED_EXIT;
@@ -562,12 +591,12 @@ EditorState editorState_menu(void) {
         // Hacked in - change filetype to FT_C because of how poor my filetype extension matching is
         case 't':
         {
-            currentBuffer.fileType = FT_C;
+            currentBuffer->fileType = FT_C;
             recreateOutline();
         } break;
         case 'T':
         {
-            printf("FileType: %d\n", currentBuffer.fileType);
+            printf("FileType: %d\n", currentBuffer->fileType);
         } break;
         default:
         {
@@ -585,8 +614,8 @@ EditorState editorState_editor(void) {
     
     // If continuing a previously typed-in file,
     // start on last line and overwrite the EOF character
-    if (buf_len(currentBuffer.lines) > 0) {
-        line = buf_len(currentBuffer.lines) + 1;
+    if (buf_len(currentBuffer->lines) > 0) {
+        line = buf_len(currentBuffer->lines) + 1;
     }
     
     // Show the previous line to give context.
@@ -598,7 +627,7 @@ EditorState editorState_editor(void) {
     while ((c = getchar()) != EOF) {
         buf_push(chars, c);
         if (c == '\n') {
-            buf_push(currentBuffer.lines, ((Line) { chars }));
+            buf_push(currentBuffer->lines, ((Line) { chars }));
             ++line;
             printLineNumber("%5d ", line);
             chars = NULL; // Create new char stretchy buffer for next line
@@ -606,7 +635,7 @@ EditorState editorState_editor(void) {
     }
     
     // Set cursor to end of file
-    currentBuffer.currentLine = buf_len(currentBuffer.lines);
+    currentBuffer->currentLine = buf_len(currentBuffer->lines);
     
     return ED_MENU;
 }
@@ -614,7 +643,7 @@ EditorState editorState_editor(void) {
 // Insert lines after a specific line. Denote end of input by typing Ctrl-D (or Ctrl-Z+Enter on Windows) on new line.
 internal void editorState_insertAfter(int line) {
     char c;
-    if (line - 1 >= 0 && line - 1 < buf_len(currentBuffer.lines))
+    if (line - 1 >= 0 && line - 1 < buf_len(currentBuffer->lines))
         printLine(line - 1, 0, true);
     int currentLine = line + 1;
     
@@ -644,19 +673,19 @@ internal void editorState_insertAfter(int line) {
         }
     }
     
-    int firstMovedLine = buffer_insertAfterLine(&currentBuffer, line, insertLines);
+    int firstMovedLine = buffer_insertAfterLine(currentBuffer, line, insertLines);
     
     // Free the old lines stretchy buffer
     buf_free(insertLines);
     
     // Show the line that was moved due to inserting before it (and after the line before it)
-    if (firstMovedLine <= buf_len(currentBuffer.lines))
+    if (firstMovedLine <= buf_len(currentBuffer->lines))
         printLine(firstMovedLine - 1, 'v', true);
 }
 
 internal void editorState_insertBefore(int line) {
     char c;
-    if (line - 2 >= 0 && line - 1 < buf_len(currentBuffer.lines))
+    if (line - 2 >= 0 && line - 1 < buf_len(currentBuffer->lines))
         printLine(line - 2, 0, true);
     int currentLine = line;
     
@@ -686,24 +715,24 @@ internal void editorState_insertBefore(int line) {
         }
     }
     
-    int firstMovedLine = buffer_insertBeforeLine(&currentBuffer, line, insertLines);
+    int firstMovedLine = buffer_insertBeforeLine(currentBuffer, line, insertLines);
     
     // Free the old lines stretchy buffer
     buf_free(insertLines);
     
     // Show the line that was moved due to the insertion before it
-    if (firstMovedLine <= buf_len(currentBuffer.lines))
+    if (firstMovedLine <= buf_len(currentBuffer->lines))
         printLine(firstMovedLine - 1, 'v', true);
 }
 
 internal void editorState_appendTo(int line) {
     char c;
     char *chars = NULL;
-    if (line - 2 >= 0 && line - 2 < buf_len(currentBuffer.lines))
+    if (line - 2 >= 0 && line - 2 < buf_len(currentBuffer->lines))
         printLine(line - 2, 0, true);
     
     // Remove the new line character from the line
-    //buf_pop(currentBuffer.lines[line - 1].chars);
+    //buf_pop(currentBuffer->lines[line - 1].chars);
     
     //int count = 0;
     printLine(line - 1, 'A', false);
@@ -721,13 +750,13 @@ internal void editorState_appendTo(int line) {
         if (c == '\n') break;
     }
     
-    buffer_appendToLine(&currentBuffer, line, chars);
+    buffer_appendToLine(currentBuffer, line, chars);
     buf_free(chars);
 }
 
 internal void editorState_prependTo(int line) {
     char c;
-    if (line - 2 >= 0 && line - 2 < buf_len(currentBuffer.lines))
+    if (line - 2 >= 0 && line - 2 < buf_len(currentBuffer->lines))
         printLine(line - 2, 0, true);
     
     char *chars = NULL; // The new char stretchy buffer
@@ -747,12 +776,12 @@ internal void editorState_prependTo(int line) {
         buf_push(chars, c);
     }
     
-    buffer_prependToLine(&currentBuffer, line, chars);
+    buffer_prependToLine(currentBuffer, line, chars);
 }
 
 internal void editorState_replaceLine(int line) {
     char c;
-    if (line - 2 >= 0 && line - 2 < buf_len(currentBuffer.lines))
+    if (line - 2 >= 0 && line - 2 < buf_len(currentBuffer->lines))
         printLine(line - 2, 0, true);
     
     char *chars = NULL; // The new char stretchy buffer
@@ -772,13 +801,13 @@ internal void editorState_replaceLine(int line) {
         if (c == '\n') break;
     }
     
-    buffer_replaceLine(&currentBuffer, line, chars);
+    buffer_replaceLine(currentBuffer, line, chars);
 }
 
 internal void editorState_replaceString(int line, char *str, int strLength) {
     char c;
     
-    int index = buffer_findStringInLine(&currentBuffer, line, str, strLength);
+    int index = buffer_findStringInLine(currentBuffer, line, str, strLength);
     
     if (index == -1) {
         printError("No occurance of '%.*s' found\n", strLength, str);
@@ -786,7 +815,7 @@ internal void editorState_replaceString(int line, char *str, int strLength) {
     }
     
     // Print the previous line to give context
-    if (line - 2 >= 0 && line - 2 < buf_len(currentBuffer.lines))
+    if (line - 2 >= 0 && line - 2 < buf_len(currentBuffer->lines))
         printLine(line - 2, 0, true);
     
     // Print the string where the replacement is occuring
@@ -826,14 +855,14 @@ internal void editorState_replaceString(int line, char *str, int strLength) {
         buf_push(chars, c);
     }
     
-    buffer_replaceInLine(&currentBuffer, line, index, index + strLength - 1, chars);
+    buffer_replaceInLine(currentBuffer, line, index, index + strLength - 1, chars);
 }
 
 // Finds the first occrance of the string in the given line
 // Displays the line with an arrow pointing to the occurance
 // Will also show the line before it to give context and the column of the start of the occurance
 internal void editorState_findStringInLine(int line, char *str, int strLength) {
-    int index = buffer_findStringInLine(&currentBuffer, line, str, strLength);
+    int index = buffer_findStringInLine(currentBuffer, line, str, strLength);
     
     if (index == -1) {
         printError("No occurance of '%.*s' was found in line %d\n", strLength, str, line);
@@ -841,7 +870,7 @@ internal void editorState_findStringInLine(int line, char *str, int strLength) {
     }
     
     // Print the previous line to give context
-    if (line - 1 >= 0 && line - 1 < buf_len(currentBuffer.lines))
+    if (line - 1 >= 0 && line - 1 < buf_len(currentBuffer->lines))
         printLine(line - 2, 0, true);
     
     // Print the line
@@ -875,7 +904,7 @@ internal void editorState_findStringInLine(int line, char *str, int strLength) {
 // Will also show the line before it to give context
 internal void editorState_findStringInFile(char *str, int strLength) {
     int colIndex = -1;
-    int foundIndex = buffer_findStringInFile(&currentBuffer, str, strLength, &colIndex);
+    int foundIndex = buffer_findStringInFile(currentBuffer, str, strLength, &colIndex);
     
     // If no occurance found in file
     if (foundIndex == -1) {
@@ -884,7 +913,7 @@ internal void editorState_findStringInFile(char *str, int strLength) {
     }
     
     // Print the previous line to give context
-    if (foundIndex - 1 >= 0 && foundIndex - 1 < buf_len(currentBuffer.lines))
+    if (foundIndex - 1 >= 0 && foundIndex - 1 < buf_len(currentBuffer->lines))
         printLine(foundIndex - 1, 0, true);
     
     // Print the string where the occurance was found
@@ -917,22 +946,22 @@ internal void editorState_deleteLine(int line) {
     if (line - 1 > 0)
         printLine(line - 2, 0, true);
     
-    if (line == buf_len(currentBuffer.lines)) { // TODO: This isn't working correctly
+    if (line == buf_len(currentBuffer->lines)) { // TODO: This isn't working correctly
         printLine(line - 1, 'x', true);
-        buffer_deleteLine(&currentBuffer, buf_len(currentBuffer.lines));
+        buffer_deleteLine(currentBuffer, buf_len(currentBuffer->lines));
         
         // Show the first line that was moved - the line # should be the same as the line that was deleted
-        if (line <= buf_len(currentBuffer.lines))
+        if (line <= buf_len(currentBuffer->lines))
             printLine(line - 1, '^', true);
         return;
     }
     
     printLine(line - 1, 'x', true);
     
-    buffer_deleteLine(&currentBuffer, line);
+    buffer_deleteLine(currentBuffer, line);
     
     // Show the first line that was moved - the line # should be the same as the line that was deleted
-    if (line <= buf_len(currentBuffer.lines))
+    if (line <= buf_len(currentBuffer->lines))
         printLine(line - 1, '^', true);
 }
 
@@ -941,7 +970,7 @@ internal void editorState_moveUp(int line) {
     if (line - 2 > 0)
         printLine(line - 3, 0, true);
     
-    buffer_moveLineUp(&currentBuffer, line);
+    buffer_moveLineUp(currentBuffer, line);
     
     // Print the new position of the line that was moved and the old line that was moved down
     printLine(line - 2, '^', true);
@@ -956,7 +985,7 @@ internal void editorState_moveDown(int line) {
     if (line - 1 > 0)
         printLine(line - 2, 0, true);
     
-    buffer_moveLineDown(&currentBuffer, line);
+    buffer_moveLineDown(currentBuffer, line);
     
     // Print the new position of the line that was moved and the old line that was moved up
     printLine(line - 1, '^', true);
@@ -968,7 +997,7 @@ internal void editorState_moveDown(int line) {
 
 /* Print the currently stored text with line numbers */
 void printText(int startLine) {
-    if (buf_len(currentBuffer.lines) <= 0) {
+    if (buf_len(currentBuffer->lines) <= 0) {
         printLineNumber("%5d ", 1);
         printf("\n");
         return;
@@ -978,9 +1007,9 @@ void printText(int startLine) {
     int offset = startLine;
     char c;
     
-    for (int line = offset; line < linesAtATime + offset + 1 && line <= buf_len(currentBuffer.lines); line++) {
-        if (line == buf_len(currentBuffer.lines)) {
-            if (line + 1 == currentBuffer.currentLine)
+    for (int line = offset; line < linesAtATime + offset + 1 && line <= buf_len(currentBuffer->lines); line++) {
+        if (line == buf_len(currentBuffer->lines)) {
+            if (line + 1 == currentBuffer->currentLine)
                 printLineNumber("%c%4d ", '*', line + 1);
             else printLineNumber("%5d ", line + 1);
             break;
@@ -988,22 +1017,22 @@ void printText(int startLine) {
         printLine(line, 0, true);
     }
     offset = linesAtATime + offset + 1;
-    if (offset >= buf_len(currentBuffer.lines)) {
+    if (offset >= buf_len(currentBuffer->lines)) {
         printf("\n");
         return;
     }
-    printPrompt("\n<%s | preview> ", currentBuffer.openedFilename);
+    printPrompt("\n<%s | preview> ", currentBuffer->openedFilename);
     
-    while ((c = getchar()) != EOF && offset < buf_len(currentBuffer.lines)) {
+    while ((c = getchar()) != EOF && offset < buf_len(currentBuffer->lines)) {
         if (c == '?') {
             // Print help info about preview command here
-            printf("\nPreviewing '%s'\n", currentBuffer.openedFilename);
+            printf("\nPreviewing '%s'\n", currentBuffer->openedFilename);
             printf(" * 'q' or Ctrl-X to stop previewing\n");
             printf(" * 'Q' to exit the whole program\n");
             printf(" * Enter to show the next lines\n");
             // Discard the enter key
             getchar();
-            printPrompt("\n<%s | preview> ", currentBuffer.openedFilename);
+            printPrompt("\n<%s | preview> ", currentBuffer->openedFilename);
             continue;
         } else if (c == 'q' || c == 24) { // 26 is Ctrl-X, aka CANCEL
             // Discard the enter key
@@ -1014,9 +1043,9 @@ void printText(int startLine) {
         }
         
         printf("\n");
-        for (int line = offset; line < linesAtATime + offset + 1 && line <= buf_len(currentBuffer.lines); line++) {
-            if (line == buf_len(currentBuffer.lines)) {
-                if (line + 1 == currentBuffer.currentLine)
+        for (int line = offset; line < linesAtATime + offset + 1 && line <= buf_len(currentBuffer->lines); line++) {
+            if (line == buf_len(currentBuffer->lines)) {
+                if (line + 1 == currentBuffer->currentLine)
                     printLineNumber("%c%4d ", '*', line + 1);
                 else printLineNumber("%5d ", line + 1);
                 break;
@@ -1025,10 +1054,10 @@ void printText(int startLine) {
         }
         
         offset = linesAtATime + offset + 1;
-        if (offset >= buf_len(currentBuffer.lines)) {
+        if (offset >= buf_len(currentBuffer->lines)) {
             break;
         }
-        printPrompt("\n<%s | preview> ", currentBuffer.openedFilename);
+        printPrompt("\n<%s | preview> ", currentBuffer->openedFilename);
     }
     
     printf("\n");
@@ -1039,12 +1068,12 @@ Prints one line of text given the line number. Note that the line numbers start 
 Pass false into printNewLine so the new line at the end is not printed
 */
 void printLine(int line, char operation, int printNewLine) {
-    //printf("Current Line: %d\n", currentBuffer.currentLine);
-    if (buf_len(currentBuffer.lines) <= 0 && line == 0) {
+    //printf("Current Line: %d\n", currentBuffer->currentLine);
+    if (buf_len(currentBuffer->lines) <= 0 && line == 0) {
         if (operation != 0)
             printLineNumber("%c%4d ", operation, 1);
         else {
-            if (line + 1 == currentBuffer.currentLine)
+            if (line + 1 == currentBuffer->currentLine)
                 printLineNumber("%c%4d ", '*', 1);
             else printLineNumber("%5d ", 1);
         }
@@ -1053,16 +1082,16 @@ void printLine(int line, char operation, int printNewLine) {
     }
     
     // If line is last line in file (one above the length of the lines)
-    if (line == buf_len(currentBuffer.lines)) {
+    if (line == buf_len(currentBuffer->lines)) {
         if (operation != 0)
             printLineNumber("%c%4d ", operation, line + 1);
         else {
-            if (line + 1 == currentBuffer.currentLine)
+            if (line + 1 == currentBuffer->currentLine)
                 printLineNumber("%c%4d ", '*', line + 1);
             else printLineNumber("%5d ", line + 1);
         }
         return;
-    } else if (line > buf_len(currentBuffer.lines)) {
+    } else if (line > buf_len(currentBuffer->lines)) {
         // Error!
         return;
     }
@@ -1070,28 +1099,28 @@ void printLine(int line, char operation, int printNewLine) {
     if (operation != 0)
         printLineNumber("%c%4d ", operation, line + 1);
     else {
-        if (line + 1 == currentBuffer.currentLine)
+        if (line + 1 == currentBuffer->currentLine)
             printLineNumber("%c%4d ", '*', line + 1);
         else printLineNumber("%5d ", line + 1);
     }
     
-    int length = buf_len(currentBuffer.lines[line].chars);
+    int length = buf_len(currentBuffer->lines[line].chars);
     // If shouldn't print new line and end of line is a new line, subtract it off from the length
-    if (!printNewLine && currentBuffer.lines[line].chars[length - 1] == '\n')
+    if (!printNewLine && currentBuffer->lines[line].chars[length - 1] == '\n')
         --length;
-    printf("%.*s", length, currentBuffer.lines[line].chars);
-    /*for (int i = 0; i < buf_len(currentBuffer.lines[line].chars); i++) {
-    putchar(currentBuffer.lines[line].chars[i]);
+    printf("%.*s", length, currentBuffer->lines[line].chars);
+    /*for (int i = 0; i < buf_len(currentBuffer->lines[line].chars); i++) {
+    putchar(currentBuffer->lines[line].chars[i]);
     }*/
 }
 
 // TODO: number of chars, filetype, syntax highlighting enabled, outline enabled
 void printFileInfo(void) {
-    printf("File Information for '%s'\n", currentBuffer.openedFilename);
+    printf("File Information for '%s'\n", currentBuffer->openedFilename);
     
-    int numOfLines = buf_len(currentBuffer.lines);
+    int numOfLines = buf_len(currentBuffer->lines);
     // If last character of last line ends with a new line, add one to the number of lines
-    Line lastLine = currentBuffer.lines[buf_len(currentBuffer.lines) - 1];
+    Line lastLine = currentBuffer->lines[buf_len(currentBuffer->lines) - 1];
     char lastChar = lastLine.chars[buf_len(lastLine.chars) - 1];
     if (lastChar == '\n') {
         numOfLines++;
@@ -1099,11 +1128,11 @@ void printFileInfo(void) {
     printf("Number of Lines: %d\n", numOfLines);
     
     // If markdown file, print outline
-    if (currentBuffer.fileType == FT_MARKDOWN) {
-        if (buf_len(currentBuffer.outline.markdown_nodes) > 0)
+    if (currentBuffer->fileType == FT_MARKDOWN) {
+        if (buf_len(currentBuffer->outline.markdown_nodes) > 0)
             printf("Outline:\n");
-    } else if (currentBuffer.fileType == FT_C) {
-        if (buf_len(currentBuffer.outline.c_nodes) > 0)
+    } else if (currentBuffer->fileType == FT_C) {
+        if (buf_len(currentBuffer->outline.c_nodes) > 0)
             printf("Outline:\n");
     }
     showOutline();
