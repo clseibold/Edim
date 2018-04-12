@@ -117,21 +117,32 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
         {
             subState = ED_EDITOR;
             
-            // Clear openedFilename and the file information
-            buf_free(currentBuffer.openedFilename);
-            
-            for (int i = 0; i < buf_len(currentBuffer.lines); i++) {
-                buf_free(currentBuffer.lines[i].chars);
+            if (currentBuffer.modified) {
+                printError("There are unsaved changes. Use 'E' or 'Q' to close without changes.");
+                subState = ED_MENU;
+            } else {
+                buffer_close(&currentBuffer);
+                initialSet = 0;
+                return MAIN_MENU;
             }
-            
-            buf_free(currentBuffer.lines);
-            
+        } break;
+        case ED_FORCE_EXIT:
+        {
+            buffer_close(&currentBuffer);
             initialSet = 0;
             return MAIN_MENU;
-        } break;
+        }
         case ED_QUIT:
         {
-            return QUIT;
+            if (currentBuffer.modified) {
+                printError("There are unsaved changes. Use 'E' or 'Q' to close without changes.");
+                subState = ED_MENU;
+            } else return QUIT;
+        } break;
+        case ED_FORCE_QUIT:
+        {
+            exit(0);
+            //return QUIT;
         } break;
         default:
         printError("Unknown command");
@@ -151,7 +162,7 @@ EditorState editorState_menu(void) {
             printPrompt("\n<%d|%.*s> ", currentBuffer.currentLine, (int) buf_len(currentBuffer.openedFilename), currentBuffer.openedFilename);
         }
         
-    } else printPrompt("\n<new file> ");
+    } else printPrompt("\n<%d|new file> ", currentBuffer.currentLine);
     
     /* get first character - the menu item */
     char c;
@@ -189,13 +200,13 @@ EditorState editorState_menu(void) {
             printf(" * 'm (line#)' - Move the line up by one\n");
             printf(" * 'M (line#)' - Move the line down by one\n");
             printf(" * 'f (string)' - Finds the first occurance of the string in the file and prints the line it's on out\n");
-            printf(" * 'F (line#) (string)' - Find the first occurance of the string in the line and prints the line out showing you where the occurance is\n");
+            printf(" * 'F (line#) (string)' - Find the first occurance of the string in the line and print the line out showing you where the occurance is\n");
             printf(" * 'u' - Undo the last operation, cannot undo an undo, cannot undo past 1 operation\n"); // TODO
             printf(" * 'c' - Continue from last line\n");
             printf(" * 'p (line#:start)' - Preview whole file (optionally starting at given line)\n");
             printf(" * 'P (line#:start) (line#:end)' - Preview a line or set of lines, including the line before and after\n");
-            printf(" * 'e / E' - Save and Exit / Exit (without save)\n");
-            printf(" * 'q / Q' - Save and Quit / Quit (without save)\n");
+            printf(" * 'e / E' - Exit / Exit (without save)\n");
+            printf(" * 'q / Q' - Quit / Quit (without save)\n");
         } break;
         case 's':
         {
@@ -534,58 +545,19 @@ EditorState editorState_menu(void) {
         } break;
         case 'e':
         {
-            if (!currentBuffer.openedFilename && buf_len(currentBuffer.openedFilename) <= 0) {
-                printPrompt("Enter a filename: ");
-                char *filename = NULL;
-                int length = parsing_getLine_dynamic(&filename, true);
-                while (length <= 0) {
-                    printPrompt("Enter a filename: ");
-                    length = parsing_getLine_dynamic(&filename, true);
-                }
-                
-                // Add null character, buffer_saveFile requires it.
-                buf_push(filename, '\0');
-                
-                printf("Saving '%s'\n", filename);
-                buffer_saveFile(&currentBuffer, filename);
-            } else {
-                printf("Saving '%s'", currentBuffer.openedFilename);
-                buffer_saveFile(&currentBuffer, currentBuffer.openedFilename);
-            }
-            
             return ED_EXIT;
         } break;
         case 'E':
         {
-            return ED_EXIT;
+            return ED_FORCE_EXIT;
         } break;
         case 'q':
         {
-            
-            if (!currentBuffer.openedFilename && buf_len(currentBuffer.openedFilename) <= 0) {
-                printPrompt("Enter a filename: ");
-                char *filename = NULL;
-                int length = parsing_getLine_dynamic(&filename, true);
-                while (length <= 0) {
-                    printPrompt("Enter a filename: ");
-                    length = parsing_getLine_dynamic(&filename, true);
-                }
-                
-                // Add null character, buffer_saveFile requires it.
-                buf_push(filename, '\0');
-                
-                printf("Saving '%s'\n", filename);
-                buffer_saveFile(&currentBuffer, filename);
-            } else {
-                printf("Saving '%s'", currentBuffer.openedFilename);
-                buffer_saveFile(&currentBuffer, currentBuffer.openedFilename);
-            }
-            
             return ED_QUIT;
         } break;
         case 'Q':
         {
-            return ED_QUIT;
+            return ED_FORCE_QUIT;
         } break;
         // Hacked in - change filetype to FT_C because of how poor my filetype extension matching is
         case 't':

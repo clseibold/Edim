@@ -97,9 +97,10 @@ To run the release executable, on Windows run `build run release`.
 * 'm (line#)' - Move the line up by one
 * 'M (line#)' - Move the line down by one
 * 'f (string)' - Finds the first occurance of the string in the file and prints the line it's on out
+* 'F (line#) (string)' - Find the first occurance of the string in the line and print the line out showing you where the occurance is
 * 'u' - Undo the last operation, cannot undo an undo, cannot undo past 1 operation
 * 'c' - Continue from last line in file
 * 'p' - Preview whole file
 * 'P (line#:start) (line#:end)' - Preview a line or set of lines, including the line before and after
-* 'd / D' - Save and Exit / Exit (without save)
-* 'q / Q' - Save and Quit / Quit (without save)
+* 'd / D' - Exit / Exit (without save)
+* 'q / Q' - Quit / Quit (without save)

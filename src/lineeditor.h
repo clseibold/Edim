@@ -33,7 +33,9 @@ typedef enum EditorState {
     ED_EDITOR,
     ED_MENU,
     ED_EXIT, // Exit to main menu
+    ED_FORCE_EXIT,
     ED_QUIT, // Quit program
+    ED_FORCE_QUIT
 } EditorState;
 
 State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength);
@@ -148,6 +150,8 @@ Buffer currentBuffer;
 void buffer_initEmptyBuffer(Buffer *buffer);
 int buffer_openFile(Buffer *buffer, char *filename);
 void buffer_saveFile(Buffer *buffer, char *filename);
+void buffer_close(Buffer *buffer);
+
 int buffer_insertAfterLine(Buffer *buffer, int line, Line *lines); // TODO
 int buffer_insertBeforeLine(Buffer *buffer, int line, Line *lines); // TODO
 void buffer_appendToLine(Buffer *buffer, int line, char *chars);
@@ -161,6 +165,7 @@ void buffer_moveLineUp(Buffer *buffer, int line);
 // TODO: Add the number to move up by
 void buffer_moveLineDown(Buffer *buffer, int line);
 void buffer_deleteLine(Buffer *buffer, int line);
+
 // TODO
 // void buffer_deleteLines(Buffer *buffer, int lineStart, int lineEnd);
 int buffer_findStringInLine(Buffer *buffer, int line, char *str, int strLength);

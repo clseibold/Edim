@@ -117,6 +117,18 @@ int buffer_openFile(Buffer *buffer, char *filename) {
     return true;
 }
 
+void buffer_close(Buffer *buffer) {
+    // Clear openedFilename and the file information
+    buf_free(buffer->openedFilename);
+    
+    for (int i = 0; i < buf_len(buffer->lines); i++) {
+        buf_free(buffer->lines[i].chars);
+    }
+    
+    // Free the buffer
+    buf_free(buffer->lines);
+}
+
 // If openedFilename is not set in the buffer, then filename is used.
 void buffer_saveFile(Buffer *buffer, char *filename) {
     FILE *fp;
