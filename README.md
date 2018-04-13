@@ -47,7 +47,7 @@ To run the release executable, on Windows run `build run release`.
 * Show outline of markdown files (shown when file is opened and with fileinfo command, '#')
 * Show outline of C files (shows function implementations)
 * When opening file, if it doesn't exist, go straight to the editor to create the file.
-* Ability to open multiple buffers (files) and switch between them.
+* Ability to open multiple buffers (files), switch between them, and close them.
 
 ## TODO
 * Cancel Prompts for getting information for a command (for example, when it prompt you to enter a line number when one wasn't provided when the command was typed)

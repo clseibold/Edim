@@ -679,7 +679,7 @@ EditorState editorState_menu(void) {
         {
             return editorState_openAnotherFile(rest, restLength);
         } break;
-        case 'n'
+        case 'n':
         {
             // TODO
         } break;
