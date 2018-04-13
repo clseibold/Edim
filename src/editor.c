@@ -137,24 +137,46 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
                 printError("There are unsaved changes. Use 'E' or 'Q' to close without changes.");
                 subState = ED_MENU;
             } else {
+                int isLast = false;
+                if (currentBuffer == &(buffers[buf_len(buffers) - 1]))
+                    isLast = true;
                 buffer_close(currentBuffer);
-                buf_pop(buffers);
-                currentBuffer = buf_end(buffers) - 1;
+                if (isLast) {
+                    buf_pop(buffers);
+                    currentBuffer = buf_end(buffers) - 1;
+                } else {
+                    Buffer *source = currentBuffer + 1;
+                    Buffer *destination = currentBuffer;
+                    memmove(destination, source, sizeof(Buffer) * 1);
+                    buf_pop(buffers);
+                }
                 if (buf_len(buffers) <= 0) {
                     initialSet = 0;
                     return MAIN_MENU;
                 }
+                subState = ED_MENU;
             }
         } break;
         case ED_FORCE_EXIT:
         {
+            int isLast = false;
+            if (currentBuffer == &(buffers[buf_len(buffers) - 1]))
+                isLast = true;
             buffer_close(currentBuffer);
-            buf_pop(buffers);
-            currentBuffer = buf_end(buffers) - 1;
+            if (isLast) {
+                buf_pop(buffers);
+                currentBuffer = buf_end(buffers) - 1;
+            } else {
+                Buffer *source = currentBuffer + 1;
+                Buffer *destination = currentBuffer;
+                memmove(destination, source, sizeof(Buffer) * 1);
+                buf_pop(buffers);
+            }
             if (buf_len(buffers) <= 0) {
                 initialSet = 0;
                 return MAIN_MENU;
             }
+            subState = ED_MENU;
         } break;
         case ED_QUIT:
         {
@@ -242,7 +264,7 @@ EditorState editorState_menu(void) {
             //printf(" * 'e' - Close buffer\n"); // TODO
             printf(" * 's' - Save current buffer\n");
             printf(" * 'S' - Save all buffers\n"); // TODO
-            printf(" * 'e / E' - Exit all buffers / Exit all buffers (without save)\n");
+            printf(" * 'e / E' - Exit current buffer / Exit current buffer (without save)\n");
             printf(" * 'q / Q' - Quit, closing all buffers / Quit, closing all buffers (without save)\n");
         } break;
         case 's':
@@ -582,6 +604,25 @@ EditorState editorState_menu(void) {
         } break;
         case 'b':
         {
+            // If a integer was  given with the command
+            if (restLength - 1 > 0) {
+                char *end;
+                int index = (int) strtol(rest, &end, 10);
+                
+                char lineInput[MAXLENGTH / 4];
+                int length;
+                while (index < 0 || index > buf_len(buffers) - 1 || length == -1) {
+                    printError("That buffer doesn't exist.");
+                    printPrompt("Enter a buffer number: ");
+                    length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
+                    index = (int) strtol(lineInput, &end, 10);
+                }
+                
+                currentBuffer = &(buffers[index]);
+                
+                return ED_KEEP;
+            }
+            
             for (int i = 0; i < buf_len(buffers); i++) {
                 if (buf_len(buffers[i].openedFilename) <= 0) {
                     // We can assume this is the current buffer because you can't switch or close a buffer with unsaved changes
