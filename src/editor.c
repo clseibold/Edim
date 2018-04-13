@@ -791,15 +791,17 @@ EditorState editorState_editor(void) {
     
 #ifdef _WIN32
     printLineNumber("%5d ", line);
-    while ((chars = getInput()) != NULL) {
-        if (buf_len(chars) == 0) {
-            buf_free(chars);
-            break;
-        }
+    int canceled = false;
+    while ((chars = getInput(&canceled)) != NULL) {
         buf_push(currentBuffer->lines, ((Line) { chars }));
         ++line;
         printLineNumber("%5d ", line);
     }
+    
+    if (canceled) {
+        // TODO: close the buffer?
+    }
+    printf("\n");
 #else
     printLineNumber("%5d ", line);
     while ((c = getchar()) != EOF) {
@@ -829,6 +831,27 @@ internal void editorState_insertAfter(int line) {
     Line *insertLines = NULL;
     char *chars = NULL;
     
+#ifdef _WIN32
+    printLineNumber("a%4d ", currentLine);
+    int canceled = false;
+    while ((chars = getInput(&canceled)) != NULL) {
+        buf_push(insertLines, ((Line) { chars }));
+        ++currentLine;
+        printLineNumber("a%4d ", currentLine);
+    }
+    
+    if (canceled) {
+        printf("^X");
+        buf_free(chars);
+        for (int i = 0; i < buf_len(insertLines); i++) {
+            buf_free(insertLines[i].chars);
+        }
+        buf_free(insertLines);
+        // Cancel the operation by returning
+        return;
+    }
+    printf("\n");
+#else
     printLineNumber("a%4d ", currentLine);
     while ((c = getchar()) != EOF) {
         if (c == (char) 24) { // Ctrl-X (^X) - Cancel
@@ -851,6 +874,7 @@ internal void editorState_insertAfter(int line) {
             chars = NULL; // create new char stretchy buffer for next line
         }
     }
+#endif
     
     int firstMovedLine = buffer_insertAfterLine(currentBuffer, line, insertLines);
     
@@ -871,6 +895,27 @@ internal void editorState_insertBefore(int line) {
     Line *insertLines = NULL;
     char *chars = NULL;
     
+#ifdef _WIN32
+    printLineNumber("i%4d ", currentLine);
+    int canceled = false;
+    while ((chars = getInput(&canceled)) != NULL) {
+        buf_push(insertLines, ((Line) { chars }));
+        ++currentLine;
+        printLineNumber("i%4d ", currentLine);
+    }
+    
+    if (canceled) {
+        printf("^X");
+        buf_free(chars);
+        for (int i = 0; i < buf_len(insertLines); i++) {
+            buf_free(insertLines[i].chars);
+        }
+        buf_free(insertLines);
+        // Cancel the operation by returning
+        return;
+    }
+    printf("\n");
+#else
     printLineNumber("i%4d ", currentLine);
     while ((c = getchar()) != EOF) {
         if (c == (char) 24) { // Ctrl-X (^X) - Cancel
@@ -893,6 +938,7 @@ internal void editorState_insertBefore(int line) {
             chars = NULL; // create new char stretchy buffer for next line
         }
     }
+#endif
     
     int firstMovedLine = buffer_insertBeforeLine(currentBuffer, line, insertLines);
     
@@ -910,11 +956,18 @@ internal void editorState_appendTo(int line) {
     if (line - 2 >= 0 && line - 2 < buf_len(currentBuffer->lines))
         printLine(line - 2, 0, true);
     
-    // Remove the new line character from the line
-    //buf_pop(currentBuffer->lines[line - 1].chars);
-    
-    //int count = 0;
     printLine(line - 1, 'A', false);
+#ifdef _WIN32
+    int canceled = false;
+    chars = getInput(&canceled);
+    if (canceled) {
+        printf("^X");
+        // Delete the chars buffer
+        buf_free(chars);
+        // Cancel the operation by returning
+        return;
+    }
+#else
     while ((c = getchar()) != EOF) {
         if (c == (char) 24) { // Ctrl-X (^X) - Cancel
             // Delete the chars buffer
@@ -928,6 +981,7 @@ internal void editorState_appendTo(int line) {
         //count++;
         if (c == '\n') break;
     }
+#endif
     
     buffer_appendToLine(currentBuffer, line, chars);
     buf_free(chars);
@@ -942,6 +996,21 @@ internal void editorState_prependTo(int line) {
     
     printLine(line - 1, 'I', true);
     printPrompt("%4s ^- ", "");
+#ifdef _WIN32
+    int canceled = false;
+    chars = getInput(&canceled);
+    if (canceled) {
+        printf("^X");
+        // Delete the chars buffer
+        buf_free(chars);
+        // Cancel the operation by returning
+        return;
+    }
+    // Get rid of new line
+    if (chars[buf_len(chars) - 1] == '\n') {
+        buf_pop(chars);
+    }
+#else
     while ((c = getchar()) != EOF) {
         if (c == (char) 24) { // Ctrl-X (^X) - Cancel
             // Free the new unused line buffer
@@ -954,6 +1023,7 @@ internal void editorState_prependTo(int line) {
         if (c == '\n') break; // Make sure new line is not pushed onto the buffer
         buf_push(chars, c);
     }
+#endif
     
     buffer_prependToLine(currentBuffer, line, chars);
 }
@@ -967,6 +1037,17 @@ internal void editorState_replaceLine(int line) {
     
     printLine(line - 1, 'r', true);
     printf("%5s ", "");
+#ifdef _WIN32
+    int canceled = false;
+    chars = getInput(&canceled);
+    if (canceled) {
+        printf("^X");
+        // Delete the chars buffer
+        buf_free(chars);
+        // Cancel the operation by returning
+        return;
+    }
+#else
     while ((c = getchar()) != EOF) {
         if (c == (char) 24) { // Ctrl-X (^X) - Cancel
             // Free the new unused line buffer
@@ -979,6 +1060,7 @@ internal void editorState_replaceLine(int line) {
         buf_push(chars, c);
         if (c == '\n') break;
     }
+#endif
     
     buffer_replaceLine(currentBuffer, line, chars);
 }
@@ -1021,6 +1103,21 @@ internal void editorState_replaceString(int line, char *str, int strLength) {
     char *chars = NULL; // What the string will be replaced with
     
     printPrompt("%5s %.*s- ", "", strPointToMatchLength, strPointToMatch); // TODO
+#ifdef _WIN32
+    int canceled = false;
+    chars = getInput(&canceled);
+    if (canceled) {
+        printf("^X");
+        // Delete the chars buffer
+        buf_free(chars);
+        // Cancel the operation by returning
+        return;
+    }
+    // Get rid of new line
+    if (chars[buf_len(chars) - 1] == '\n') {
+        buf_pop(chars);
+    }
+#else
     while ((c = getchar()) != EOF) {
         if (c == (char) 24) { // Ctrl-X (^X) - Cancel
             // Free the new unused line buffer
@@ -1033,6 +1130,7 @@ internal void editorState_replaceString(int line, char *str, int strLength) {
         if (c == '\n') break; // Make sure new line is not pushed onto the buffer
         buf_push(chars, c);
     }
+#endif
     
     buffer_replaceInLine(currentBuffer, line, index, index + strLength - 1, chars);
 }

@@ -70,7 +70,8 @@ int parsing_getLine_dynamic(char **chars, int trimSpace) {
 // TODO: Test on other platforms!
 // Returns NULL when canceled and a buffer of length 0 when Ctrl-Z with no input
 // TODO: Add a pointer to a bool (int) that will be set to true when Ctrl-Z was typed.
-char *getInput(void) {
+char *getInput(int *canceled) {
+    (*canceled) = false;
     char *inputBuffer = NULL;
     
     int c;
@@ -140,11 +141,12 @@ char *getInput(void) {
         
             continue;
         }*/
-        if (c == 24) { // Cancel
+        if (c == 24) { // Cancel - Ctrl-X
             //buf_pop_all(inputBuffer);
             buf_free(inputBuffer);
             inputBuffer = NULL;
             currentIndex = 0;
+            (*canceled) = true;
             return NULL;
         }
         if (c == '\n' || c == '\r') { // Enter

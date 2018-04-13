@@ -48,7 +48,7 @@ void printFileInfo(void);
 
 /* === parsing.c === */
 
-char *getInput(void);
+char *getInput(int *canceled);
 int parsing_getLine(char *line, int max, int trimSpace);
 int parsing_getLine_dynamic(char **chars, int trimSpace);
 void createOutline(void);
