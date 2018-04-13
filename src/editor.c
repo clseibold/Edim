@@ -260,6 +260,9 @@ EditorState editorState_menu(void) {
             printf(" * 'p (line#:start)' - Preview whole file (optionally starting at given line)\n");
             printf(" * 'P (line#:start) (line#:end)' - Preview a line or set of lines, including the line before and after\n");
             printf(" * 'b' - List all currently open buffers\n");
+            printf(" * 'b (buffer#)' - Switch current buffer to buffer #\n");
+            printf(" * 'bn' - Switch current buffer to next buffer. Will wrap around when hits end.\n");
+            printf(" * 'bp' - Switch current buffer to previous buffer. Will wrap around when hits beginning.\n");
             printf(" * 'o' - Open new buffer\n"); // TODO
             //printf(" * 'e' - Close buffer\n"); // TODO
             printf(" * 's' - Save current buffer\n");
@@ -604,6 +607,31 @@ EditorState editorState_menu(void) {
         } break;
         case 'b':
         {
+            if (restLength > 0) {
+                switch (rest[0]) {
+                    case 'n':
+                    {
+                        int current = currentBuffer - buffers;
+                        int next = current + 1;
+                        if (next >= buf_len(buffers))
+                            next = 0;
+                        
+                        currentBuffer = &(buffers[next]);
+                        return ED_KEEP;
+                    } break;
+                    case 'p':
+                    {
+                        int current = currentBuffer - buffers;
+                        int previous = current - 1;
+                        if (previous < 0)
+                            previous = buf_len(buffers) - 1;
+                        
+                        currentBuffer = &(buffers[previous]);
+                        return ED_KEEP;
+                    } break;
+                }
+            }
+            
             // If a integer was  given with the command
             if (restLength - 1 > 0) {
                 char *end;

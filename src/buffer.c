@@ -130,6 +130,18 @@ void buffer_close(Buffer *buffer) {
         buf_free(buffer->lines[i].chars);
     }
     
+    // Clear the outline
+    switch (buffer->fileType) {
+        case FT_MARKDOWN:
+        {
+            buf_free(buffer->outline.markdown_nodes);
+        } break;
+        case FT_C:
+        {
+            buf_free(buffer->outline.c_nodes);
+        } break;;
+    }
+    
     // Free the buffer
     buf_free(buffer->lines);
 }
