@@ -149,8 +149,13 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
         case ED_FORCE_EXIT:
         {
             buffer_close(currentBuffer);
-            initialSet = 0;
-        } return MAIN_MENU;
+            buf_pop(buffers);
+            currentBuffer = buf_end(buffers) - 1;
+            if (buf_len(buffers) <= 0) {
+                initialSet = 0;
+                return MAIN_MENU;
+            }
+        } break;
         case ED_QUIT:
         {
             int canQuit = true;
@@ -580,15 +585,17 @@ EditorState editorState_menu(void) {
             for (int i = 0; i < buf_len(buffers); i++) {
                 if (buf_len(buffers[i].openedFilename) <= 0) {
                     // We can assume this is the current buffer because you can't switch or close a buffer with unsaved changes
-                    printf("*%3d: new file\n", i);
-                }
-                else {
+                    printf("*%3d: new file", i);
+                } else {
                     if (currentBuffer == &(buffers[i])) {
-                        printf("*%3d: %.*s\n", i, (int) buf_len(buffers[i].openedFilename), buffers[i].openedFilename);
+                        printf("*%3d: %.*s", i, (int) buf_len(buffers[i].openedFilename), buffers[i].openedFilename);
                     } else {
-                        printf("%4d: %.*s\n", i, (int) buf_len(buffers[i].openedFilename), buffers[i].openedFilename);
+                        printf("%4d: %.*s", i, (int) buf_len(buffers[i].openedFilename), buffers[i].openedFilename);
                     }
                 }
+                if (buffers[i].modified)
+                    printf("*");
+                printf("\n");
             }
         } break;
         case 'l': // TODO: Reload file, prompt if unsaved changes?
