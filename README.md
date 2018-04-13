@@ -85,7 +85,6 @@ To run the release executable, on Windows run `build run release`.
 * Ability to use relative line numbers based on what was shown previously (from any command that previews any amount of lines, including insert, delete, preview, etc.)
 
 ## Commands
-* 's' - Save
 * '#' - Gives back information on the file, including number of lines, filename, number of characters, filetype, etc. 
 * 'a (line#)' - Insert after the line number
 * 'i (line#)' - Insert before the line number
@@ -102,5 +101,11 @@ To run the release executable, on Windows run `build run release`.
 * 'c' - Continue from last line in file
 * 'p' - Preview whole file
 * 'P (line#:start) (line#:end)' - Preview a line or set of lines, including the line before and after
-* 'd / D' - Exit / Exit (without save)
-* 'q / Q' - Quit / Quit (without save)
+* 'b' - List all currently open buffers
+* 'b (buffer#)' - Switch current buffer to buffer #
+* 'bn' - Switch current buffer to next buffer. Will wrap around when hits end.
+* 'bp' - Switch current buffer to previous buffer. Will wrap around when hits beginning.
+* 'o' - Open new buffer
+* 's' - Save current buffer
+* 'e / E' - Exit current buffer / Exit current buffer (without save)
+* 'q / Q' - Quit, closing all buffers / Quit, closing all buffers (without save)

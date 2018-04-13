@@ -265,10 +265,10 @@ EditorState editorState_menu(void) {
             printf(" * 'b (buffer#)' - Switch current buffer to buffer #\n");
             printf(" * 'bn' - Switch current buffer to next buffer. Will wrap around when hits end.\n");
             printf(" * 'bp' - Switch current buffer to previous buffer. Will wrap around when hits beginning.\n");
-            printf(" * 'o' - Open new buffer\n"); // TODO
-            //printf(" * 'e' - Close buffer\n"); // TODO
+            printf(" * 'o' - Open new buffer\n");
+            printf(" * 'n' - Open new file buffer\n");
             printf(" * 's' - Save current buffer\n");
-            printf(" * 'S' - Save all buffers\n"); // TODO
+            //printf(" * 'S' - Save all buffers\n"); // TODO
             printf(" * 'e / E' - Exit current buffer / Exit current buffer (without save)\n");
             printf(" * 'q / Q' - Quit, closing all buffers / Quit, closing all buffers (without save)\n");
         } break;
@@ -678,7 +678,10 @@ EditorState editorState_menu(void) {
         case 'o':
         {
             return editorState_openAnotherFile(rest, restLength);
-            //return editorState_editor();
+        } break;
+        case 'n'
+        {
+            // TODO
         } break;
         case 'e':
         {
