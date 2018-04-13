@@ -67,6 +67,207 @@ int parsing_getLine_dynamic(char **chars, int trimSpace) {
     return buf_len(*chars);
 }
 
+// TODO: Test on other platforms!
+// Returns NULL when canceled and a buffer of length 0 when Ctrl-Z with no input
+// TODO: Add a pointer to a bool (int) that will be set to true when Ctrl-Z was typed.
+char *getInput(void) {
+    char *inputBuffer = NULL;
+    
+    int c;
+    int currentIndex = 0;
+    while ((c = getch()) != 26) { // Ctrl-Z
+        if (c == 0 || c == 224) {
+            int special = getch();
+            if (special == 75) { // Left arrow
+                if (currentIndex != 0) {
+                    if (inputBuffer[currentIndex - 1] == '\t')
+                        fputs("\b\b\b\b", stdout);
+                    else putchar('\b');
+                    --currentIndex;
+                }
+            } else if (special == 77) { // Right arrow
+                if (currentIndex < buf_len(inputBuffer)) {
+                    if (inputBuffer[currentIndex] == '\t')
+                        fputs("    ", stdout);
+                    else putchar(inputBuffer[currentIndex]);
+                    ++currentIndex;
+                }
+            } else if (special == 83) { // Delete
+                if (currentIndex < buf_len(inputBuffer)) {
+                    // Move all the characters down one
+                    char *source = &(inputBuffer[currentIndex + 1]);
+                    char *destination = &(inputBuffer[currentIndex]);
+                    int amtToMove = buf_end(inputBuffer) - source;
+                    memmove(destination, source, sizeof(char) * amtToMove);
+                    buf_pop(inputBuffer);
+                    // Print all of the characters that have been moved
+                    for (int i = currentIndex; i < buf_len(inputBuffer); i++) {
+                        if (inputBuffer[i] == '\t')
+                            fputs("    ", stdout);
+                        else putchar(inputBuffer[i]);
+                    }
+                    // Print spaces where the last character(s) used to be
+                    fputs("    \b\b\b\b", stdout);
+                    // Go back to where the cursor is
+                    for (int i = 0; i < buf_len(inputBuffer) - currentIndex; i++) {
+                        if (inputBuffer[buf_len(inputBuffer) - 1 - i] == '\t')
+                            fputs("\b\b\b\b", stdout);
+                        else putchar('\b');
+                    }
+                }
+            } else if (special == 79) { // End key
+                for (int i = currentIndex; i < buf_len(inputBuffer); i++) {
+                    if (inputBuffer[i] == '\t')
+                        fputs("    ", stdout);
+                    else putchar(inputBuffer[i]);
+                }
+                currentIndex = buf_len(inputBuffer);
+            } else if (special == 71) { // Home key
+                for (int i = 0; i < currentIndex; i++) {
+                    if (inputBuffer[i] == '\t')
+                        fputs("\b\b\b\b", stdout);
+                    else putchar('\b');
+                }
+                currentIndex = 0;
+            } else if (special == 115) { // Ctrl+Left // TODO
+            } else if (special == 116) { // Ctrl+Right // TODO
+            } else {
+                //printf("%d", special); // For debugging
+            }
+            continue;
+        }
+        /*if (c == 127) { // Delete // TODO: Detect Tab character
+        
+            continue;
+        }*/
+        if (c == 24) { // Cancel
+            //buf_pop_all(inputBuffer);
+            buf_free(inputBuffer);
+            inputBuffer = NULL;
+            currentIndex = 0;
+            return NULL;
+        }
+        if (c == '\n' || c == '\r') { // Enter
+#ifdef _WIN32
+            putchar('\r');
+#endif
+            putchar('\n');
+            buf_push(inputBuffer, '\n');
+            ++currentIndex;
+            break;
+        }
+        if (c == '\t') { // Tab
+            if (currentIndex == buf_len(inputBuffer)) {
+                fputs("    ", stdout);
+                buf_push(inputBuffer, '\t');
+            } else {
+                fputs("    ", stdout);
+                buf_add(inputBuffer, 1);
+                // Move all characters up one
+                char *source = &(inputBuffer[currentIndex]);
+                char *destination = &(inputBuffer[currentIndex + 1]);
+                int amtToMove = &(inputBuffer[buf_len(inputBuffer) - 1]) - source;
+                memmove(destination, source, sizeof(char) * amtToMove);
+                // Change the character in the inputBuffer
+                inputBuffer[currentIndex] = c;
+                // Print the characters
+                for (int i = currentIndex + 1; i < buf_len(inputBuffer); i++) {
+                    if (inputBuffer[i] == '\t')
+                        fputs("    ", stdout);
+                    else putchar(inputBuffer[i]);
+                }
+                // Move back to where the cursor is
+                for (int i = 0; i < buf_len(inputBuffer) - currentIndex - 1; i++) {
+                    if (inputBuffer[buf_len(inputBuffer) - 1 - i] == '\t')
+                        fputs("\b\b\b\b", stdout);
+                    else putchar('\b');
+                }
+            }
+            
+            ++currentIndex;
+            continue;
+        }
+        if (c == '\b') { // Backspace
+            if (currentIndex > 0) {
+                if (currentIndex == buf_len(inputBuffer)) {
+                    if (inputBuffer[currentIndex - 1] == '\t')
+                        fputs("\b\b\b\b", stdout);
+                    else fputs("\b \b", stdout);
+                    buf_pop(inputBuffer);
+                    --currentIndex;
+                    continue;
+                }
+                
+                if (inputBuffer[currentIndex - 1] == '\t')
+                    fputs("\b\b\b\b", stdout);
+                else fputs("\b \b", stdout);
+                
+                // Move all characters down one
+                char *source = &(inputBuffer[currentIndex]);
+                char *destination = &(inputBuffer[currentIndex - 1]);
+                int amtToMove = buf_end(inputBuffer) - source;
+                memmove(destination, source, sizeof(char) * amtToMove);
+                
+                buf_pop(inputBuffer);
+                
+                // Print all of the characters again
+                for (int i = currentIndex - 1; i < buf_len(inputBuffer); i++) {
+                    if (inputBuffer[i] == '\t')
+                        fputs("    ", stdout);
+                    else if (inputBuffer[i] == '\n' || inputBuffer[i] == '\r')
+                        ; // Do Nothing
+                    else putchar(inputBuffer[i]);
+                }
+                
+                // Print spaces where the last character(s) used to be
+                fputs("    \b\b\b\b", stdout);
+                
+                // Move back to where the cursor is
+                for (int i = 0; i <= buf_len(inputBuffer) - currentIndex; i++) {
+                    if (inputBuffer[buf_len(inputBuffer) - 1 - i] == '\t')
+                        fputs("\b\b\b\b", stdout);
+                    else putchar('\b');
+                }
+                
+                --currentIndex;
+            }
+            continue;
+        }
+        
+        if (currentIndex == buf_len(inputBuffer)) {
+            putchar(c);
+            buf_push(inputBuffer, c);
+        } else {
+            putchar(c);
+            buf_add(inputBuffer, 1);
+            // Move all characters up one
+            char *source = &(inputBuffer[currentIndex]);
+            char *destination = &(inputBuffer[currentIndex + 1]);
+            int amtToMove = &(inputBuffer[buf_len(inputBuffer) - 1]) - source;
+            memmove(destination, source, sizeof(char) * amtToMove);
+            // Change the character in the inputBuffer
+            inputBuffer[currentIndex] = c;
+            // Print the characters
+            for (int i = currentIndex + 1; i < buf_len(inputBuffer); i++) {
+                if (inputBuffer[i] == '\t')
+                    fputs("    ", stdout);
+                else putchar(inputBuffer[i]);
+            }
+            // Move back to where the cursor is
+            for (int i = 0; i < buf_len(inputBuffer) - currentIndex - 1; i++) {
+                if (inputBuffer[buf_len(inputBuffer) - 1 - i] == '\t')
+                    fputs("\b\b\b\b", stdout);
+                else putchar('\b');
+            }
+        }
+        ++currentIndex;
+    }
+    
+    //printf("Result: %.*s\n", (int) buf_len(inputBuffer), inputBuffer);
+    
+    return inputBuffer;
+}
+
 void getFileTypeExtension(FileType ft, char **ftExt) {
     switch (ft) {
         case FT_TEXT:

@@ -219,7 +219,7 @@ EditorState editorState_menu(void) {
             printPrompt("\n<%d: %.*s|%d> ", currentBuffer - buffers, (int) buf_len(currentBuffer->openedFilename), currentBuffer->openedFilename, currentBuffer->currentLine);
         }
         
-    } else printPrompt("\n<%d: new file|%d> ", currentBuffer - buffers, currentBuffer->currentLine);
+    } else printPrompt("\n<%d: new file*|%d> ", currentBuffer - buffers, currentBuffer->currentLine);
     
     /* get first character - the menu item */
     char c;
@@ -789,6 +789,18 @@ EditorState editorState_editor(void) {
     
     char *chars = NULL;
     
+#ifdef _WIN32
+    printLineNumber("%5d ", line);
+    while ((chars = getInput()) != NULL) {
+        if (buf_len(chars) == 0) {
+            buf_free(chars);
+            break;
+        }
+        buf_push(currentBuffer->lines, ((Line) { chars }));
+        ++line;
+        printLineNumber("%5d ", line);
+    }
+#else
     printLineNumber("%5d ", line);
     while ((c = getchar()) != EOF) {
         buf_push(chars, c);
@@ -799,6 +811,7 @@ EditorState editorState_editor(void) {
             chars = NULL; // Create new char stretchy buffer for next line
         }
     }
+#endif
     
     // Set cursor to end of file
     currentBuffer->currentLine = buf_len(currentBuffer->lines);
