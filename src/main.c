@@ -5,12 +5,11 @@
 
 #ifdef _WIN32
 #include <conio.h>
-#endif
-
-#ifndef _WIN32
+#define getch _getch
+#else
 #include <unistd.h>
 #include <termios.h>
-char getch(){
+char getch() {
     /*#include <unistd.h>   //_getch*/
     /*#include <termios.h>  //_getch*/
     char buf=0;

@@ -841,7 +841,6 @@ internal void editorState_insertAfter(int line) {
     }
     
     if (canceled) {
-        printf("^X");
         buf_free(chars);
         for (int i = 0; i < buf_len(insertLines); i++) {
             buf_free(insertLines[i].chars);
@@ -905,7 +904,6 @@ internal void editorState_insertBefore(int line) {
     }
     
     if (canceled) {
-        printf("^X");
         buf_free(chars);
         for (int i = 0; i < buf_len(insertLines); i++) {
             buf_free(insertLines[i].chars);
@@ -961,7 +959,6 @@ internal void editorState_appendTo(int line) {
     int canceled = false;
     chars = getInput(&canceled);
     if (canceled) {
-        printf("^X");
         // Delete the chars buffer
         buf_free(chars);
         // Cancel the operation by returning
@@ -1000,7 +997,6 @@ internal void editorState_prependTo(int line) {
     int canceled = false;
     chars = getInput(&canceled);
     if (canceled) {
-        printf("^X");
         // Delete the chars buffer
         buf_free(chars);
         // Cancel the operation by returning
@@ -1041,7 +1037,6 @@ internal void editorState_replaceLine(int line) {
     int canceled = false;
     chars = getInput(&canceled);
     if (canceled) {
-        printf("^X");
         // Delete the chars buffer
         buf_free(chars);
         // Cancel the operation by returning
@@ -1107,7 +1102,6 @@ internal void editorState_replaceString(int line, char *str, int strLength) {
     int canceled = false;
     chars = getInput(&canceled);
     if (canceled) {
-        printf("^X");
         // Delete the chars buffer
         buf_free(chars);
         // Cancel the operation by returning

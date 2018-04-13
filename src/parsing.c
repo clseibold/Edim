@@ -130,8 +130,8 @@ char *getInput(int *canceled) {
                     else putchar('\b');
                 }
                 currentIndex = 0;
-            } else if (special == 115) { // Ctrl+Left // TODO
-            } else if (special == 116) { // Ctrl+Right // TODO
+                //} else if (special == 115) { // Ctrl+Left // TODO
+                //} else if (special == 116) { // Ctrl+Right // TODO
             } else {
                 //printf("%d", special); // For debugging
             }
@@ -143,6 +143,7 @@ char *getInput(int *canceled) {
         }*/
         if (c == 24) { // Cancel - Ctrl-X
             //buf_pop_all(inputBuffer);
+            fputs("^X", stdout);
             buf_free(inputBuffer);
             inputBuffer = NULL;
             currentIndex = 0;
