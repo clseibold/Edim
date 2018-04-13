@@ -147,7 +147,8 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
                 } else {
                     Buffer *source = currentBuffer + 1;
                     Buffer *destination = currentBuffer;
-                    memmove(destination, source, sizeof(Buffer) * 1);
+                    int amtToMove = buf_end(buffers) - source;
+                    memmove(destination, source, sizeof(Buffer) * amtToMove);
                     buf_pop(buffers);
                 }
                 if (buf_len(buffers) <= 0) {
@@ -169,7 +170,8 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
             } else {
                 Buffer *source = currentBuffer + 1;
                 Buffer *destination = currentBuffer;
-                memmove(destination, source, sizeof(Buffer) * 1);
+                int amtToMove = buf_end(buffers) - source;
+                memmove(destination, source, sizeof(Buffer) * amtToMove);
                 buf_pop(buffers);
             }
             if (buf_len(buffers) <= 0) {
@@ -654,7 +656,9 @@ EditorState editorState_menu(void) {
             for (int i = 0; i < buf_len(buffers); i++) {
                 if (buf_len(buffers[i].openedFilename) <= 0) {
                     // We can assume this is the current buffer because you can't switch or close a buffer with unsaved changes
-                    printf("*%3d: new file", i);
+                    if (currentBuffer == &(buffers[i]))
+                        printf("*%3d: new file", i);
+                    else printf("%4d: new file", i);
                 } else {
                     if (currentBuffer == &(buffers[i])) {
                         printf("*%3d: %.*s", i, (int) buf_len(buffers[i].openedFilename), buffers[i].openedFilename);
