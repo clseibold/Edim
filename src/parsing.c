@@ -309,7 +309,7 @@ void createCOutline(void) {
                 // Check that there's a space between the type and the function name
                 // Skip all characters except for space
                 while (current - start < lineLength) {
-                    if (*current == ' ') {
+                    if (*current == ' ' || *current == '\t') {
                         break;
                     }
                     ++current;
@@ -318,7 +318,7 @@ void createCOutline(void) {
                 if (current - start >= lineLength)
                     isDeclaration = false;
                 // Make sure there's at least one space
-                if (*current != ' ') isDeclaration = false;
+                if (*current != ' ' && *current != '\t') isDeclaration = false;
             } break;
         }
         
@@ -326,7 +326,7 @@ void createCOutline(void) {
             int isFunctionDeclaration = false;
             
             // Skip whitespace
-            while (*current == ' ') ++current;
+            while (*current == ' ' || *current == '\t') ++current;
             
             // Make sure there's at least one character for the function name
             if (*current != '(' && *current != ')' && *current != '=' && *current != '"' && *current != '\'' && *current != ',' && current - start < lineLength) {
@@ -339,7 +339,7 @@ void createCOutline(void) {
                     if (*current == '(') {
                         isFunctionDeclaration = true;
                         break;
-                    } else if (*current == '=' || *current == ',' || *current == '"' || *current == '\'' || *current == ' ') { // Don't allow certain characters in function names
+                    } else if (*current == '=' || *current == ',' || *current == '"' || *current == '\'' || *current == ' ' || *current == '\t') { // Don't allow certain characters in function names
                         isFunctionDeclaration = false;
                         break;
                     }
@@ -365,7 +365,7 @@ void createCOutline(void) {
                     isFunctionDeclaration = false;
                 } else {
                     // Skip whitespace
-                    while (current - start < lineLength && *current == ' ') ++current;
+                    while (current - start < lineLength && (*current == ' ' || *current == '\t')) ++current;
                     
                     // Check if next character is '{', if not, check next line
                     if (*current == '{' && current - start < lineLength) {
@@ -376,7 +376,7 @@ void createCOutline(void) {
                         char *currentNextLine = startNextLine;
                         
                         // Skip whitespace
-                        while (*currentNextLine == ' ') ++currentNextLine;
+                        while (*currentNextLine == ' ' || *currentNextLine == '\t') ++currentNextLine;
                         // Check that first non-whitespace character of next line is '{'
                         if (*currentNextLine == '{') {
                             isFunctionDeclaration = true;

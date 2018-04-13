@@ -15,11 +15,12 @@ void buffer_initEmptyBuffer(Buffer *buffer) {
     emptyOperation.lines = NULL;
     emptyOperation.original = emptyLine;
     
-    (*buffer).openedFilename = NULL;
-    (*buffer).fileType = FT_UNKNOWN;
-    (*buffer).lines = NULL;
-    (*buffer).lastOperation = emptyOperation;
-    (*buffer).modified = false;
+    buffer->openedFilename = NULL;
+    buffer->fileType = FT_UNKNOWN;
+    buffer->lines = NULL;
+    buffer->lastOperation = emptyOperation;
+    buffer->modified = false;
+    buffer->outline.nodes = NULL;
 }
 
 // filename should be zero-terminated
@@ -80,6 +81,7 @@ int buffer_openFile(Buffer *buffer, char *filename) {
         free(ftExt);
     }
     
+    buffer->openedFilename = NULL;
     for (int i = 0; i < strlen(filename) + 1; i++) {
         buf_push(buffer->openedFilename, filename[i]);
     }
@@ -93,6 +95,7 @@ int buffer_openFile(Buffer *buffer, char *filename) {
     // If fp is NULL, file doesn't exist. Return false after having set the fileType.
     if (fp == NULL) {
         buffer->modified = true;
+        fclose(fp);
         return false;
     }
     
@@ -110,6 +113,8 @@ int buffer_openFile(Buffer *buffer, char *filename) {
     // Set modified to false and current line to last line in file.
     buffer->modified = false;
     buffer->currentLine = buf_len(buffer->lines);
+    
+    printf("Filetype: %d\n", buffer->fileType);
     
     // Create the outline
     createOutline();

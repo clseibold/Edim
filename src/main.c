@@ -49,6 +49,8 @@ int main() {
     hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 #endif
     
+    buffers = NULL;
+    
     char args[MAXLENGTH] = { 0 };
     int argsLength = 0;
     int running = true;

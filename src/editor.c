@@ -6,6 +6,8 @@
 
 #include "lineeditor.h"
 
+internal EditorState editorState_openAnotherFile(char *rest, int restLength);
+
 internal void editorState_insertAfter(int line);
 internal void editorState_insertBefore(int line);
 internal void editorState_appendTo(int line);
@@ -86,6 +88,7 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
                 }
                 if (!buffer_openFile(currentBuffer, filename)) {
                     printf("File doesn't exist... Creating it.\n\n");
+                    currentBuffer->modified = true;
                     subState = editorState_editor();
                     if (subState == ED_KEEP) subState = subStatePrev;
                     newFile = true;
@@ -104,6 +107,7 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
                 filename[ii] = '\0';
                 if (!buffer_openFile(currentBuffer, filename)) {
                     printf("File doesn't exist... Creating it.\n\n");
+                    currentBuffer->modified = true;
                     subState = editorState_editor();
                     if (subState == ED_KEEP) subState = subStatePrev;
                     newFile = true;
@@ -125,7 +129,7 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
             subState = editorState_menu();
             if (subState == ED_KEEP) subState = subStatePrev;
         } break;
-        case ED_EXIT:
+        case ED_EXIT: // TODO: Close the current buffer, move buffers down. If no buffers left, goto main menu
         {
             subState = ED_EDITOR;
             
@@ -134,20 +138,32 @@ State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
                 subState = ED_MENU;
             } else {
                 buffer_close(currentBuffer);
-                initialSet = 0;
-                return MAIN_MENU;
+                buf_pop(buffers);
+                currentBuffer = buf_end(buffers) - 1;
+                if (buf_len(buffers) <= 0) {
+                    initialSet = 0;
+                    return MAIN_MENU;
+                }
             }
         } break;
         case ED_FORCE_EXIT:
         {
             buffer_close(currentBuffer);
             initialSet = 0;
-            return MAIN_MENU;
-        }
+        } return MAIN_MENU;
         case ED_QUIT:
         {
-            if (currentBuffer->modified) {
-                printError("There are unsaved changes. Use 'E' or 'Q' to close without changes.");
+            int canQuit = true;
+            
+            for (int i = 0; i < buf_len(buffers); i++) {
+                if (buffers[i].modified == true) {
+                    canQuit = false;
+                    break;
+                }
+            }
+            
+            if (!canQuit) {
+                printError("There are unsaved changes in at least one of the open buffers. Use 'E' or 'Q' to close without changes.");
                 subState = ED_MENU;
             } else return QUIT;
         } break;
@@ -198,7 +214,6 @@ EditorState editorState_menu(void) {
             printf("Use Ctrl-D or Ctrl-Z+Enter to denote end of input\n");
             printf("Use Ctrl-X+Enter to cancel the current command/operation\n");
             printf("\n");
-            printf(" * 's' - Save\n");
             /* Edit - rewrite a specific line, group of lines, group of characters in a line (given column numbers), and word/group of words */
             //printf(" * 'e' - Edit\n");
             printf(" * '#' - Gives back information on the file, including number of lines, filename, number of characters, filetype, etc.\n");
@@ -218,8 +233,12 @@ EditorState editorState_menu(void) {
             printf(" * 'p (line#:start)' - Preview whole file (optionally starting at given line)\n");
             printf(" * 'P (line#:start) (line#:end)' - Preview a line or set of lines, including the line before and after\n");
             printf(" * 'b' - List all currently open buffers\n");
-            printf(" * 'e / E' - Exit / Exit (without save)\n");
-            printf(" * 'q / Q' - Quit / Quit (without save)\n");
+            printf(" * 'o' - Open new buffer\n"); // TODO
+            //printf(" * 'e' - Close buffer\n"); // TODO
+            printf(" * 's' - Save current buffer\n");
+            printf(" * 'S' - Save all buffers\n"); // TODO
+            printf(" * 'e / E' - Exit all buffers / Exit all buffers (without save)\n");
+            printf(" * 'q / Q' - Quit, closing all buffers / Quit, closing all buffers (without save)\n");
         } break;
         case 's':
         {
@@ -572,6 +591,15 @@ EditorState editorState_menu(void) {
                 }
             }
         } break;
+        case 'l': // TODO: Reload file, prompt if unsaved changes?
+        {
+            
+        } break;
+        case 'o':
+        {
+            return editorState_openAnotherFile(rest, restLength);
+            //return editorState_editor();
+        } break;
         case 'e':
         {
             return ED_EXIT;
@@ -603,6 +631,61 @@ EditorState editorState_menu(void) {
             printError("Unknown command");
         } break;
     }
+    
+    return ED_KEEP;
+}
+
+internal EditorState editorState_openAnotherFile(char *rest, int restLength) {
+    char str[MAXLENGTH / 4];
+    int strLength = 0;
+    
+    // If a string was already given with the command
+    if (restLength - 1 > 0) {
+        // Copy into str
+        strLength = restLength;
+        strncpy(str, rest, strLength);
+        
+        // Make sure string ends with zero termination
+        assert(str[strLength - 1] == '\0');
+        
+        {
+            Buffer buffer;
+            buffer_initEmptyBuffer(&buffer);
+            buf_push(buffers, buffer);
+            currentBuffer = buf_end(buffers) - 1;
+        }
+        
+        if (!buffer_openFile(currentBuffer, str)) {
+            currentBuffer->modified = true;
+            return editorState_editor();
+        } else {
+            printFileInfo();
+            return ED_MENU;
+        }
+    }
+    
+    printPrompt("Enter file to open: ");
+    strLength = parsing_getLine(str, MAXLENGTH / 4, false);
+    while (strLength == -1) {
+        printPrompt("Enter file to open: ");
+        strLength = parsing_getLine(str, MAXLENGTH / 4, true);
+    }
+    
+    // Make sure string ends with zero termination
+    assert(str[strLength - 1] == '\0');
+    
+    {
+        Buffer buffer;
+        buffer_initEmptyBuffer(&buffer);
+        buf_push(buffers, buffer);
+        currentBuffer = buf_end(buffers) - 1;
+    }
+    
+    if (!buffer_openFile(currentBuffer, str)) {
+        printf("File doesn't exist... Creating it.\n\n");
+        currentBuffer->modified = true;
+        return ED_EDITOR;
+    } else printFileInfo();
     
     return ED_KEEP;
 }
@@ -1021,7 +1104,7 @@ void printText(int startLine) {
         printf("\n");
         return;
     }
-    printPrompt("\n<%s | preview> ", currentBuffer->openedFilename);
+    printPrompt("\n<%d: %s | preview> ", currentBuffer - buffers, currentBuffer->openedFilename);
     
     while ((c = getchar()) != EOF && offset < buf_len(currentBuffer->lines)) {
         if (c == '?') {
@@ -1032,7 +1115,7 @@ void printText(int startLine) {
             printf(" * Enter to show the next lines\n");
             // Discard the enter key
             getchar();
-            printPrompt("\n<%s | preview> ", currentBuffer->openedFilename);
+            printPrompt("\n<%d: %s | preview> ", currentBuffer - buffers, currentBuffer->openedFilename);
             continue;
         } else if (c == 'q' || c == 24) { // 26 is Ctrl-X, aka CANCEL
             // Discard the enter key
@@ -1057,7 +1140,7 @@ void printText(int startLine) {
         if (offset >= buf_len(currentBuffer->lines)) {
             break;
         }
-        printPrompt("\n<%s | preview> ", currentBuffer->openedFilename);
+        printPrompt("\n<%d: %s | preview> ", currentBuffer - buffers, currentBuffer->openedFilename);
     }
     
     printf("\n");
@@ -1068,14 +1151,12 @@ Prints one line of text given the line number. Note that the line numbers start 
 Pass false into printNewLine so the new line at the end is not printed
 */
 void printLine(int line, char operation, int printNewLine) {
-    //printf("Current Line: %d\n", currentBuffer->currentLine);
+    // If no lines in buffer and line is 0, show one line.
     if (buf_len(currentBuffer->lines) <= 0 && line == 0) {
         if (operation != 0)
             printLineNumber("%c%4d ", operation, 1);
         else {
-            if (line + 1 == currentBuffer->currentLine)
-                printLineNumber("%c%4d ", '*', 1);
-            else printLineNumber("%5d ", 1);
+            printLineNumber("%5d ", 1);
         }
         printf("\n");
         return;
@@ -1108,15 +1189,19 @@ void printLine(int line, char operation, int printNewLine) {
     // If shouldn't print new line and end of line is a new line, subtract it off from the length
     if (!printNewLine && currentBuffer->lines[line].chars[length - 1] == '\n')
         --length;
-    printf("%.*s", length, currentBuffer->lines[line].chars);
-    /*for (int i = 0; i < buf_len(currentBuffer->lines[line].chars); i++) {
-    putchar(currentBuffer->lines[line].chars[i]);
-    }*/
+    
+    //printf("%.*s", length, currentBuffer->lines[line].chars);
+    for (int i = 0; i < length; i++) {
+        if (currentBuffer->lines[line].chars[i] == '\t')
+            printf("    "); // 4 spaces // TODO: Add setting for this
+        else putchar(currentBuffer->lines[line].chars[i]);
+    }
 }
 
 // TODO: number of chars, filetype, syntax highlighting enabled, outline enabled
 void printFileInfo(void) {
-    printf("File Information for '%s'\n", currentBuffer->openedFilename);
+    printf("File information for '%.*s'\n", (int) buf_len(currentBuffer->openedFilename), currentBuffer->openedFilename);
+    //printf("File Information for '%s'\n", currentBuffer->openedFilename);
     
     int numOfLines = buf_len(currentBuffer->lines);
     // If last character of last line ends with a new line, add one to the number of lines

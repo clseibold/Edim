@@ -1,5 +1,5 @@
 # Edim Line Editor
-A simple interactive line editor program inspired by vim, ed, and modern editors.
+A simple interactive line editor program inspired by vim, ed, 4coder, and modern editors.
 This readme was written using Edim.
 
 ## Building and Running

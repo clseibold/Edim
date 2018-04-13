@@ -24,7 +24,7 @@ typedef enum State {
 } State;
 
 /* === editor.c === */
-#define MAXLENGTH 200000 /* 2000000 was too big on Windows */
+#define MAXLENGTH 900 /* 2000000 was too big on Windows */
 
 typedef enum EditorState {
     ED_KEEP,
@@ -138,6 +138,7 @@ typedef struct Buffer {
     int currentLine;
     int modified;
     union outline {
+        void *nodes;
         MarkdownOutlineNode *markdown_nodes;
         COutlineNode *c_nodes;
     } outline;
