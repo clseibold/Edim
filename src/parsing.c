@@ -427,7 +427,7 @@ void createCOutline(void) {
             char str[6] = "const ";
             int i = 0;
             int startsWithConst = true;
-            while (i < 7 && (current + i) - start < lineLength) {
+            while (i < 6 && (current + i) - start < lineLength) {
                 if (*(current + i) != str[i]) {
                     startsWithConst = false;
                     break;
