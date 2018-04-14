@@ -234,6 +234,10 @@ EditorState editorState_menu(void) {
     printf("\n");
     
     switch (c) {
+        case 12:
+        {
+            clrscr();
+        } break;
         case '?': // TODO: Add new file and open file.
         {
             if (buf_len(currentBuffer->openedFilename) > 0)
@@ -243,6 +247,7 @@ EditorState editorState_menu(void) {
             printf("Use Ctrl-D or Ctrl-Z+Enter to denote end of input\n");
             printf("Use Ctrl-X+Enter to cancel the current command/operation\n");
             printf("\n");
+            printf(" * Ctrl-L+Enter - Clear the screen\n");
             /* Edit - rewrite a specific line, group of lines, group of characters in a line (given column numbers), and word/group of words */
             //printf(" * 'e' - Edit\n");
             printf(" * '#' - Gives back information on the file, including number of lines, filename, number of characters, filetype, etc.\n");
@@ -258,7 +263,7 @@ EditorState editorState_menu(void) {
             printf(" * 'f (string)' - Finds the first occurance of the string in the file and prints the line it's on out\n");
             printf(" * 'F (line#) (string)' - Find the first occurance of the string in the line and print the line out showing you where the occurance is\n");
             printf(" * 'u' - Undo the last operation, cannot undo an undo, cannot undo past 1 operation\n"); // TODO
-            printf(" * 'c' - Continue from last line\n");
+            printf(" * 'c' - Continue from last line; Append to end of file\n");
             printf(" * 'p (line#:start)' - Preview whole file (optionally starting at given line)\n");
             printf(" * 'P (line#:start) (line#:end)' - Preview a line or set of lines, including the line before and after\n");
             printf(" * 'b' - List all currently open buffers\n");

@@ -6,6 +6,11 @@
 #ifdef _WIN32
 #include <conio.h>
 #define getch _getch
+
+// Hack for clearing screen for Windows // TODO: Improve this
+void clrscr() {
+    system("cls");
+}
 #else
 #include <unistd.h>
 #include <termios.h>
@@ -31,6 +36,12 @@ char getch() {
         perror ("tcsetattr ~ICANON");
     //printf("%c\n",buf);
     return buf;
+}
+
+// Hack for clearing screen for Linux and Mac // TODO: Improve this
+void clrscr() {
+    //system("clear");
+    printf("\e[1;1H\e[2J"); // Much better // TODO: Check whether actually portable though
 }
 #endif
 

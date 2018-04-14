@@ -1,6 +1,7 @@
 #ifndef LINEEDITOR_H
 #define LINEEDITOR_H
 
+#include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdint.h>
@@ -15,6 +16,17 @@
 #define forever for(;;)
 
 #define internal static
+
+void clrscr();
+
+#ifdef _WIN32
+#include <conio.h>
+#define getch _getch
+#else
+#include <unistd.h>
+#include <termios.h>
+char getch();
+#endif
 
 typedef enum State {
     KEEP,
@@ -177,6 +189,7 @@ int buffer_findStringInFile(Buffer *buffer, char *str, int strLength, int *colIn
 /* === Colors === */
 
 #ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
 #define FOREGROUND_YELLOW FOREGROUND_RED|FOREGROUND_GREEN
