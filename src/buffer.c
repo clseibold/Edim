@@ -95,6 +95,7 @@ int buffer_openFile(Buffer *buffer, char *filename) {
     // If fp is NULL, file doesn't exist. Return false after having set the fileType.
     if (fp == NULL) {
         buffer->modified = true;
+        fclose(fp);
         return false;
     }
     
@@ -501,7 +502,7 @@ int buffer_findStringInFile(Buffer *buffer, char *str, int strLength, int *colIn
         
         if (index != -1) {
             (*colIndex) = index;
-            buffer->currentLine = line; // TODO
+            buffer->currentLine = line + 1; // TODO
             return line;
         }
     }
