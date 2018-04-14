@@ -1370,7 +1370,12 @@ void printText(int startLine) {
     }
     printPrompt("\n<%d: %s | preview> ", currentBuffer - buffers, currentBuffer->openedFilename);
     
-    while ((c = getch()) != EOF && offset < buf_len(currentBuffer->lines)) {
+#ifdef _WIN32
+    while ((c = getch()) != EOF && offset < buf_len(currentBuffer->lines))
+#else
+        while ((c = getchar()) != EOF && offset < buf_len(currentBuffer->lines))
+#endif
+    {
         if (c == '?') {
             // Print help info about preview command here
             printf("\nPreviewing '%s'\n", currentBuffer->openedFilename);
