@@ -1370,7 +1370,7 @@ void printText(int startLine) {
     }
     printPrompt("\n<%d: %s | preview> ", currentBuffer - buffers, currentBuffer->openedFilename);
     
-    while ((c = getchar()) != EOF && offset < buf_len(currentBuffer->lines)) {
+    while ((c = getch()) != EOF && offset < buf_len(currentBuffer->lines)) {
         if (c == '?') {
             // Print help info about preview command here
             printf("\nPreviewing '%s'\n", currentBuffer->openedFilename);
@@ -1378,12 +1378,12 @@ void printText(int startLine) {
             printf(" * 'Q' to exit the whole program\n");
             printf(" * Enter to show the next lines\n");
             // Discard the enter key
-            getchar();
+            //getchar();
             printPrompt("\n<%d: %s | preview> ", currentBuffer - buffers, currentBuffer->openedFilename);
             continue;
         } else if (c == 'q' || c == 24) { // 26 is Ctrl-X, aka CANCEL
             // Discard the enter key
-            getchar();
+            //getchar();
             break;
         } else if (c == 'Q') {
             exit(0);
