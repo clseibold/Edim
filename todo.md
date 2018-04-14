@@ -26,3 +26,4 @@
   - Virtual Whitespace system (like 4coder)?
 * On main menu (or in editor), add command to show listing in current directory (or directory of file)
   - also allow showing tree of current directory (or directory of file)
+* 'fn' for finding after cursor and 'fp' for finding before cursor. Concurrent fn's without a string passed in will continue searching. 'fn' and 'fp', just like 'f', will change the current cursor to the line the occurance was found on.

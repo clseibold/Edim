@@ -406,6 +406,12 @@ void createCOutline(void) {
             
             // Skip whitespace
             while (current - start < lineLength && (*current == ' ' || *current == '\t')) ++current;
+        } else if (*current == 'i' && *(current + 1) == 'n' && *(current + 2) == 'l' && *(current + 3) == 'i' && *(current + 4) == 'n' && *(current + 5) == 'e' && *(current + 6) == ' ') {
+            current += 7;
+            
+            // Skip whitespace
+            while (current - start < lineLength && (*current == ' ' || *current == '\t'))
+                ++current;
         } else if (*current == 's') {
             char str[7] = "static ";
             int i = 0;
