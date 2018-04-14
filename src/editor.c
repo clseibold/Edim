@@ -1350,7 +1350,7 @@ void printText(int startLine) {
         return;
     }
     
-    int linesAtATime = 10; // TODO: Should have a setting for this.
+    int linesAtATime = 15; // TODO: Should have a setting for this.
     int offset = startLine;
     char c;
     
@@ -1394,7 +1394,10 @@ void printText(int startLine) {
             exit(0);
         }
         
-        printf("\n");
+        printf("\r");
+        for (int i = 0; i < 45; i++) // TODO: Hacky
+            printf(" ");
+        printf("\r");
         for (int line = offset; line < linesAtATime + offset + 1 && line <= buf_len(currentBuffer->lines); line++) {
             if (line == buf_len(currentBuffer->lines)) {
                 if (line + 1 == currentBuffer->currentLine)
