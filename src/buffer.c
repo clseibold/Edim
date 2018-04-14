@@ -453,6 +453,8 @@ void buffer_deleteLine(Buffer *buffer, int line) {
     buffer->modified = true;
     if (lineToDelete - 1 > 0)
         buffer->currentLine = lineToDelete - 1;
+    else if (lineToDelete > buf_len(buffer->lines))
+        buffer->currentLine = buf_len(buffer->lines);
     else buffer->currentLine = lineToDelete;
 }
 
@@ -485,6 +487,8 @@ int buffer_findStringInLine(Buffer *buffer, int line, char *str, int strLength) 
         }
     }
     
+    buffer->currentLine = lineToSearch;
+    
     // Return the index
     return index;
 }
@@ -498,6 +502,7 @@ int buffer_findStringInFile(Buffer *buffer, char *str, int strLength, int *colIn
         
         if (index != -1) {
             (*colIndex) = index;
+            buffer->currentLine = line; // TODO
             return line;
         }
     }

@@ -234,7 +234,7 @@ EditorState editorState_menu(void) {
     printf("\n");
     
     switch (c) {
-        case 12:
+        case 12: // Ctrl-L
         {
             clrscr();
         } break;
@@ -251,6 +251,7 @@ EditorState editorState_menu(void) {
             /* Edit - rewrite a specific line, group of lines, group of characters in a line (given column numbers), and word/group of words */
             //printf(" * 'e' - Edit\n");
             printf(" * '#' - Gives back information on the file, including number of lines, filename, number of characters, filetype, etc.\n");
+            printf(" * 'j (line#)' - Set's current line to line number (no output). Use 'j$' to set last line as current line.");
             printf(" * 'a (line#)' - Insert after the line number\n");
             printf(" * 'i (line#)' - Insert before the line number\n");
             printf(" * 'A (line#)' - Appends to a line\n");
@@ -276,6 +277,29 @@ EditorState editorState_menu(void) {
             //printf(" * 'S' - Save all buffers\n"); // TODO
             printf(" * 'e / E' - Exit current buffer / Exit current buffer (without save)\n");
             printf(" * 'q / Q' - Quit, closing all buffers / Quit, closing all buffers (without save)\n");
+        } break;
+        case 'j':
+        {
+            char *end;
+            
+            if (rest[0] == '$' || (rest[0] == ' ' && rest[1] == '$')) {
+                currentBuffer->currentLine = buf_len(currentBuffer->lines);
+                break;
+            }
+            
+            int line = (int) strtol(rest, &end, 10);
+            
+            char lineInput[MAXLENGTH / 4];
+            int length;
+            while (line <= 0 || line > buf_len(currentBuffer->lines) || length == -1) {
+                if (rest != end)
+                    printError("That line number exceeds the bounds of the file.\n");
+                printPrompt("Enter a line number: ");
+                length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
+                line = (int) strtol(lineInput, &end, 10);
+            }
+            
+            currentBuffer->currentLine = line;
         } break;
         case 's':
         {
@@ -312,15 +336,18 @@ EditorState editorState_menu(void) {
             char *end;
             int line = (int) strtol(rest, &end, 10);
             
-            char lineInput[MAXLENGTH / 4];
-            int length;
-            while (line < 0 || line > buf_len(currentBuffer->lines) || length == -1) {
-                if (rest != end)
-                    printError("That line number exceeds the bounds of the file.\n");
-                printPrompt("Enter a line number: ");
-                length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
-                line = (int) strtol(lineInput, &end, 10);
-            }
+            // Only ask for line number (again) if it exceeds the bounds of the file and a number was passed in the args to the command. If no line number was passed into command, then use current line number
+            if (line != 0) {
+                char lineInput[MAXLENGTH / 4];
+                int length;
+                while (line < 0 || line > buf_len(currentBuffer->lines) || length == -1) {
+                    if (rest != end)
+                        printError("That line number exceeds the bounds of the file.\n");
+                    printPrompt("Enter a line number: ");
+                    length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
+                    line = (int) strtol(lineInput, &end, 10);
+                }
+            } else line = -1;
             
             if (line == 0)
                 editorState_insertBefore(1);
@@ -332,15 +359,18 @@ EditorState editorState_menu(void) {
             char *end;
             int line = (int) strtol(rest, &end, 10);
             
-            char lineInput[MAXLENGTH / 4];
-            int length;
-            while (line <= 0 || line > buf_len(currentBuffer->lines) + 1 || length == -1) {
-                if (rest != end)
-                    printError("That line number exceeds the bounds of the file.\n");
-                printPrompt("Enter a line number: ");
-                length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
-                line = (int) strtol(lineInput, &end, 10);
-            }
+            // Only ask for line number (again) if it exceeds the bounds of the file and a number was passed in the args to the command. If no line number was passed into command, then use current line number
+            if (line != 0) {
+                char lineInput[MAXLENGTH / 4];
+                int length;
+                while (line <= 0 || line > buf_len(currentBuffer->lines) + 1 || length == -1) {
+                    if (rest != end)
+                        printError("That line number exceeds the bounds of the file.\n");
+                    printPrompt("Enter a line number: ");
+                    length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
+                    line = (int) strtol(lineInput, &end, 10);
+                }
+            } else line = -1;
             
             if (line == buf_len(currentBuffer->lines) + 1)
                 editorState_insertAfter(buf_len(currentBuffer->lines));
@@ -352,15 +382,18 @@ EditorState editorState_menu(void) {
             char *end;
             int line = (int) strtol(rest, &end, 10);
             
-            char lineInput[MAXLENGTH / 4];
-            int length;
-            while (line <= 0 || line > buf_len(currentBuffer->lines) || length == -1) {
-                if (rest != end)
-                    printError("That line number exceeds the bounds of the file.\n");
-                printPrompt("Enter a line number: ");
-                length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
-                line = (int) strtol(lineInput, &end, 10);
-            }
+            // Only ask for line number (again) if it exceeds the bounds of the file and a number was passed in the args to the command. If no line number was passed into command, then use current line number
+            if (line != 0) {
+                char lineInput[MAXLENGTH / 4];
+                int length;
+                while (line <= 0 || line > buf_len(currentBuffer->lines) || length == -1) {
+                    if (rest != end)
+                        printError("That line number exceeds the bounds of the file.\n");
+                    printPrompt("Enter a line number: ");
+                    length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
+                    line = (int) strtol(lineInput, &end, 10);
+                }
+            } else line = -1;
             
             editorState_appendTo(line);
             recreateOutline();
@@ -370,15 +403,18 @@ EditorState editorState_menu(void) {
             char *end;
             int line = (int) strtol(rest, &end, 10);
             
-            char lineInput[MAXLENGTH / 4];
-            int length;
-            while (line <= 0 || line > buf_len(currentBuffer->lines) || length == -1) {
-                if (rest != end)
-                    printError("That line number exceeds the bounds of the file.\n");
-                printPrompt("Enter a line number: ");
-                length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
-                line = (int) strtol(lineInput, &end, 10);
-            }
+            // Only ask for line number (again) if it exceeds the bounds of the file and a number was passed in the args to the command. If no line number was passed into command, then use current line number
+            if (line != 0) {
+                char lineInput[MAXLENGTH / 4];
+                int length;
+                while (line <= 0 || line > buf_len(currentBuffer->lines) || length == -1) {
+                    if (rest != end)
+                        printError("That line number exceeds the bounds of the file.\n");
+                    printPrompt("Enter a line number: ");
+                    length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
+                    line = (int) strtol(lineInput, &end, 10);
+                }
+            } else line = -1;
             
             editorState_prependTo(line);
             recreateOutline();
@@ -388,15 +424,18 @@ EditorState editorState_menu(void) {
             char *end;
             int line = (int) strtol(rest, &end, 10);
             
-            char lineInput[MAXLENGTH / 4];
-            int length;
-            while (line <= 0 || line > buf_len(currentBuffer->lines) || length == -1) {
-                if (rest != end)
-                    printError("That line number exceeds the bounds of the file.\n");
-                printPrompt("Enter a line number: ");
-                length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
-                line = (int) strtol(lineInput, &end, 10);
-            }
+            // Only ask for line number (again) if it exceeds the bounds of the file and a number was passed in the args to the command. If no line number was passed into command, then use current line number
+            if (line != 0) {
+                char lineInput[MAXLENGTH / 4];
+                int length;
+                while (line <= 0 || line > buf_len(currentBuffer->lines) || length == -1) {
+                    if (rest != end)
+                        printError("That line number exceeds the bounds of the file.\n");
+                    printPrompt("Enter a line number: ");
+                    length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
+                    line = (int) strtol(lineInput, &end, 10);
+                }
+            } else line = -1;
             
             editorState_replaceLine(line);
             recreateOutline();
@@ -407,15 +446,18 @@ EditorState editorState_menu(void) {
             int line = (int) strtol(rest, &end, 10);
             ++end; // Don't include the space in between the line number and the string to replace
             
-            char lineInput[MAXLENGTH / 4];
-            int length;
-            while (line <= 0 || line > buf_len(currentBuffer->lines) || length == -1) {
-                if (rest != end)
-                    printError("That line number exceeds the bounds of the file.\n");
-                printPrompt("Enter a line number: ");
-                length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
-                line = (int) strtol(lineInput, &end, 10);
-            }
+            // Only ask for line number (again) if it exceeds the bounds of the file and a number was passed in the args to the command. If no line number was passed into command, then use current line number
+            if (line != 0) {
+                char lineInput[MAXLENGTH / 4];
+                int length;
+                while (line <= 0 || line > buf_len(currentBuffer->lines) || length == -1) {
+                    if (rest != end)
+                        printError("That line number exceeds the bounds of the file.\n");
+                    printPrompt("Enter a line number: ");
+                    length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
+                    line = (int) strtol(lineInput, &end, 10);
+                }
+            } else line = -1;
             
             char str[MAXLENGTH / 4];
             int strLength = 0;
@@ -445,15 +487,18 @@ EditorState editorState_menu(void) {
             char *end;
             int line = (int) strtol(rest, &end, 10);
             
-            char lineInput[MAXLENGTH / 4];
-            int length;
-            while (line == 0 || line > buf_len(currentBuffer->lines) || length == -1) {
-                if (rest != end)
-                    printError("That line number exceeds the bounds of the file.\n");
-                printPrompt("Enter a line number: ");
-                length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
-                line = (int) strtol(lineInput, &end, 10);
-            }
+            // Only ask for line number (again) if it exceeds the bounds of the file and a number was passed in the args to the command. If no line number was passed into command, then use current line number
+            if (line != 0) {
+                char lineInput[MAXLENGTH / 4];
+                int length;
+                while (line == 0 || line > buf_len(currentBuffer->lines) || length == -1) {
+                    if (rest != end)
+                        printError("That line number exceeds the bounds of the file.\n");
+                    printPrompt("Enter a line number: ");
+                    length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
+                    line = (int) strtol(lineInput, &end, 10);
+                }
+            } else line = -1;
             
             editorState_deleteLine(line);
             recreateOutline();
@@ -463,15 +508,20 @@ EditorState editorState_menu(void) {
             char *end;
             int line = (int) strtol(rest, &end, 10);
             
-            char lineInput[MAXLENGTH / 4];
-            int length;
-            while (line == 0 || line > buf_len(currentBuffer->lines) || length == -1) {
-                if (rest != end)
-                    printError("That line number exceeds the bounds of the file.\n");
-                printPrompt("Enter a line number: ");
-                length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
-                line = (int) strtol(lineInput, &end, 10);
-            }
+            printf("%d\n", line);
+            
+            // Only ask for line number (again) if it exceeds the bounds of the file and a number was passed in the args to the command. If no line number was passed into command, then use current line number
+            if (line != 0) {
+                char lineInput[MAXLENGTH / 4];
+                int length;
+                while (line <= 0 || line > buf_len(currentBuffer->lines) || length == -1) {
+                    if (rest != end)
+                        printError("That line number exceeds the bounds of the file.\n");
+                    printPrompt("Enter a line number: ");
+                    length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
+                    line = (int) strtol(lineInput, &end, 10);
+                }
+            } else line = -1;
             
             editorState_moveUp(line);
             recreateOutline();
@@ -481,15 +531,18 @@ EditorState editorState_menu(void) {
             char *end;
             int line = (int) strtol(rest, &end, 10);
             
-            char lineInput[MAXLENGTH / 4];
-            int length;
-            while (line == 0 || line > buf_len(currentBuffer->lines) || length == -1) {
-                if (rest != end)
-                    printError("That line number exceeds the bounds of the file.\n");
-                printPrompt("Enter a line number: ");
-                length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
-                line = (int) strtol(lineInput, &end, 10);
-            }
+            // Only ask for line number (again) if it exceeds the bounds of the file and a number was passed in the args to the command. If no line number was passed into command, then use current line number
+            if (line != 0) {
+                char lineInput[MAXLENGTH / 4];
+                int length;
+                while (line <= 0 || line > buf_len(currentBuffer->lines) || length == -1) {
+                    if (rest != end)
+                        printError("That line number exceeds the bounds of the file.\n");
+                    printPrompt("Enter a line number: ");
+                    length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
+                    line = (int) strtol(lineInput, &end, 10);
+                }
+            } else line = -1;
             
             editorState_moveDown(line);
             recreateOutline();
@@ -499,7 +552,9 @@ EditorState editorState_menu(void) {
             char *end;
             int line = (int) strtol(rest, &end, 10);
             
-            if (line <= 0 || line > buf_len(currentBuffer->lines))
+            if (line == 0)
+                printText(currentBuffer->currentLine - 1);
+            else if (line < 0 || line > buf_len(currentBuffer->lines))
                 printText(0);
             else printText(line - 1);
         } break;
@@ -509,15 +564,18 @@ EditorState editorState_menu(void) {
             int line = (int) strtol(rest, &end, 10);
             ++end; // Don't include the space in between the first line number and the second line number
             
-            char lineInput[MAXLENGTH / 4];
-            int length;
-            while (line == 0 || line > buf_len(currentBuffer->lines) || length == -1) {
-                if (rest != end)
-                    printError("That line number exceeds the bounds of the file.\n");
-                printPrompt("Enter a line number: ");
-                length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
-                line = (int) strtol(lineInput, &end, 10);
-            }
+            // Only ask for line number (again) if it exceeds the bounds of the file and a number was passed in the args to the command. If no line number was passed into command, then use current line number
+            if (line != 0) {
+                char lineInput[MAXLENGTH / 4];
+                int length;
+                while (line == 0 || line > buf_len(currentBuffer->lines) || length == -1) {
+                    if (rest != end)
+                        printError("That line number exceeds the bounds of the file.\n");
+                    printPrompt("Enter a line number: ");
+                    length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
+                    line = (int) strtol(lineInput, &end, 10);
+                }
+            } else line = currentBuffer->currentLine;
             
             int endLine;
             char *end2;
@@ -579,15 +637,18 @@ EditorState editorState_menu(void) {
             int line = (int) strtol(rest, &end, 10);
             ++end; // Don't include the space in between the line number and the string to replace
             
-            char lineInput[MAXLENGTH / 4];
-            int length;
-            while (line <= 0 || line > buf_len(currentBuffer->lines) || length == -1) {
-                if (rest != end)
-                    printError("That line number exceeds the bounds of the file.\n");
-                printPrompt("Enter a line number: ");
-                length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
-                line = (int) strtol(lineInput, &end, 10);
-            }
+            // Only ask for line number (again) if it exceeds the bounds of the file and a number was passed in the args to the command. If no line number was passed into command, then use current line number
+            if (line != 0) {
+                char lineInput[MAXLENGTH / 4];
+                int length;
+                while (line <= 0 || line > buf_len(currentBuffer->lines) || length == -1) {
+                    if (rest != end)
+                        printError("That line number exceeds the bounds of the file.\n");
+                    printPrompt("Enter a line number: ");
+                    length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
+                    line = (int) strtol(lineInput, &end, 10);
+                }
+            } else line = -1;
             
             char str[MAXLENGTH / 4];
             int strLength = 0;
@@ -828,6 +889,7 @@ EditorState editorState_editor(void) {
 
 // Insert lines after a specific line. Denote end of input by typing Ctrl-D (or Ctrl-Z+Enter on Windows) on new line.
 internal void editorState_insertAfter(int line) {
+    if (line == -1) line = currentBuffer->currentLine;
     char c;
     if (line - 1 >= 0 && line - 1 < buf_len(currentBuffer->lines))
         printLine(line - 1, 0, true);
@@ -891,6 +953,7 @@ internal void editorState_insertAfter(int line) {
 }
 
 internal void editorState_insertBefore(int line) {
+    if (line == -1) line = currentBuffer->currentLine;
     char c;
     if (line - 2 >= 0 && line - 1 < buf_len(currentBuffer->lines))
         printLine(line - 2, 0, true);
@@ -954,6 +1017,7 @@ internal void editorState_insertBefore(int line) {
 }
 
 internal void editorState_appendTo(int line) {
+    if (line == -1) line = currentBuffer->currentLine;
     char c;
     char *chars = NULL;
     if (line - 2 >= 0 && line - 2 < buf_len(currentBuffer->lines))
@@ -990,6 +1054,7 @@ internal void editorState_appendTo(int line) {
 }
 
 internal void editorState_prependTo(int line) {
+    if (line == -1) line = currentBuffer->currentLine;
     char c;
     if (line - 2 >= 0 && line - 2 < buf_len(currentBuffer->lines))
         printLine(line - 2, 0, true);
@@ -1030,6 +1095,7 @@ internal void editorState_prependTo(int line) {
 }
 
 internal void editorState_replaceLine(int line) {
+    if (line == -1) line = currentBuffer->currentLine;
     char c;
     if (line - 2 >= 0 && line - 2 < buf_len(currentBuffer->lines))
         printLine(line - 2, 0, true);
@@ -1066,6 +1132,7 @@ internal void editorState_replaceLine(int line) {
 }
 
 internal void editorState_replaceString(int line, char *str, int strLength) {
+    if (line == -1) line = currentBuffer->currentLine;
     char c;
     
     int index = buffer_findStringInLine(currentBuffer, line, str, strLength);
@@ -1138,6 +1205,7 @@ internal void editorState_replaceString(int line, char *str, int strLength) {
 // Displays the line with an arrow pointing to the occurance
 // Will also show the line before it to give context and the column of the start of the occurance
 internal void editorState_findStringInLine(int line, char *str, int strLength) {
+    if (line == -1) line = currentBuffer->currentLine;
     int index = buffer_findStringInLine(currentBuffer, line, str, strLength);
     
     if (index == -1) {
@@ -1218,6 +1286,7 @@ internal void editorState_findStringInFile(char *str, int strLength) {
 }
 
 internal void editorState_deleteLine(int line) {
+    if (line == -1) line = currentBuffer->currentLine;
     // Show the line before the line that's being deleted
     if (line - 1 > 0)
         printLine(line - 2, 0, true);
@@ -1242,6 +1311,7 @@ internal void editorState_deleteLine(int line) {
 }
 
 internal void editorState_moveUp(int line) {
+    if (line == -1) line = currentBuffer->currentLine;
     // Show the line before the line being moved up to
     if (line - 2 > 0)
         printLine(line - 3, 0, true);
@@ -1257,6 +1327,7 @@ internal void editorState_moveUp(int line) {
 }
 
 internal void editorState_moveDown(int line) {
+    if (line == -1) line = currentBuffer->currentLine;
     // Show the line before the line being moved down
     if (line - 1 > 0)
         printLine(line - 2, 0, true);
@@ -1344,6 +1415,7 @@ Prints one line of text given the line number. Note that the line numbers start 
 Pass false into printNewLine so the new line at the end is not printed
 */
 void printLine(int line, char operation, int printNewLine) {
+    if (line == -1) line = currentBuffer->currentLine;
     // If no lines in buffer and line is 0, show one line.
     if (buf_len(currentBuffer->lines) <= 0 && line == 0) {
         if (operation != 0)
