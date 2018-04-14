@@ -11,6 +11,7 @@
 
 #define true 1
 #define false 0
+#define bool char
 #define forever for(;;)
 
 #define internal static
@@ -137,7 +138,7 @@ typedef struct Buffer {
     // Used by default when no line passed into a command.
     // Commands that modify the file will change the currentLine to the last line it modified. Some commands, like 'c', don't modify the file based on the current line, but will change the current line to what it's modifying ('c' will change the current line to the last line in the file and start inserting from there).
     int currentLine;
-    int modified;
+    bool modified;
     union outline {
         void *nodes;
         MarkdownOutlineNode *markdown_nodes;

@@ -405,7 +405,7 @@ void createCOutline(void) {
             current += 8;
             
             // Skip whitespace
-            while ((current - start < lineLength) &&*current == ' ' || *current == '\t') ++current;
+            while (current - start < lineLength && (*current == ' ' || *current == '\t')) ++current;
         } else if (*current == 's') {
             char str[7] = "static ";
             int i = 0;
@@ -422,7 +422,25 @@ void createCOutline(void) {
             }
             
             // Skip whitespace
-            while ((current - start < lineLength) &&*current == ' ' || *current == '\t') ++current;
+            while (current - start < lineLength && (*current == ' ' || *current == '\t')) ++current;
+        } else if (*current == 'c') {
+            char str[6] = "const ";
+            int i = 0;
+            int startsWithConst = true;
+            while (i < 7 && (current + i) - start < lineLength) {
+                if (*(current + i) != str[i]) {
+                    startsWithConst = false;
+                    break;
+                }
+                ++i;
+            }
+            if (startsWithConst) {
+                current += 6;
+            }
+            
+            // Skip whitespace
+            if (current - start < lineLength && (*current == ' ' || *current == '\t'))
+                ++current;
         }
         
         int isDeclaration = true;
