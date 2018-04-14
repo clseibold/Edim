@@ -48,6 +48,8 @@ To run the release executable, on Windows run `build run release`.
 * Show outline of C files (shows function implementations)
 * When opening file, if it doesn't exist, go straight to the editor to create the file.
 * Ability to open multiple buffers (files), switch between them, and close them.
+* Set current line number to specified line ('j (line#)') or to last line in file ('j$').
+* When a command accepts a line number as first argument and one wasn't passed in, use current line instead.
 
 ## TODO
 * Cancel Prompts for getting information for a command (for example, when it prompt you to enter a line number when one wasn't provided when the command was typed)
