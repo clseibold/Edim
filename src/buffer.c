@@ -95,7 +95,6 @@ int buffer_openFile(Buffer *buffer, char *filename) {
     // If fp is NULL, file doesn't exist. Return false after having set the fileType.
     if (fp == NULL) {
         buffer->modified = true;
-        fclose(fp);
         return false;
     }
     
