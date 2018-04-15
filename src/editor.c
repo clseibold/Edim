@@ -841,7 +841,7 @@ internal EditorState editorState_openAnotherFile(char *rest, int restLength) {
 
 // Editor - will allow user to type in anything, showing line number at start of new lines. To exit the editor, press Ctrl-D on Linux or Ctrl-Z+Enter on Windows. As each new line is entered, the characters will be added to a char pointer streatchy buffer (dynamic array). Then, this line will be added to the streatchy buffer of lines (called 'lines').
 EditorState editorState_editor(void) {
-    char c;
+    int c;
     int line = 1;
     
     // If continuing a previously typed-in file,
@@ -855,7 +855,7 @@ EditorState editorState_editor(void) {
     
     char *chars = NULL;
     
-#ifdef _WIN32
+//#ifdef _WIN32
     printLineNumber("%5d ", line);
     int canceled = false;
     while ((chars = getInput(&canceled)) != NULL) {
@@ -868,7 +868,7 @@ EditorState editorState_editor(void) {
         // TODO: close the buffer?
     }
     printf("\n");
-#else
+#if 0
     printLineNumber("%5d ", line);
     while ((c = getchar()) != EOF) {
         buf_push(chars, c);

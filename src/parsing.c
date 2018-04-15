@@ -74,26 +74,40 @@ char *getInput(int *canceled) {
     (*canceled) = false;
     char *inputBuffer = NULL;
     
-    int c;
+    char c;
     int currentIndex = 0;
-    while ((c = getch()) != 26) { // Ctrl-Z
-        if (c == 0 || c == 224) {
-            int special = getch();
-            if (special == 75) { // Left arrow
+    while ((c = getch()) != ENDINPUT) { // Ctrl-Z for Windows, Ctrl-D for Linux
+#ifdef _WIN32
+        if (c == 0 || c == 224)
+#else
+	if (c == SPECIAL1)
+#endif
+	{
+#ifndef _WIN32
+	    if (getch() == SPECIAL2) {
+#endif
+	    int specialkey = getch();
+            if (specialkey == LEFT) { // Left arrow
                 if (currentIndex != 0) {
                     if (inputBuffer[currentIndex - 1] == '\t')
                         fputs("\b\b\b\b", stdout);
                     else putchar('\b');
                     --currentIndex;
                 }
-            } else if (special == 77) { // Right arrow
+            } else if (specialkey == RIGHT) { // Right arrow
                 if (currentIndex < buf_len(inputBuffer)) {
                     if (inputBuffer[currentIndex] == '\t')
                         fputs("    ", stdout);
                     else putchar(inputBuffer[currentIndex]);
                     ++currentIndex;
                 }
-            } else if (special == 83) { // Delete
+#ifdef _WIN32
+            } else if (specialkey == 83) { // Delete
+#else
+	    } else if (specialkey == DELETE1) {
+		int special2 = getch();
+		if (special2 == DELETE2) {
+#endif
                 if (currentIndex < buf_len(inputBuffer)) {
                     // Move all the characters down one
                     char *source = &(inputBuffer[currentIndex + 1]);
@@ -116,14 +130,17 @@ char *getInput(int *canceled) {
                         else putchar('\b');
                     }
                 }
-            } else if (special == 79) { // End key
+#ifndef _WIN32
+	        }
+#endif
+            } else if (specialkey == END) { // End key
                 for (int i = currentIndex; i < buf_len(inputBuffer); i++) {
                     if (inputBuffer[i] == '\t')
                         fputs("    ", stdout);
                     else putchar(inputBuffer[i]);
                 }
                 currentIndex = buf_len(inputBuffer);
-            } else if (special == 71) { // Home key
+            } else if (specialkey == HOME) { // Home key
                 for (int i = 0; i < currentIndex; i++) {
                     if (inputBuffer[i] == '\t')
                         fputs("\b\b\b\b", stdout);
@@ -136,11 +153,10 @@ char *getInput(int *canceled) {
                 //printf("%d", special); // For debugging
             }
             continue;
+#ifndef _WIN32
+	    }
+#endif
         }
-        /*if (c == 127) { // Delete // TODO: Detect Tab character
-        
-            continue;
-        }*/
         if (c == 24) { // Cancel - Ctrl-X
             //buf_pop_all(inputBuffer);
             fputs("^X", stdout);
@@ -190,7 +206,12 @@ char *getInput(int *canceled) {
             ++currentIndex;
             continue;
         }
-        if (c == '\b') { // Backspace
+#ifdef _WIN32
+        if (c == '\b') // Backspace - Windows
+#else
+	if (c == 127) // Backspace - Linux
+#endif
+	{
             if (currentIndex > 0) {
                 if (currentIndex == buf_len(inputBuffer)) {
                     if (inputBuffer[currentIndex - 1] == '\t')

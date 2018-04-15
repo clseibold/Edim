@@ -93,9 +93,9 @@ int main() {
     char c;
     //printf("Test\b \b\n");
     //getInput();
-    /*while ((c = getch()) != 'Q') {
-        printf("%c", c);
-    }*/
+    while ((c = getch()) != 'Q') {
+        printf("%d\n", c);
+    }
     
     buffers = NULL;
     
