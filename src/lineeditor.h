@@ -23,6 +23,7 @@ void clrscr();
 #include <conio.h>
 #define getch _getch
 #else
+#include <alloca.h>
 #include <unistd.h>
 #include <termios.h>
 char getch();
