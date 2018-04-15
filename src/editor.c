@@ -850,12 +850,8 @@ EditorState editorState_editor(void) {
         line = buf_len(currentBuffer->lines) + 1;
     }
     
-    // Show the previous line to give context.
-    printLine(line - 2, 0, true);
-    
     char *chars = NULL;
     
-//#ifdef _WIN32
     printLineNumber("%5d ", line);
     int canceled = false;
     while ((chars = getInput(&canceled)) != NULL) {
