@@ -64,8 +64,8 @@ void printFileInfo(void);
 
 // Special Keys
 #ifdef _WIN32
-#define INPUT_SPECIAL1 0
-#define INPUT_SPECIAL2 224
+#define INPUT_SPECIAL1 -32
+#define INPUT_SPECIAL2 224 // TODO
 #define INPUT_LEFT 75
 #define INPUT_RIGHT 77
 #define INPUT_DELETE 83
