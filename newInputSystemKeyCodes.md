@@ -1,19 +1,19 @@
 # New Input System - Special Key Characters
 
 ## Linux
-Special = 279
+Special = 27, 91
 Backspace = 127
 Enter = 10
 Ctrl-D = 4
 Esc = 27
 Tab = 9
 Ctrl-X = 24
-Left = Special, 168
-Right = Special, 167
-Up = Special, 165
-Down = Special, 166
-Ctrl-Left = Special, 149, 595, 368
-Ctrl-Right = Special, 149, 595, 367
-End = Special, 170
-Home = Special, 172
-Delete = Special, 151, 126
+Left = Special, 68
+Right = Special, 67
+Up = Special, 65
+Down = Special, 66
+Ctrl-Left = Special, 59, 53, 68
+Ctrl-Right = Special, 59, 53, 67
+End = Special, 70
+Home = Special, 72
+Delete = Special, 51, 126
