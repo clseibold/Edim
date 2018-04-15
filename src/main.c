@@ -90,12 +90,12 @@ int main() {
     // Used for printing in color on Windows
     hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 #endif
-    char c;
+    //char c;
     //printf("Test\b \b\n");
     //getInput();
-    while ((c = getch()) != 'Q') {
+    /*while ((c = getch()) != 'Q') {
         printf("%d\n", c);
-    }
+    }*/
     
     buffers = NULL;
     

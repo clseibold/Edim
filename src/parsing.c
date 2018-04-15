@@ -76,25 +76,25 @@ char *getInput(int *canceled) {
     
     char c;
     int currentIndex = 0;
-    while ((c = getch()) != ENDINPUT) { // Ctrl-Z for Windows, Ctrl-D for Linux
+    while ((c = getch()) != INPUT_ENDINPUT) { // Ctrl-Z for Windows, Ctrl-D for Linux
 #ifdef _WIN32
-        if (c == 0 || c == 224)
+        if (c == INPUT_SPECIAL1 || c == INPUT_SPECIAL2)
 #else
-	if (c == SPECIAL1)
+	if (c == INPUT_SPECIAL1)
 #endif
 	{
 #ifndef _WIN32
-	    if (getch() == SPECIAL2) {
+	    if (getch() == INPUT_SPECIAL2) {
 #endif
 	    int specialkey = getch();
-            if (specialkey == LEFT) { // Left arrow
+            if (specialkey == INPUT_LEFT) { // Left arrow
                 if (currentIndex != 0) {
                     if (inputBuffer[currentIndex - 1] == '\t')
                         fputs("\b\b\b\b", stdout);
                     else putchar('\b');
                     --currentIndex;
                 }
-            } else if (specialkey == RIGHT) { // Right arrow
+            } else if (specialkey == INPUT_RIGHT) { // Right arrow
                 if (currentIndex < buf_len(inputBuffer)) {
                     if (inputBuffer[currentIndex] == '\t')
                         fputs("    ", stdout);
@@ -104,9 +104,9 @@ char *getInput(int *canceled) {
 #ifdef _WIN32
             } else if (specialkey == 83) { // Delete
 #else
-	    } else if (specialkey == DELETE1) {
+	    } else if (specialkey == INPUT_DELETE1) {
 		int special2 = getch();
-		if (special2 == DELETE2) {
+		if (special2 == INPUT_DELETE2) {
 #endif
                 if (currentIndex < buf_len(inputBuffer)) {
                     // Move all the characters down one
@@ -133,14 +133,14 @@ char *getInput(int *canceled) {
 #ifndef _WIN32
 	        }
 #endif
-            } else if (specialkey == END) { // End key
+            } else if (specialkey == INPUT_END) { // End key
                 for (int i = currentIndex; i < buf_len(inputBuffer); i++) {
                     if (inputBuffer[i] == '\t')
                         fputs("    ", stdout);
                     else putchar(inputBuffer[i]);
                 }
                 currentIndex = buf_len(inputBuffer);
-            } else if (specialkey == HOME) { // Home key
+            } else if (specialkey == INPUT_HOME) { // Home key
                 for (int i = 0; i < currentIndex; i++) {
                     if (inputBuffer[i] == '\t')
                         fputs("\b\b\b\b", stdout);

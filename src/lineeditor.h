@@ -64,24 +64,24 @@ void printFileInfo(void);
 
 // Special Keys
 #ifdef _WIN32
-#define SPECIAL1 0
-#define SPECIAL2 224
-#define LEFT 75
-#define RIGHT 77
-#define DELETE 83
-#define END 79
-#define HOME 71
-#define ENDINPUT 26 // CTRL-Z
+#define INPUT_SPECIAL1 0
+#define INPUT_SPECIAL2 224
+#define INPUT_LEFT 75
+#define INPUT_RIGHT 77
+#define INPUT_DELETE 83
+#define INPUT_END 79
+#define INPUT_HOME 71
+#define INPUT_ENDINPUT 26 // CTRL-Z
 #else
-#define SPECIAL1 27
-#define SPECIAL2 91
-#define LEFT 68
-#define RIGHT 67
-#define DELETE1 51
-#define DELETE2 126
-#define END 70
-#define HOME 72
-#define ENDINPUT 4 // CTRL-D
+#define INPUT_SPECIAL1 27
+#define INPUT_SPECIAL2 91
+#define INPUT_LEFT 68
+#define INPUT_RIGHT 67
+#define INPUT_DELETE1 51
+#define INPUT_DELETE2 126
+#define INPUT_END 70
+#define INPUT_HOME 72
+#define INPUT_ENDINPUT 4 // CTRL-D
 #endif
 
 char *getInput(int *canceled);
