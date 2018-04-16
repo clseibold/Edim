@@ -72,6 +72,7 @@ void printFileInfo(void);
 #define INPUT_END 79
 #define INPUT_HOME 71
 #define INPUT_ENDINPUT 26 // CTRL-Z
+#define INPUT_BACKSPACE '\b'
 #else
 #define INPUT_SPECIAL1 27
 #define INPUT_SPECIAL2 91
@@ -82,6 +83,7 @@ void printFileInfo(void);
 #define INPUT_END 70
 #define INPUT_HOME 72
 #define INPUT_ENDINPUT 4 // CTRL-D
+#define INPUT_BACKSPACE 127
 #endif
 
 char *getInput(int *canceled);

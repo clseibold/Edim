@@ -80,81 +80,81 @@ char *getInput(int *canceled) {
 #ifdef _WIN32
         if (c == INPUT_SPECIAL1 || c == INPUT_SPECIAL2)
 #else
-	if (c == INPUT_SPECIAL1)
+            if (c == INPUT_SPECIAL1)
 #endif
-	{
+        {
 #ifndef _WIN32
-	    if (getch() == INPUT_SPECIAL2) {
+            if (getch() == INPUT_SPECIAL2) {
 #endif
-	    int specialkey = getch();
-            if (specialkey == INPUT_LEFT) { // Left arrow
-                if (currentIndex != 0) {
-                    if (inputBuffer[currentIndex - 1] == '\t')
-                        fputs("\b\b\b\b", stdout);
-                    else putchar('\b');
-                    --currentIndex;
-                }
-            } else if (specialkey == INPUT_RIGHT) { // Right arrow
-                if (currentIndex < buf_len(inputBuffer)) {
-                    if (inputBuffer[currentIndex] == '\t')
-                        fputs("    ", stdout);
-                    else putchar(inputBuffer[currentIndex]);
-                    ++currentIndex;
-                }
+                int specialkey = getch();
+                if (specialkey == INPUT_LEFT) { // Left arrow
+                    if (currentIndex != 0) {
+                        if (inputBuffer[currentIndex - 1] == '\t')
+                            fputs("\b\b\b\b", stdout);
+                        else putchar('\b');
+                        --currentIndex;
+                    }
+                } else if (specialkey == INPUT_RIGHT) { // Right arrow
+                    if (currentIndex < buf_len(inputBuffer)) {
+                        if (inputBuffer[currentIndex] == '\t')
+                            fputs("    ", stdout);
+                        else putchar(inputBuffer[currentIndex]);
+                        ++currentIndex;
+                    }
 #ifdef _WIN32
-            } else if (specialkey == 83) { // Delete
+                } else if (specialkey == 83) { // Delete
 #else
-	    } else if (specialkey == INPUT_DELETE1) {
-		int special2 = getch();
-		if (special2 == INPUT_DELETE2) {
+                } else if (specialkey == INPUT_DELETE1) {
+                    int special2 = getch();
+                    if (special2 == INPUT_DELETE2) {
 #endif
-                if (currentIndex < buf_len(inputBuffer)) {
-                    // Move all the characters down one
-                    char *source = &(inputBuffer[currentIndex + 1]);
-                    char *destination = &(inputBuffer[currentIndex]);
-                    int amtToMove = buf_end(inputBuffer) - source;
-                    memmove(destination, source, sizeof(char) * amtToMove);
-                    buf_pop(inputBuffer);
-                    // Print all of the characters that have been moved
+                        if (currentIndex < buf_len(inputBuffer)) {
+                            // Move all the characters down one
+                            char *source = &(inputBuffer[currentIndex + 1]);
+                            char *destination = &(inputBuffer[currentIndex]);
+                            int amtToMove = buf_end(inputBuffer) - source;
+                            memmove(destination, source, sizeof(char) * amtToMove);
+                            buf_pop(inputBuffer);
+                            // Print all of the characters that have been moved
+                            for (int i = currentIndex; i < buf_len(inputBuffer); i++) {
+                                if (inputBuffer[i] == '\t')
+                                    fputs("    ", stdout);
+                                else putchar(inputBuffer[i]);
+                            }
+                            // Print spaces where the last character(s) used to be
+                            fputs("    \b\b\b\b", stdout);
+                            // Go back to where the cursor is
+                            for (int i = 0; i < buf_len(inputBuffer) - currentIndex; i++) {
+                                if (inputBuffer[buf_len(inputBuffer) - 1 - i] == '\t')
+                                    fputs("\b\b\b\b", stdout);
+                                else putchar('\b');
+                            }
+                        }
+#ifndef _WIN32
+                    }
+#endif
+                } else if (specialkey == INPUT_END) { // End key
                     for (int i = currentIndex; i < buf_len(inputBuffer); i++) {
                         if (inputBuffer[i] == '\t')
                             fputs("    ", stdout);
                         else putchar(inputBuffer[i]);
                     }
-                    // Print spaces where the last character(s) used to be
-                    fputs("    \b\b\b\b", stdout);
-                    // Go back to where the cursor is
-                    for (int i = 0; i < buf_len(inputBuffer) - currentIndex; i++) {
-                        if (inputBuffer[buf_len(inputBuffer) - 1 - i] == '\t')
+                    currentIndex = buf_len(inputBuffer);
+                } else if (specialkey == INPUT_HOME) { // Home key
+                    for (int i = 0; i < currentIndex; i++) {
+                        if (inputBuffer[i] == '\t')
                             fputs("\b\b\b\b", stdout);
                         else putchar('\b');
                     }
+                    currentIndex = 0;
+                    //} else if (special == 115) { // Ctrl+Left // TODO
+                    //} else if (special == 116) { // Ctrl+Right // TODO
+                } else {
+                    //printf("%d", special); // For debugging
                 }
+                continue;
 #ifndef _WIN32
-	        }
-#endif
-            } else if (specialkey == INPUT_END) { // End key
-                for (int i = currentIndex; i < buf_len(inputBuffer); i++) {
-                    if (inputBuffer[i] == '\t')
-                        fputs("    ", stdout);
-                    else putchar(inputBuffer[i]);
-                }
-                currentIndex = buf_len(inputBuffer);
-            } else if (specialkey == INPUT_HOME) { // Home key
-                for (int i = 0; i < currentIndex; i++) {
-                    if (inputBuffer[i] == '\t')
-                        fputs("\b\b\b\b", stdout);
-                    else putchar('\b');
-                }
-                currentIndex = 0;
-                //} else if (special == 115) { // Ctrl+Left // TODO
-                //} else if (special == 116) { // Ctrl+Right // TODO
-            } else {
-                //printf("%d", special); // For debugging
             }
-            continue;
-#ifndef _WIN32
-	    }
 #endif
         }
         if (c == 24) { // Cancel - Ctrl-X
@@ -206,12 +206,8 @@ char *getInput(int *canceled) {
             ++currentIndex;
             continue;
         }
-#ifdef _WIN32
-        if (c == '\b') // Backspace - Windows
-#else
-	if (c == 127) // Backspace - Linux
-#endif
-	{
+        if (c == INPUT_BACKSPACE)
+        {
             if (currentIndex > 0) {
                 if (currentIndex == buf_len(inputBuffer)) {
                     if (inputBuffer[currentIndex - 1] == '\t')
