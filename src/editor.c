@@ -611,7 +611,7 @@ internal EditorState editorState_openAnotherFile(char *rest, int restLength) {
 
 internal int getLineNumber() {
     char *end;
-    char *lineInput;
+    char *lineInput = NULL;
     int length = -1;
     int line = -1;
     
@@ -633,7 +633,7 @@ internal int getLineNumber() {
 
 internal int checkLineNumber(int original_line) {
     char *end;
-    char *lineInput;
+    char *lineInput = NULL;
     int length = 0;
     int line = original_line;
     
