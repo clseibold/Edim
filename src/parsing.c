@@ -157,7 +157,9 @@ char *getInput(int *canceled) {
             }
 #endif
         }
-        if (c == 24) { // Cancel - Ctrl-X
+        
+        // Control Keys
+        if (c == INPUT_CTRL_X) {
             //buf_pop_all(inputBuffer);
             fputs("^X", stdout);
             buf_free(inputBuffer);
@@ -165,7 +167,12 @@ char *getInput(int *canceled) {
             currentIndex = 0;
             (*canceled) = true;
             return NULL;
+        } else if (c == INPUT_CTRL_C) {
+            exit(0); // TODO
+        } else if (c > 0 && c <= 26 && c != 13 && c != 8 && c != 9) { // Capture all other Control Keys (aside from Enter, backspace, and tab)
+            continue;
         }
+        
         if (c == '\n' || c == '\r') { // Enter
 #ifdef _WIN32
             putchar('\r');

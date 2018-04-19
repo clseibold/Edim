@@ -110,7 +110,7 @@ int main() {
     // Open Scratch Buffer
     // Then, go straight to prompt
     
-    printf("Opening -Scratch- Buffer\n");
+    printf("Opening '-Scratch-' Buffer\n");
     buffers = NULL;
     {
         Buffer buffer;
@@ -130,7 +130,89 @@ int main() {
     }
     
     while (running) {
+        EditorState state = editorState_menu();
+        
         switch (state) {
+            case ED_EXIT:
+            {
+                if (currentBuffer->modified) {
+                    if (currentBuffer - buffers == 0) {
+                        // TODO: Save changes and close buffer if last one open
+                        if (buf_len(buffers) > 1) {
+                            printError("You cannot close the '-Scratch-' buffer when other buffers are open.");
+                        } else {
+                            exit(0);
+                        }
+                    } else {
+                        printError("There are unsaved changes. Use 'E' or 'Q' to close without changes.");
+                    }
+                    
+                } else {
+                    int isLast = false;
+                    if (currentBuffer == &(buffers[buf_len(buffers) - 1]))
+                        isLast = true;
+                    buffer_close(currentBuffer);
+                    if (isLast) {
+                        buf_pop(buffers);
+                        currentBuffer = buf_end(buffers) - 1;
+                    } else {
+                        Buffer *source = currentBuffer + 1;
+                        Buffer *destination = currentBuffer;
+                        int amtToMove = buf_end(buffers) - source;
+                        memmove(destination, source, sizeof(Buffer) * amtToMove);
+                        buf_pop(buffers);
+                    }
+                    if (buf_len(buffers) <= 0) {
+                        exit(0);
+                    }
+                }
+            } break;
+            case ED_FORCE_EXIT:
+            {
+                int isLast = false;
+                if (currentBuffer == &(buffers[buf_len(buffers) - 1]))
+                    isLast = true;
+                buffer_close(currentBuffer);
+                if (isLast) {
+                    buf_pop(buffers);
+                    currentBuffer = buf_end(buffers) - 1;
+                } else {
+                    Buffer *source = currentBuffer + 1;
+                    Buffer *destination = currentBuffer;
+                    int amtToMove = buf_end(buffers) - source;
+                    memmove(destination, source, sizeof(Buffer) * amtToMove);
+                    buf_pop(buffers);
+                }
+                if (buf_len(buffers) <= 0) {
+                    exit(0);
+                }
+            } break;
+            case ED_QUIT:
+            {
+                int canQuit = true;
+                
+                // Check that no buffers (aside from -Scratch-, which will always be buffer 0) are modified.
+                for (int i = 1; i < buf_len(buffers); i++) {
+                    if (buffers[i].modified == true) {
+                        canQuit = false;
+                        break;
+                    }
+                }
+                
+                // TODO: If -Scratch- buffer is modified, save it.
+                if (buffers[0].modified) {
+                }
+                
+                if (!canQuit) {
+                    printError("There are unsaved changes in at least one of the open buffers. Use 'E' or 'Q' to close without changes.");
+                } else exit(0);
+            } break;
+            case ED_FORCE_QUIT:
+            {
+                exit(0);
+            } break;
+        }
+        /*switch (state) {
             case MAIN_MENU:
             {
                 statePrev = NEW_FILE;
@@ -158,7 +240,7 @@ int main() {
             }
         }
         
-        statePrev = state;
+        statePrev = state;*/
     }
     
     return(0);

@@ -62,6 +62,10 @@ void printFileInfo(void);
 
 /* === parsing.c === */
 
+#define INPUT_CTRL_L 12 // Clear Scrren
+#define INPUT_CTRL_X 24 // Cancel
+#define INPUT_CTRL_C 3 // TODO: Exit or Copy?
+
 // Special Keys
 #ifdef _WIN32
 #define INPUT_SPECIAL1 -32
