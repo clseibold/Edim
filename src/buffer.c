@@ -113,8 +113,6 @@ int buffer_openFile(Buffer *buffer, char *filename) {
     buffer->modified = false;
     buffer->currentLine = buf_len(buffer->lines);
     
-    printf("Filetype: %d\n", buffer->fileType);
-    
     // Create the outline
     createOutline();
     

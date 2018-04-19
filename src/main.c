@@ -48,7 +48,7 @@ void clrscr() {
 
 #endif
 
-int main() {
+int main(int argc, char **argv) {
 #ifdef _WIN32
     // Used for printing in color on Windows
     hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -72,8 +72,11 @@ int main() {
     // Open Scratch Buffer
     // Then, go straight to prompt
     
-    printf("Opening '-Scratch-' Buffer\n");
+    if (argc <= 1)
+        printf("Opening '-Scratch-' Buffer\n");
+    
     buffers = NULL;
+    
     {
         Buffer buffer;
         buffer_initEmptyBuffer(&buffer);
@@ -89,6 +92,25 @@ int main() {
         
         buf_push(buffers, buffer);
         currentBuffer = buf_end(buffers) - 1;
+    }
+    
+    // Open file that was passed into executable
+    if (argc > 1) {
+        {
+            Buffer buffer;
+            buffer_initEmptyBuffer(&buffer);
+            buf_push(buffers, buffer);
+            currentBuffer = buf_end(buffers) - 1;
+        }
+        
+        if (!buffer_openFile(currentBuffer, argv[1])) {
+            printf("File doesn't exist... Creating it.\n\n", argv[1]);
+            currentBuffer->modified = true;
+            editorState_editor();
+        } else {
+            printf("Opening '%s'\n\n", argv[1]);
+            printFileInfo();
+        }
     }
     
     while (running) {

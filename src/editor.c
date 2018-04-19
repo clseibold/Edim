@@ -389,6 +389,7 @@ internal void editorState_openAnotherFile(char *rest, int restLength) {
         }
         
         if (!buffer_openFile(currentBuffer, str)) {
+            printf("File doesn't exist... Creating it.\n\n");
             currentBuffer->modified = true;
             editorState_editor();
         } else {
@@ -1179,7 +1180,7 @@ void printLine(int line, char operation, int printNewLine) {
 // TODO: number of chars, filetype, syntax highlighting enabled, outline enabled
 void printFileInfo(void) {
     printf("File information for '%.*s'\n", (int) buf_len(currentBuffer->openedFilename), currentBuffer->openedFilename);
-    //printf("File Information for '%s'\n", currentBuffer->openedFilename);
+    printf("Filetype: %d\n", currentBuffer->fileType); // TODO: Print actual string of filetype
     
     int numOfLines = buf_len(currentBuffer->lines);
     if (numOfLines != 0) {
