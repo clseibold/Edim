@@ -255,8 +255,10 @@ int buffer_insertAfterLine(Buffer *buffer, int line, Line *lines) {
 // Returns the line after the lines that were added.
 int buffer_insertBeforeLine(Buffer *buffer, int line, Line *lines) {
     int lineToInsertBefore = line;
-    if (line == -1) {
+    if (line == -1 || line == 0) {
         lineToInsertBefore = buffer->currentLine;
+        if (lineToInsertBefore == 0)
+            lineToInsertBefore = 1;
     }
     
     int linesAddedAmt = buf_len(lines);
@@ -288,8 +290,10 @@ int buffer_insertBeforeLine(Buffer *buffer, int line, Line *lines) {
 // Does not free the chars buffer
 void buffer_appendToLine(Buffer *buffer, int line, char *chars) {
     int lineToAppendTo = line;
-    if (line == -1) {
+    if (line == -1 || line == 0) {
         lineToAppendTo = buffer->currentLine;
+        if (lineToAppendTo == 0)
+            return;
     }
     // Remove the new line character from the line
     buf_pop(buffer->lines[lineToAppendTo - 1].chars);
@@ -307,8 +311,10 @@ void buffer_appendToLine(Buffer *buffer, int line, char *chars) {
 // The old char buffer of the line will be freed.
 void buffer_prependToLine(Buffer *buffer, int line, char *chars) {
     int lineToPrependTo = line;
-    if (line == -1) {
+    if (line == -1 || line == 0) {
         lineToPrependTo = buffer->currentLine;
+        if (lineToPrependTo == 0)
+            return;
     }
     
     // Store the old buffer
@@ -333,8 +339,10 @@ void buffer_prependToLine(Buffer *buffer, int line, char *chars) {
 // The old char buffer of the line will be freed.
 void buffer_replaceLine(Buffer *buffer, int line, char *chars) {
     int lineToReplace = line;
-    if (line == -1) {
+    if (line == -1 || line == 0) {
         lineToReplace = buffer->currentLine;
+        if (lineToReplace == 0)
+            return;
     }
     
     // Free the old buffer
@@ -350,8 +358,10 @@ void buffer_replaceLine(Buffer *buffer, int line, char *chars) {
 // Replace in the line from the startIndex to the endIndex (inclusive) with the provided char buffer
 void buffer_replaceInLine(Buffer *buffer, int line, int startIndex, int endIndex, char *chars) {
     int lineToReplaceIn = line;
-    if (line == -1) {
+    if (line == -1 || line == 0) {
         lineToReplaceIn = buffer->currentLine;
+        if (lineToReplaceIn == 0)
+            return;
     }
     
     int lengthOfStringToReplace = endIndex - startIndex;
@@ -386,8 +396,10 @@ void buffer_replaceInLine(Buffer *buffer, int line, int startIndex, int endIndex
 // TODO: Add the number to move up by
 void buffer_moveLineUp(Buffer *buffer, int line) {
     int lineToMove = line;
-    if (line == -1) {
+    if (line == -1 || line == 0) {
         lineToMove = buffer->currentLine;
+        if (lineToMove == 0)
+            return;
     }
     
     // Store the line where the given line is being moved up to
@@ -407,8 +419,10 @@ void buffer_moveLineUp(Buffer *buffer, int line) {
 // TODO: Add the number to move up by
 void buffer_moveLineDown(Buffer *buffer, int line) {
     int lineToMove = line;
-    if (line == -1) {
+    if (line == -1 || line == 0) {
         lineToMove = buffer->currentLine;
+        if (lineToMove == 0)
+            return;
     }
     
     // Store the line where the given line is being moved down to
@@ -427,8 +441,10 @@ void buffer_moveLineDown(Buffer *buffer, int line) {
 
 void buffer_deleteLine(Buffer *buffer, int line) {
     int lineToDelete = line;
-    if (line == -1) {
+    if (line == -1 || line == 0) {
         lineToDelete = buffer->currentLine;
+        if (lineToDelete == 0)
+            return;
     }
     
     if (lineToDelete == buf_len(buffer->lines)) {
@@ -459,8 +475,10 @@ void buffer_deleteLine(Buffer *buffer, int line) {
 // Returns index of first occurance of string, -1 for no occurance
 int buffer_findStringInLine(Buffer *buffer, int line, char *str, int strLength) {
     int lineToSearch = line;
-    if (line == -1) {
+    if (line == -1 || line == 0) {
         lineToSearch = buffer->currentLine;
+        if (lineToSearch == 0)
+            return -1;
     }
     // Find the first occurance of the string in the current line
     int index = -1; // Column index

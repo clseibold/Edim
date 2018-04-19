@@ -168,7 +168,7 @@ typedef struct COutlineNode {
 } COutlineNode;
 
 typedef struct Buffer {
-    char *openedFilename; // char Streatchy buffer for the currently opened filename
+    char *openedFilename; // char Stretchy buffer for the currently opened filename
     FileType fileType;
     Line *lines;
     Operation lastOperation;

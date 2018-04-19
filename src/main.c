@@ -34,7 +34,6 @@ char getch() {
     old.c_lflag|=ECHO;
     if(tcsetattr(0, TCSADRAIN, &old)<0)
         perror ("tcsetattr ~ICANON");
-    //printf("%c\n",buf);
     return buf;
 }
 
@@ -97,8 +96,6 @@ int main() {
         printf("%d\n", c);
     }*/
     
-    buffers = NULL;
-    
     char args[MAXLENGTH] = { 0 };
     int argsLength = 0;
     int running = true;
@@ -110,12 +107,38 @@ int main() {
     
     printf("Press '?' for help.\n");
     
+    // Open Scratch Buffer
+    // Then, go straight to prompt
+    
+    printf("Opening -Scratch- Buffer\n");
+    buffers = NULL;
+    {
+        Buffer buffer;
+        buffer_initEmptyBuffer(&buffer);
+        buffer.modified = true;
+        buffer.fileType = FT_MARKDOWN;
+        
+        char *name = "-Scratch-";
+        for (int i = 0; i < strlen(name); i++) {
+            buf_push(buffer.openedFilename, name[i]);
+        }
+        
+        buffer.currentLine = 0;
+        
+        buf_push(buffers, buffer);
+        currentBuffer = buf_end(buffers) - 1;
+    }
+    
     while (running) {
         switch (state) {
             case MAIN_MENU:
             {
-                state = mainMenu(args, &argsLength);
+                statePrev = NEW_FILE;
+                state = NEW_FILE;
+                state = editorState(ED_MENU, args, argsLength);
                 if (state == KEEP) state = statePrev;
+                //state = mainMenu(args, &argsLength);
+                //if (state == KEEP) state = statePrev;
             } break;
             case NEW_FILE:
             {

@@ -735,6 +735,10 @@ internal void editorState_insertBefore(char *rest) {
     if (line == 0) line = currentBuffer->currentLine;
     else line = checkLineNumber(line);
     
+    if (line == 0) { // Current Line is 0
+        line = 1;
+    }
+    
     /*if (line == buf_len(currentBuffer->lines) + 1) {
         currentBuffer->currentLine = buf_len(currentBuffer->lines);
         editorState_insertAfter(rest);
@@ -1204,6 +1208,7 @@ void printText(int startLine) {
     }
     printPrompt("\n<%d: %s | preview> ", currentBuffer - buffers, currentBuffer->openedFilename);
     
+    bool forward = true;
     while ((c = getch()) != EOF && offset < buf_len(currentBuffer->lines))
     {
         if (c == '?') {
@@ -1211,22 +1216,33 @@ void printText(int startLine) {
             printf("\nPreviewing '%s'\n", currentBuffer->openedFilename);
             printf(" * 'q' or Ctrl-X to stop previewing\n");
             printf(" * 'Q' to exit the whole program\n");
-            printf(" * Enter to show the next lines\n");
-            // Discard the enter key
-            //getchar();
+            printf(" * Enter/'n' to show the next lines\n");
+            printf(" * 'p' to show previous lines");
+            
             printPrompt("\n<%d: %s | preview> ", currentBuffer - buffers, currentBuffer->openedFilename);
             continue;
+        } else if (c == 'p') {
+            if (forward) {
+                printf("\r");
+                for (int i = 0; i < 45; i++) { // TODO: Hacky
+                    printf(" ");
+                }
+                printf("\r");
+                printf("-----\n\n");
+            }
+            offset = offset - (linesAtATime * 2) - 2;
+            if (offset < 0) offset = 0;
+            forward = false;
         } else if (c == 'q' || c == 24) { // 26 is Ctrl-X, aka CANCEL
-            // Discard the enter key
-            //getchar();
             break;
         } else if (c == 'Q') {
             exit(0);
-        }
+        } else forward = true;
         
         printf("\r");
-        for (int i = 0; i < 45; i++) // TODO: Hacky
+        for (int i = 0; i < 45; i++) { // TODO: Hacky
             printf(" ");
+        }
         printf("\r");
         for (int line = offset; line < linesAtATime + offset + 1 && line <= buf_len(currentBuffer->lines); line++) {
             if (line == buf_len(currentBuffer->lines)) {
@@ -1238,7 +1254,7 @@ void printText(int startLine) {
             printLine(line, 0, true);
         }
         
-        offset = linesAtATime + offset + 1;
+        offset = offset + linesAtATime + 1;
         if (offset >= buf_len(currentBuffer->lines)) {
             break;
         }
@@ -1307,11 +1323,13 @@ void printFileInfo(void) {
     //printf("File Information for '%s'\n", currentBuffer->openedFilename);
     
     int numOfLines = buf_len(currentBuffer->lines);
-    // If last character of last line ends with a new line, add one to the number of lines
-    Line lastLine = currentBuffer->lines[buf_len(currentBuffer->lines) - 1];
-    char lastChar = lastLine.chars[buf_len(lastLine.chars) - 1];
-    if (lastChar == '\n') {
-        numOfLines++;
+    if (numOfLines != 0) {
+        // If last character of last line ends with a new line, add one to the number of lines
+        Line lastLine = currentBuffer->lines[buf_len(currentBuffer->lines) - 1];
+        char lastChar = lastLine.chars[buf_len(lastLine.chars) - 1];
+        if (lastChar == '\n') {
+            numOfLines++;
+        }
     }
     printf("Number of Lines: %d\n", numOfLines);
     
