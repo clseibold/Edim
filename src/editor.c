@@ -6,7 +6,7 @@
 
 #include "lineeditor.h"
 
-internal EditorState editorState_openAnotherFile(char *rest, int restLength);
+internal void editorState_openAnotherFile(char *rest, int restLength);
 internal void editorState_openNewFile(char *rest, int restLength);
 
 internal int getLineNumber();
@@ -25,195 +25,8 @@ internal void editorState_deleteLine(char *rest);
 internal void editorState_moveUp(char *rest);
 internal void editorState_moveDown(char *rest);
 
-/* Get input for new file */
-State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength) {
-    static EditorState subState = ED_EDITOR;
-    static int initialSet = 0;
-    static EditorState subStatePrev;
-    
-    if (state != ED_KEEP && !initialSet) {
-        subState = state;
-        initialSet = 1;
-    }
-    
-    subStatePrev = subState;
-    
-    switch (subState) {
-        case ED_NEW:
-        {
-            {
-                Buffer buffer;
-                buffer_initEmptyBuffer(&buffer);
-                buffer.modified = true;
-                buf_push(buffers, buffer);
-                currentBuffer = buf_end(buffers) - 1;
-            }
-            
-            if (argsLength > 1) {
-                int i = 0;
-                while (args[i] != ' ' && args[i] != '\n' && args[i] != '\0') {
-                    buf_push(currentBuffer->openedFilename, args[i]);
-                    ++i;
-                }
-            }
-            
-            if (initialSet) {
-                printf("Opening a new file.\n");
-                printf("Press Ctrl-D (or Ctrl-Z on Windows) on new line to denote End Of Input\n\n");
-            }
-            
-            // Make sure currently stored text has been cleared out.
-            assert(buf_len(currentBuffer->lines) == 0);
-            
-            subState = ED_EDITOR;
-            subState = editorState_editor();
-            if (subState == ED_KEEP) subState = subStatePrev;
-        } break;
-        case ED_OPEN:
-        {
-            {
-                Buffer buffer;
-                buffer_initEmptyBuffer(&buffer);
-                buf_push(buffers, buffer);
-                currentBuffer = buf_end(buffers) - 1;
-            }
-            
-            int newFile = false;
-            
-            // Get arg for filename or Prompt for filename if no args provided
-            if (argsLength <= 1) {
-                printPrompt("Enter the filename: ");
-                char filename[MAXLENGTH / 4];
-                int filenameLength = 0;
-                filenameLength = parsing_getLine(filename, MAXLENGTH / 4, true);
-                while (filenameLength == -1) {
-                    printPrompt("Enter the filename: ");
-                    filenameLength = parsing_getLine(filename, MAXLENGTH / 4, true);
-                }
-                if (!buffer_openFile(currentBuffer, filename)) {
-                    printf("File doesn't exist... Creating it.\n\n");
-                    currentBuffer->modified = true;
-                    subState = editorState_editor();
-                    if (subState == ED_KEEP) subState = subStatePrev;
-                    newFile = true;
-                }
-            } else {
-                char *filename = malloc((argsLength + 1) * sizeof(char));
-                int i = 0;
-                int ii = 0;
-                
-                while (args[i] != ' ' && args[i] != '\n' && args[i] != '\0')
-                {
-                    filename[ii] = args[i];
-                    ++i;
-                    ++ii;
-                }
-                filename[ii] = '\0';
-                if (!buffer_openFile(currentBuffer, filename)) {
-                    printf("File doesn't exist... Creating it.\n\n");
-                    currentBuffer->modified = true;
-                    subState = editorState_editor();
-                    if (subState == ED_KEEP) subState = subStatePrev;
-                    newFile = true;
-                }
-                free(filename);
-                filename = 0;
-            }
-            if (!newFile)
-                printFileInfo();
-            subState = ED_MENU;
-        } break;
-        case ED_EDITOR:
-        {
-            subState = editorState_editor();
-            if (subState == ED_KEEP) subState = subStatePrev;
-        } break;
-        case ED_MENU:
-        {
-            subState = editorState_menu();
-            if (subState == ED_KEEP) subState = subStatePrev;
-        } break;
-        case ED_EXIT: // TODO: Close the current buffer, move buffers down. If no buffers left, goto main menu
-        {
-            subState = ED_EDITOR;
-            
-            if (currentBuffer->modified) {
-                printError("There are unsaved changes. Use 'E' or 'Q' to close without changes.");
-                subState = ED_MENU;
-            } else {
-                int isLast = false;
-                if (currentBuffer == &(buffers[buf_len(buffers) - 1]))
-                    isLast = true;
-                buffer_close(currentBuffer);
-                if (isLast) {
-                    buf_pop(buffers);
-                    currentBuffer = buf_end(buffers) - 1;
-                } else {
-                    Buffer *source = currentBuffer + 1;
-                    Buffer *destination = currentBuffer;
-                    int amtToMove = buf_end(buffers) - source;
-                    memmove(destination, source, sizeof(Buffer) * amtToMove);
-                    buf_pop(buffers);
-                }
-                if (buf_len(buffers) <= 0) {
-                    initialSet = 0;
-                    return MAIN_MENU;
-                }
-                subState = ED_MENU;
-            }
-        } break;
-        case ED_FORCE_EXIT:
-        {
-            int isLast = false;
-            if (currentBuffer == &(buffers[buf_len(buffers) - 1]))
-                isLast = true;
-            buffer_close(currentBuffer);
-            if (isLast) {
-                buf_pop(buffers);
-                currentBuffer = buf_end(buffers) - 1;
-            } else {
-                Buffer *source = currentBuffer + 1;
-                Buffer *destination = currentBuffer;
-                int amtToMove = buf_end(buffers) - source;
-                memmove(destination, source, sizeof(Buffer) * amtToMove);
-                buf_pop(buffers);
-            }
-            if (buf_len(buffers) <= 0) {
-                initialSet = 0;
-                return MAIN_MENU;
-            }
-            subState = ED_MENU;
-        } break;
-        case ED_QUIT:
-        {
-            int canQuit = true;
-            
-            for (int i = 0; i < buf_len(buffers); i++) {
-                if (buffers[i].modified == true) {
-                    canQuit = false;
-                    break;
-                }
-            }
-            
-            if (!canQuit) {
-                printError("There are unsaved changes in at least one of the open buffers. Use 'E' or 'Q' to close without changes.");
-                subState = ED_MENU;
-            } else return QUIT;
-        } break;
-        case ED_FORCE_QUIT:
-        {
-            exit(0);
-            //return QUIT;
-        } break;
-        default:
-        printError("Unknown command");
-    }
-    
-    return KEEP;
-}
-
 /* Menu for Editor */
-EditorState editorState_menu(void) {
+State editorState_menu(void) {
     /* Prompt */
     if (buf_len(currentBuffer->openedFilename) > 0) {
         // TODO: This will also print out the directory, so I should get rid of everything before the last slash
@@ -456,7 +269,7 @@ EditorState editorState_menu(void) {
                             next = 0;
                         
                         currentBuffer = &(buffers[next]);
-                        return ED_KEEP;
+                        return KEEP;
                     } break;
                     case 'p':
                     {
@@ -466,7 +279,7 @@ EditorState editorState_menu(void) {
                             previous = buf_len(buffers) - 1;
                         
                         currentBuffer = &(buffers[previous]);
-                        return ED_KEEP;
+                        return KEEP;
                     } break;
                 }
             }
@@ -487,7 +300,7 @@ EditorState editorState_menu(void) {
                 
                 currentBuffer = &(buffers[index]);
                 
-                return ED_KEEP;
+                return KEEP;
             }
             
             for (int i = 0; i < buf_len(buffers); i++) {
@@ -514,7 +327,7 @@ EditorState editorState_menu(void) {
         } break;
         case 'o':
         {
-            return editorState_openAnotherFile(rest, restLength);
+            editorState_openAnotherFile(rest, restLength);
         } break;
         case 'n':
         {
@@ -522,19 +335,19 @@ EditorState editorState_menu(void) {
         } break;
         case 'e':
         {
-            return ED_EXIT;
+            return EXIT;
         } break;
         case 'E':
         {
-            return ED_FORCE_EXIT;
+            return FORCE_EXIT;
         } break;
         case 'q':
         {
-            return ED_QUIT;
+            return QUIT;
         } break;
         case 'Q':
         {
-            return ED_FORCE_QUIT;
+            return FORCE_QUIT;
         } break;
         // Hacked in - change filetype to FT_C because of how poor my filetype extension matching is
         case 't':
@@ -552,10 +365,10 @@ EditorState editorState_menu(void) {
         } break;
     }
     
-    return ED_KEEP;
+    return KEEP;
 }
 
-internal EditorState editorState_openAnotherFile(char *rest, int restLength) {
+internal void editorState_openAnotherFile(char *rest, int restLength) {
     char str[MAXLENGTH / 4];
     int strLength = 0;
     
@@ -577,11 +390,12 @@ internal EditorState editorState_openAnotherFile(char *rest, int restLength) {
         
         if (!buffer_openFile(currentBuffer, str)) {
             currentBuffer->modified = true;
-            return editorState_editor();
+            editorState_editor();
         } else {
             printFileInfo();
-            return ED_MENU;
         }
+        
+        return;
     }
     
     printPrompt("Enter file to open: ");
@@ -604,10 +418,8 @@ internal EditorState editorState_openAnotherFile(char *rest, int restLength) {
     if (!buffer_openFile(currentBuffer, str)) {
         printf("File doesn't exist... Creating it.\n\n");
         currentBuffer->modified = true;
-        return ED_EDITOR;
+        editorState_editor();
     } else printFileInfo();
-    
-    return ED_KEEP;
 }
 
 internal void editorState_openNewFile(char *rest, int restLength) {
@@ -687,7 +499,7 @@ internal int checkLineNumber(int original_line) {
 }
 
 // Editor - will allow user to type in anything, showing line number at start of new lines. To exit the editor, press Ctrl-D on Linux or Ctrl-Z+Enter on Windows. As each new line is entered, the characters will be added to a char pointer streatchy buffer (dynamic array). Then, this line will be added to the streatchy buffer of lines (called 'lines').
-EditorState editorState_editor(void) {
+void editorState_editor(void) {
     int c;
     int line = 1;
     
@@ -714,8 +526,6 @@ EditorState editorState_editor(void) {
     
     // Set cursor to end of file
     currentBuffer->currentLine = buf_len(currentBuffer->lines);
-    
-    return ED_MENU;
 }
 
 // Insert lines after a specific line. Denote end of input by typing Ctrl-D (or Ctrl-Z+Enter on Windows) on new line.

@@ -4,6 +4,7 @@
 #include "lineeditor.h"
 
 #ifdef _WIN32
+
 #include <conio.h>
 #define getch _getch
 
@@ -11,7 +12,9 @@
 void clrscr() {
     system("cls");
 }
+
 #else
+
 #include <unistd.h>
 #include <termios.h>
 char getch() {
@@ -42,47 +45,8 @@ void clrscr() {
     //system("clear");
     printf("\e[1;1H\e[2J"); // Much better // TODO: Check whether actually portable though
 }
-#endif
 
-State mainMenu(char *args, int *argsLength) {
-    /* Prompt */
-    printPrompt("\n<> ");
-    
-    /* get first character - the menu item */
-    char c;
-    c = getchar();
-    
-    /* Store rest of line in rest */
-    *argsLength = parsing_getLine(args, MAXLENGTH / 4, true);
-    
-    printf("\n");
-    
-    switch (c) {
-        case '?':
-        {
-            printf(" * 'n' - New File\n");
-            printf(" * 'o' - Open File\n");
-            printf(" * 'q' or 'Q' - Quit\n");
-        } break;
-        case 'n':
-        {
-            return NEW_FILE;
-        } break;
-        case 'o':
-        {
-            return OPEN_FILE;
-        } break;
-        case 'q':
-        case 'Q':
-        {
-            return QUIT;
-        } break;
-        default:
-        printError("Unknown command");
-    }
-    
-    return KEEP;
-}
+#endif
 
 int main() {
 #ifdef _WIN32
@@ -99,8 +63,6 @@ int main() {
     char args[MAXLENGTH] = { 0 };
     int argsLength = 0;
     int running = true;
-    State state = MAIN_MENU;
-    State statePrev = state;
     
     printf("Edim - Ed Improved\n");
     printf("Copyright (c) Christian Seibold. All Rights Reserved.\n\n");
@@ -130,10 +92,10 @@ int main() {
     }
     
     while (running) {
-        EditorState state = editorState_menu();
+        State state = editorState_menu();
         
         switch (state) {
-            case ED_EXIT:
+            case EXIT:
             {
                 if (currentBuffer->modified) {
                     if (currentBuffer - buffers == 0) {
@@ -167,7 +129,7 @@ int main() {
                     }
                 }
             } break;
-            case ED_FORCE_EXIT:
+            case FORCE_EXIT:
             {
                 int isLast = false;
                 if (currentBuffer == &(buffers[buf_len(buffers) - 1]))
@@ -187,7 +149,7 @@ int main() {
                     exit(0);
                 }
             } break;
-            case ED_QUIT:
+            case QUIT:
             {
                 int canQuit = true;
                 
@@ -207,7 +169,7 @@ int main() {
                     printError("There are unsaved changes in at least one of the open buffers. Use 'E' or 'Q' to close without changes.");
                 } else exit(0);
             } break;
-            case ED_FORCE_QUIT:
+            case FORCE_QUIT:
             {
                 exit(0);
             } break;

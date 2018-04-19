@@ -30,31 +30,14 @@ char getch();
 #endif
 
 typedef enum State {
-    KEEP,
-    MAIN_MENU,
-    NEW_FILE,
-    OPEN_FILE,
-    QUIT
+    KEEP, EXIT, FORCE_EXIT, QUIT, FORCE_QUIT
 } State;
 
 /* === editor.c === */
 #define MAXLENGTH 900 /* 2000000 was too big on Windows */
 
-typedef enum EditorState {
-    ED_KEEP,
-    ED_OPEN,
-    ED_NEW,
-    ED_EDITOR,
-    ED_MENU,
-    ED_EXIT, // Exit to main menu
-    ED_FORCE_EXIT,
-    ED_QUIT, // Quit program
-    ED_FORCE_QUIT
-} EditorState;
-
-State editorState(EditorState state, char args[MAXLENGTH / 4], int argsLength);
-EditorState editorState_menu(void);
-EditorState editorState_editor(void);
+State editorState_menu(void);
+void editorState_editor(void);
 
 void printText(int startLine);
 void printLine(int line, char operation, int printNewLine);
