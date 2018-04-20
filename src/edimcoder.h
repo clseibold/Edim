@@ -73,7 +73,7 @@ void printFileInfo(void);
 #define INPUT_BACKSPACE 127
 #endif
 
-char *getInput(int *canceled);
+char *getInput(int *canceled, char *inputBuffer);
 int parsing_getLine(char *line, int max, int trimSpace);
 int parsing_getLine_dynamic(char **chars, int trimSpace);
 void createOutline(void);

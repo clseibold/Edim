@@ -67,15 +67,22 @@ int parsing_getLine_dynamic(char **chars, int trimSpace) {
     return buf_len(*chars);
 }
 
-// TODO: Test on other platforms!
-// Returns NULL when canceled and a buffer of length 0 when Ctrl-Z with no input
-// TODO: Add a pointer to a bool (int) that will be set to true when Ctrl-Z was typed.
-char *getInput(int *canceled) {
+// TODO: Test on macOS and BSD!
+char *getInput(int *canceled, char *inputBuffer) {
     (*canceled) = false;
-    char *inputBuffer = NULL;
+    int currentIndex = 0;
+    int defaultLength = buf_len(inputBuffer);
+    
+    if (inputBuffer != NULL && buf_len(inputBuffer) > 0) {
+        for (int i = 0; i < buf_len(inputBuffer); i++) {
+            if (inputBuffer[i] == '\t')
+                fputs("    ", stdout);
+            else putchar(inputBuffer[i]);
+            ++currentIndex;
+        }
+    }
     
     char c;
-    int currentIndex = 0;
     while ((c = getch()) != INPUT_ENDINPUT) { // Ctrl-Z for Windows, Ctrl-D for Linux
 #ifdef _WIN32
         if (c == INPUT_SPECIAL1 || c == INPUT_SPECIAL2)
@@ -288,6 +295,18 @@ char *getInput(int *canceled) {
             }
         }
         ++currentIndex;
+    }
+    
+    // If no input was made, free the buffer and return;
+    if (buf_len(inputBuffer) - defaultLength <= 0) {
+        if (inputBuffer != NULL)
+            buf_free(inputBuffer);
+    }
+    
+    // If there's no new line - which there shouldn't be -
+    // then add it.
+    if (inputBuffer != NULL && *(buf_end(inputBuffer) - 1) != '\n') {
+        buf_add(inputBuffer, '\n');
     }
     
     if (buf_len(inputBuffer) == 0) {

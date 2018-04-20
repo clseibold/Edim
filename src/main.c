@@ -52,6 +52,13 @@ int main(int argc, char **argv) {
 #ifdef _WIN32
     // Used for printing in color on Windows
     hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    
+    printf("Testing\n\n");
+    
+    CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+    GetConsoleScreenBufferInfo(hConsole, &consoleInfo);
+    COORD pos = { consoleInfo.dwCursorPosition.X, consoleInfo.dwCursorPosition.Y - 1 };
+    SetConsoleCursorPosition(hConsole, pos);
 #endif
     //char c;
     //printf("Test\b \b\n");

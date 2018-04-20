@@ -499,6 +499,79 @@ internal int checkLineNumber(int original_line) {
     return line;
 }
 
+internal Line *multiLineEditor(int previousLine, Line *insertLines, bool *canceled, OperationKind kind) {
+    char *chars = NULL;
+    if (previousLine - 1 > 0) { // AutoIndentation
+        int whitespaceCount = 0;
+        char *start = currentBuffer->lines[previousLine - 1].chars;
+        while (*start == '\t') {
+            ++whitespaceCount;
+            ++start;
+            if (start - chars > buf_len(chars)) break;
+        }
+        
+        chars = NULL;
+        
+        // If C, C++, or C_HEADER files, autoindent
+        if (currentBuffer->fileType == FT_C || currentBuffer->fileType == FT_CPP || currentBuffer->fileType == FT_C_HEADER || currentBuffer->fileType == FT_UNKNOWN) {
+            for (int i = 0; i < whitespaceCount; i++) {
+                buf_push(chars, '\t');
+            }
+        }
+    }
+    
+    char operation = ' ';
+    switch (kind) {
+        case 0:
+        operation = ' '; break;
+        case InsertAfter:
+        operation = 'a'; break;
+        case InsertBefore:
+        operation = 'i'; break;
+        default:
+        operation = ' '; break;
+    }
+    
+    int currentLine = previousLine + 1;
+    printLineNumber("%c%4d ", operation, currentLine);
+    
+    int inputCanceled = false;
+    while ((chars = getInput(&inputCanceled, chars)) != NULL && buf_len(chars) != 0) {
+        buf_push(insertLines, ((Line) { chars }));
+        ++currentLine;
+        
+        // Count number of tabs at start of line for autoindentation of next line
+        // TODO: Make work with spaces.
+        int whitespaceCount = 0;
+        char *start = chars;
+        while (*start == '\t') {
+            ++whitespaceCount;
+            ++start;
+            if (start - chars > buf_len(chars)) break;
+        }
+        
+        chars = NULL;
+        
+        // If C, C++, or C_HEADER files, autoindent
+        if (currentBuffer->fileType == FT_C || currentBuffer->fileType == FT_CPP || currentBuffer->fileType == FT_C_HEADER || currentBuffer->fileType == FT_UNKNOWN) {
+            for (int i = 0; i < whitespaceCount; i++) {
+                buf_push(chars, '\t');
+            }
+        }
+        
+        printLineNumber("%c%4d ", operation, currentLine);
+    }
+    
+    if (inputCanceled) {
+        buf_free(chars);
+        // Cancel the operation by returning
+        (*canceled) = true;
+        return NULL;
+    }
+    
+    return insertLines;
+}
+
 // Editor - will allow user to type in anything, showing line number at start of new lines. To exit the editor, press Ctrl-D on Linux or Ctrl-Z+Enter on Windows. As each new line is entered, the characters will be added to a char pointer streatchy buffer (dynamic array). Then, this line will be added to the streatchy buffer of lines (called 'lines').
 void editorState_editor(void) {
     int c;
@@ -506,20 +579,12 @@ void editorState_editor(void) {
     
     // If continuing a previously typed-in file,
     // start on last line and overwrite the EOF character
-    if (buf_len(currentBuffer->lines) > 0) {
-        line = buf_len(currentBuffer->lines) + 1;
-    }
+    //if (buf_len(currentBuffer->lines) > 0) {
+    //line = buf_len(currentBuffer->lines) + 1;
+    //}
     
-    char *chars = NULL;
-    
-    printLineNumber("%5d ", line);
-    int canceled = false;
-    while ((chars = getInput(&canceled)) != NULL) {
-        buf_push(currentBuffer->lines, ((Line) { chars }));
-        ++line;
-        printLineNumber("%5d ", line);
-    }
-    
+    bool canceled = false;
+    currentBuffer->lines = multiLineEditor(0, NULL, &canceled, 0);
     if (canceled) {
         // TODO: close the buffer?
     }
@@ -542,26 +607,16 @@ internal void editorState_insertAfter(char *rest) {
         printLine(line - 1, 0, true);
     int currentLine = line + 1;
     
-    Line *insertLines = NULL;
-    char *chars = NULL;
-    
-    printLineNumber("a%4d ", currentLine);
-    int canceled = false;
-    while ((chars = getInput(&canceled)) != NULL) {
-        buf_push(insertLines, ((Line) { chars }));
-        ++currentLine;
-        printLineNumber("a%4d ", currentLine);
-    }
-    
+    bool canceled = false;
+    Line *insertLines = multiLineEditor(currentLine - 1, NULL, &canceled, InsertAfter);
     if (canceled) {
-        buf_free(chars);
         for (int i = 0; i < buf_len(insertLines); i++) {
             buf_free(insertLines[i].chars);
         }
         buf_free(insertLines);
-        // Cancel the operation by returning
         return;
     }
+    
     printf("\n");
     
     int firstMovedLine = buffer_insertAfterLine(currentBuffer, line, insertLines);
@@ -598,26 +653,16 @@ internal void editorState_insertBefore(char *rest) {
         printLine(line - 2, 0, true);
     int currentLine = line;
     
-    Line *insertLines = NULL;
-    char *chars = NULL;
-    
-    printLineNumber("i%4d ", currentLine);
-    int canceled = false;
-    while ((chars = getInput(&canceled)) != NULL) {
-        buf_push(insertLines, ((Line) { chars }));
-        ++currentLine;
-        printLineNumber("i%4d ", currentLine);
-    }
-    
+    bool canceled = false;
+    Line *insertLines = multiLineEditor(currentLine - 1, NULL, &canceled, InsertBefore);
     if (canceled) {
-        buf_free(chars);
         for (int i = 0; i < buf_len(insertLines); i++) {
             buf_free(insertLines[i].chars);
         }
         buf_free(insertLines);
-        // Cancel the operation by returning
         return;
     }
+    
     printf("\n");
     
     int firstMovedLine = buffer_insertBeforeLine(currentBuffer, line, insertLines);
@@ -646,7 +691,7 @@ internal void editorState_appendTo(char *rest) {
     
     printLine(line - 1, 'A', false);
     int canceled = false;
-    chars = getInput(&canceled);
+    chars = getInput(&canceled, chars);
     if (canceled) {
         // Delete the chars buffer
         buf_free(chars);
@@ -676,7 +721,7 @@ internal void editorState_prependTo(char *rest) {
     printLine(line - 1, 'I', true);
     printPrompt("%4s ^- ", "");
     int canceled = false;
-    chars = getInput(&canceled);
+    chars = getInput(&canceled, chars);
     if (canceled) {
         // Delete the chars buffer
         buf_free(chars);
@@ -709,7 +754,7 @@ internal void editorState_replaceLine(char *rest) {
     printLine(line - 1, 'r', true);
     printf("%5s ", "");
     int canceled = false;
-    chars = getInput(&canceled);
+    chars = getInput(&canceled, chars);
     if (canceled) {
         // Delete the chars buffer
         buf_free(chars);
@@ -794,7 +839,7 @@ internal void editorState_replaceString(char *rest, int restLength) {
     
     printPrompt("%5s %.*s- ", "", strPointToMatchLength, strPointToMatch); // TODO
     int canceled = false;
-    chars = getInput(&canceled);
+    chars = getInput(&canceled, chars);
     if (canceled) {
         // Delete the chars buffer
         buf_free(chars);
