@@ -3,14 +3,35 @@
 
 #include "edimcoder.h"
 
+// Gives back pointer starting at next non-whitespace character that appears after start
+char *skipWhitespace(char *start, int boundSize) {
+    char *current = start;
+    while (*current == ' ' || *current == '\t' || *current == '\n' || *current == '\r') {
+        ++current;
+        if (current - start > boundSize) break;
+    }
+    return current;
+}
+
+// Will give back a pointer just after the word skipped.
+char *skipWord(char *start, int boundSize, bool includeNumbers) {
+    char *current = start;
+    while ((*current >= 'A' && *current <= 'Z') || (*current >= 'a' && *current <= 'z')
+           || (includeNumbers && *current >= '0' && *current <= '9')) {
+        ++current;
+        if (current - start > boundSize) break;
+    }
+    return current;
+}
+
 /* Gets input, trims leading space, and puts into line char array
- as long as it doesn't go over the max.
- 
- @line - array of characters to fill up
- @max - maximum amount of characters allowed in line
- @trimSpace - Whether to trim leading space (1) or not (0)
- @return - the length of the line
- */
+as long as it doesn't go over the max.
+
+@line - array of characters to fill up
+@max - maximum amount of characters allowed in line
+@trimSpace - Whether to trim leading space (1) or not (0)
+@return - the length of the line
+*/
 int parsing_getLine(char *line, int max, int trimSpace) {
     int c;
     int i = 0;
@@ -68,7 +89,10 @@ int parsing_getLine_dynamic(char **chars, int trimSpace) {
 }
 
 // TODO: Test on macOS and BSD!
-char *getInput(int *canceled, char *inputBuffer) {
+// TODO: bool printNewLine
+// TODO: Placeholder/Ghost text
+// TODO: Autocomplete?
+char *getInput(bool *canceled, char *inputBuffer, inputKeyCallback callback) {
     (*canceled) = false;
     int currentIndex = 0;
     int defaultLength = buf_len(inputBuffer);
@@ -93,6 +117,11 @@ char *getInput(int *canceled, char *inputBuffer) {
 #ifndef _WIN32
             if (getch() == INPUT_SPECIAL2) {
 #endif
+                if (callback != NULL) {
+                    if (!callback(c, true, &inputBuffer, &currentIndex))
+                        continue;
+                }
+                
                 int specialkey = getch();
                 if (specialkey == INPUT_LEFT) { // Left arrow
                     if (currentIndex != 0) {
@@ -165,7 +194,12 @@ char *getInput(int *canceled, char *inputBuffer) {
 #endif
         }
         
-        // Control Keys
+        if (callback != NULL) {
+            if (!callback(c, false, &inputBuffer, &currentIndex))
+                continue;
+        }
+        
+        // ASCII Control Keys
         if (c == INPUT_CTRL_X) {
             //buf_pop_all(inputBuffer);
             fputs("^X", stdout);

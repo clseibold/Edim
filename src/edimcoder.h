@@ -45,9 +45,20 @@ void printFileInfo(void);
 
 /* === parsing.c === */
 
+typedef struct pString {
+    char *start;
+    char *end;
+} pString;
+
+// Function pointer to function that can run user-code on specific keypresses during input (with getInput). If null, the function is not called
+// Return true if keypress should continue to use default action provided by getInput()
+typedef bool (*inputKeyCallback)(char, bool isSpecial, char **, int *);
+
+// ANSI Control Characters
 #define INPUT_CTRL_L 12 // Clear Scrren
 #define INPUT_CTRL_X 24 // Cancel
-#define INPUT_CTRL_C 3 // TODO: Exit or Copy?
+#define INPUT_CTRL_C 3 // Currently: Exit Program, TODO: Exit or Copy?
+#define INPUT_CTRL_O 15
 
 // Special Keys
 #ifdef _WIN32
@@ -73,7 +84,9 @@ void printFileInfo(void);
 #define INPUT_BACKSPACE 127
 #endif
 
-char *getInput(int *canceled, char *inputBuffer);
+char *skipWhitespace(char *start, int boundSize);
+char *skipWord(char *start, int boundSize, bool includeNumbers);
+char *getInput(bool *canceled, char *inputBuffer, inputKeyCallback callback);
 int parsing_getLine(char *line, int max, int trimSpace);
 int parsing_getLine_dynamic(char **chars, int trimSpace);
 void createOutline(void);

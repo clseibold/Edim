@@ -12,6 +12,8 @@ internal void editorState_openNewFile(char *rest, int restLength);
 internal int getLineNumber();
 internal int checkLineNumber(int original_line);
 
+internal void editorState_printHelpScreen();
+
 internal void editorState_insertAfter(char *rest);
 internal void editorState_insertBefore(char *rest);
 internal void editorState_appendTo(char *rest);
@@ -24,6 +26,33 @@ internal void editorState_findStringInFile(char *rest, int restLength);
 internal void editorState_deleteLine(char *rest);
 internal void editorState_moveUp(char *rest);
 internal void editorState_moveDown(char *rest);
+
+internal bool commandInputCallback(char c, bool isSpecial, char **inputBuffer, int *currentIndex) {
+    if (!isSpecial && c == INPUT_CTRL_L) {
+        clrscr();
+        
+        // Reprint prompt
+        if (buf_len(currentBuffer->openedFilename) > 0) {
+            // TODO: This will also print out the directory, so I should get rid of everything before the last slash
+            if (currentBuffer->modified) {
+                printPrompt("\n<%d: %.*s*|%d> ", currentBuffer - buffers, (int) buf_len(currentBuffer->openedFilename), currentBuffer->openedFilename, currentBuffer->currentLine);
+            } else {
+                printPrompt("\n<%d: %.*s|%d> ", currentBuffer - buffers, (int) buf_len(currentBuffer->openedFilename), currentBuffer->openedFilename, currentBuffer->currentLine);
+            }
+            
+        } else printPrompt("\n<%d: new file*|%d> ", currentBuffer - buffers, currentBuffer->currentLine);
+        return false;
+    } else if (!isSpecial && c == INPUT_CTRL_O) {
+        char *str = "o ";
+        for (int i = 0; i < strlen(str); i++)
+            buf_push(*inputBuffer, str[i]);
+        printf("%s", str);
+        (*currentIndex) += 2;
+        return false;
+    }
+    
+    return true;
+}
 
 /* Menu for Editor */
 State editorState_menu(void) {
@@ -39,62 +68,55 @@ State editorState_menu(void) {
     } else printPrompt("\n<%d: new file*|%d> ", currentBuffer - buffers, currentBuffer->currentLine);
     
     /* get first character - the menu item */
-    char c;
-    c = getchar();
+    char *input = NULL; // TODO: Free at end
+    bool canceled = false;
+    input = getInput(&canceled, input, commandInputCallback);
+    if (canceled || input == NULL || buf_len(input) == 0 || (buf_len(input) == 1 && input[0] == '\n')) {
+        buf_free(input);
+        return KEEP;
+    }
     
-    if (c == '\n') return KEEP;
+    char *current = input;
     
-    /* Store rest of line in rest */
-    char rest[MAXLENGTH / 4];
-    int restLength = parsing_getLine(rest, MAXLENGTH / 4, true);
+    // Parse first word for command
+    int boundSize = buf_len(input);
+    current = skipWhitespace(current, boundSize);
+    boundSize = buf_len(input) - (current - input);
+    
+    pString command;
+    command.start = current;
+    current = skipWord(current, boundSize, false);
+    command.end = current;
+    boundSize = buf_len(input) - (current - input);
+    
+    char c = command.start[0];
+    char *rest = current;
+    int restLength = boundSize;
     
     printf("\n");
+    
+    // String Comparisons - I believe this is inefficient
+    // TODO: Look into string interning
+    size_t maxChars = (command.end - command.start);
+    //printf("'%.*s'", maxChars, command.start);
+    if (strncmp(command.start, "clear", maxChars) == 0) {
+        clrscr();
+        buf_free(input);
+        return KEEP;
+    } else if (strncmp(command.start, "help", maxChars) == 0) {
+        editorState_printHelpScreen();
+        return KEEP;
+    }
     
     switch (c) {
         case 12: // Ctrl-L
         {
             clrscr();
         } break;
-        case '?': // TODO: Add new file and open file.
+        /*case '?': // TODO: Add new file and open file.
         {
-            if (buf_len(currentBuffer->openedFilename) > 0)
-                printf("'%s' is currently open.\n\n", currentBuffer->openedFilename);
-            else printf("An unnamed file is currently open.\n\n");
-            
-            printf("Use Ctrl-D or Ctrl-Z+Enter to denote end of input\n");
-            printf("Use Ctrl-X+Enter to cancel the current command/operation\n");
-            printf("\n");
-            printf(" * Ctrl-L+Enter - Clear the screen\n");
-            /* Edit - rewrite a specific line, group of lines, group of characters in a line (given column numbers), and word/group of words */
-            //printf(" * 'e' - Edit\n");
-            printf(" * '#' - Gives back information on the file, including number of lines, filename, number of characters, filetype, etc.\n");
-            printf(" * 'j (line#)' - Set's current line to line number (no output). Use 'j$' to set last line as current line.");
-            printf(" * 'a (line#)' - Insert after the line number\n");
-            printf(" * 'i (line#)' - Insert before the line number\n");
-            printf(" * 'A (line#)' - Appends to a line\n");
-            printf(" * 'I (line#)' - Prepends to a line\n");
-            printf(" * 'r (line#)' - Replace a line with a new line\n");
-            printf(" * 'R (line#) (string)' - Replace the first occurance of the string in the line\n");
-            printf(" * 'x (line#)' - Deletes a line\n");
-            printf(" * 'm (line#)' - Move the line up by one\n");
-            printf(" * 'M (line#)' - Move the line down by one\n");
-            printf(" * 'f (string)' - Finds the first occurance of the string in the file and prints the line it's on out\n");
-            printf(" * 'F (line#) (string)' - Find the first occurance of the string in the line and print the line out showing you where the occurance is\n");
-            printf(" * 'u' - Undo the last operation, cannot undo an undo, cannot undo past 1 operation\n"); // TODO
-            printf(" * 'c' - Continue from last line; Append to end of file\n");
-            printf(" * 'p (line#:start)' - Preview whole file (optionally starting at given line)\n");
-            printf(" * 'P (line#:start) (line#:end)' - Preview a line or set of lines, including the line before and after\n");
-            printf(" * 'b' - List all currently open buffers\n");
-            printf(" * 'b (buffer#)' - Switch current buffer to buffer #\n");
-            printf(" * 'bn' - Switch current buffer to next buffer. Will wrap around when hits end.\n");
-            printf(" * 'bp' - Switch current buffer to previous buffer. Will wrap around when hits beginning.\n");
-            printf(" * 'o' - Open new buffer\n");
-            printf(" * 'n' - Open new file buffer\n");
-            printf(" * 's' - Save current buffer\n");
-            //printf(" * 'S' - Save all buffers\n"); // TODO
-            printf(" * 'e / E' - Exit current buffer / Exit current buffer (without save)\n");
-            printf(" * 'q / Q' - Quit, closing all buffers / Quit, closing all buffers (without save)\n");
-        } break;
+            editorState_printHelpScreen();
+        } break;*/
         case 'j':
         {
             char *end;
@@ -269,6 +291,8 @@ State editorState_menu(void) {
                             next = 0;
                         
                         currentBuffer = &(buffers[next]);
+                        
+                        buf_free(input);
                         return KEEP;
                     } break;
                     case 'p':
@@ -279,6 +303,8 @@ State editorState_menu(void) {
                             previous = buf_len(buffers) - 1;
                         
                         currentBuffer = &(buffers[previous]);
+                        
+                        buf_free(input);
                         return KEEP;
                     } break;
                 }
@@ -300,6 +326,7 @@ State editorState_menu(void) {
                 
                 currentBuffer = &(buffers[index]);
                 
+                buf_free(input);
                 return KEEP;
             }
             
@@ -327,6 +354,9 @@ State editorState_menu(void) {
         } break;
         case 'o':
         {
+            char *restOrig = rest;
+            rest = skipWhitespace(rest, restLength);
+            restLength = restLength - (rest - restOrig);
             editorState_openAnotherFile(rest, restLength);
         } break;
         case 'n':
@@ -335,18 +365,22 @@ State editorState_menu(void) {
         } break;
         case 'e':
         {
+            buf_free(input);
             return EXIT;
         } break;
         case 'E':
         {
+            buf_free(input);
             return FORCE_EXIT;
         } break;
         case 'q':
         {
+            buf_free(input);
             return QUIT;
         } break;
         case 'Q':
         {
+            buf_free(input);
             return FORCE_QUIT;
         } break;
         // Hacked in - change filetype to FT_C because of how poor my filetype extension matching is
@@ -365,6 +399,7 @@ State editorState_menu(void) {
         } break;
     }
     
+    buf_free(input);
     return KEEP;
 }
 
@@ -374,12 +409,17 @@ internal void editorState_openAnotherFile(char *rest, int restLength) {
     
     // If a string was already given with the command
     if (restLength - 1 > 0) {
+        if (rest[restLength - 1] == '\n')
+            --restLength;
+        
         // Copy into str
         strLength = restLength;
         strncpy(str, rest, strLength);
         
+        if (str[strLength - 1] != '\0')
+            str[strLength] = '\0';
         // Make sure string ends with zero termination
-        assert(str[strLength - 1] == '\0');
+        assert(str[strLength] == '\0');
         
         {
             Buffer buffer;
@@ -543,8 +583,8 @@ internal Line *multiLineEditor(int previousLine, Line *insertLines, bool *cancel
     int currentLine = previousLine + 1;
     printLineNumber("%c%4d ", operation, currentLine);
     
-    int inputCanceled = false;
-    while ((chars = getInput(&inputCanceled, chars)) != NULL && buf_len(chars) != 0) {
+    bool inputCanceled = false;
+    while ((chars = getInput(&inputCanceled, chars, NULL)) != NULL && buf_len(chars) != 0) {
         buf_push(insertLines, ((Line) { chars }));
         ++currentLine;
         
@@ -589,6 +629,46 @@ internal Line *multiLineEditor(int previousLine, Line *insertLines, bool *cancel
     }
     
     return insertLines;
+}
+
+internal void editorState_printHelpScreen() {
+    if (buf_len(currentBuffer->openedFilename) > 0)
+        printf("'%s' is currently open.\n\n", currentBuffer->openedFilename);
+    else printf("An unnamed file is currently open.\n\n");
+    
+    printf("Use Ctrl-D or Ctrl-Z+Enter to denote end of input\n");
+    printf("Use Ctrl-X+Enter to cancel the current command/operation\n");
+    printf("\n");
+    printf(" * Ctrl-L or 'clear' - Clear the screen\n");
+    /* Edit - rewrite a specific line, group of lines, group of characters in a line (given column numbers), and word/group of words */
+    //printf(" * 'e' - Edit\n");
+    printf(" * '#' - Gives back information on the file, including number of lines, filename, number of characters, filetype, etc.\n");
+    printf(" * 'j (line#)' - Set's current line to line number (no output). Use 'j$' to set last line as current line.");
+    printf(" * 'a (line#)' - Insert after the line number\n");
+    printf(" * 'i (line#)' - Insert before the line number\n");
+    printf(" * 'A (line#)' - Appends to a line\n");
+    printf(" * 'I (line#)' - Prepends to a line\n");
+    printf(" * 'r (line#)' - Replace a line with a new line\n");
+    printf(" * 'R (line#) (string)' - Replace the first occurance of the string in the line\n");
+    printf(" * 'x (line#)' - Deletes a line\n");
+    printf(" * 'm (line#)' - Move the line up by one\n");
+    printf(" * 'M (line#)' - Move the line down by one\n");
+    printf(" * 'f (string)' - Finds the first occurance of the string in the file and prints the line it's on out\n");
+    printf(" * 'F (line#) (string)' - Find the first occurance of the string in the line and print the line out showing you where the occurance is\n");
+    printf(" * 'u' - Undo the last operation, cannot undo an undo, cannot undo past 1 operation\n"); // TODO
+    printf(" * 'c' - Continue from last line; Append to end of file\n");
+    printf(" * 'p (line#:start)' - Preview whole file (optionally starting at given line)\n");
+    printf(" * 'P (line#:start) (line#:end)' - Preview a line or set of lines, including the line before and after\n");
+    printf(" * 'b' - List all currently open buffers\n");
+    printf(" * 'b (buffer#)' - Switch current buffer to buffer #\n");
+    printf(" * 'bn' - Switch current buffer to next buffer. Will wrap around when hits end.\n");
+    printf(" * 'bp' - Switch current buffer to previous buffer. Will wrap around when hits beginning.\n");
+    printf(" * 'o' - Open new buffer\n");
+    printf(" * 'n' - Open new file buffer\n");
+    printf(" * 's' - Save current buffer\n");
+    //printf(" * 'S' - Save all buffers\n"); // TODO
+    printf(" * 'e / E' - Exit current buffer / Exit current buffer (without save)\n");
+    printf(" * 'q / Q' - Quit, closing all buffers / Quit, closing all buffers (without save)\n");
 }
 
 // Editor - will allow user to type in anything, showing line number at start of new lines. To exit the editor, press Ctrl-D on Linux or Ctrl-Z+Enter on Windows. As each new line is entered, the characters will be added to a char pointer streatchy buffer (dynamic array). Then, this line will be added to the streatchy buffer of lines (called 'lines').
@@ -709,8 +789,8 @@ internal void editorState_appendTo(char *rest) {
         printLine(line - 2, 0, true);
     
     printLine(line - 1, 'A', false);
-    int canceled = false;
-    chars = getInput(&canceled, chars);
+    bool canceled = false;
+    chars = getInput(&canceled, chars, NULL);
     if (canceled) {
         // Delete the chars buffer
         buf_free(chars);
@@ -739,8 +819,8 @@ internal void editorState_prependTo(char *rest) {
     
     printLine(line - 1, 'I', true);
     printPrompt("%4s ^- ", "");
-    int canceled = false;
-    chars = getInput(&canceled, chars);
+    bool canceled = false;
+    chars = getInput(&canceled, chars, NULL);
     if (canceled) {
         // Delete the chars buffer
         buf_free(chars);
@@ -772,8 +852,8 @@ internal void editorState_replaceLine(char *rest) {
     
     printLine(line - 1, 'r', true);
     printf("%5s ", "");
-    int canceled = false;
-    chars = getInput(&canceled, chars);
+    bool canceled = false;
+    chars = getInput(&canceled, chars, NULL);
     if (canceled) {
         // Delete the chars buffer
         buf_free(chars);
@@ -857,8 +937,8 @@ internal void editorState_replaceString(char *rest, int restLength) {
     char *chars = NULL; // What the string will be replaced with
     
     printPrompt("%5s %.*s- ", "", strPointToMatchLength, strPointToMatch); // TODO
-    int canceled = false;
-    chars = getInput(&canceled, chars);
+    bool canceled = false;
+    chars = getInput(&canceled, chars, NULL);
     if (canceled) {
         // Delete the chars buffer
         buf_free(chars);
