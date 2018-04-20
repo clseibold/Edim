@@ -510,6 +510,14 @@ internal Line *multiLineEditor(int previousLine, Line *insertLines, bool *cancel
             if (start - chars > buf_len(chars)) break;
         }
         
+        while (start - chars <= buf_len(chars)) {
+            if (*start == '{') {
+                ++whitespaceCount;
+            } else if (*start == '}')
+                --whitespaceCount;
+            ++start;
+        }
+        
         chars = NULL;
         
         // If C, C++, or C_HEADER files, autoindent
@@ -549,6 +557,17 @@ internal Line *multiLineEditor(int previousLine, Line *insertLines, bool *cancel
             ++start;
             if (start - chars > buf_len(chars)) break;
         }
+        
+        int scopeOpeningCount = 0;
+        while (start - chars <= buf_len(chars)) {
+            if (*start == '{') {
+                ++scopeOpeningCount;
+            } else if (*start == '}')
+                --scopeOpeningCount;
+            ++start;
+        }
+        if (scopeOpeningCount < 0) scopeOpeningCount = 0;
+        whitespaceCount += scopeOpeningCount;
         
         chars = NULL;
         
