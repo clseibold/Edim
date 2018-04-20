@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "lineeditor.h"
+#include "edimcoder.h"
 
 void setColor(COLOR foreground)
 {

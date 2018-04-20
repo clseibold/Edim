@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <malloc.h>
 
-#include "lineeditor.h"
+#include "edimcoder.h"
 
 #ifdef _WIN32
 
@@ -95,6 +95,7 @@ int main(int argc, char **argv) {
     }
     
     // Open file that was passed into executable
+    // TODO: Do this for multiple files passed in?
     if (argc > 1) {
         {
             Buffer buffer;

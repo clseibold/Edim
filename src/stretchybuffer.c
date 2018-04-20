@@ -1,4 +1,4 @@
-#include "lineeditor.h"
+#include "edimcoder.h"
 
 #include <stdio.h>
 #include <ctype.h>

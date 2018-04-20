@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "lineeditor.h"
+#include "edimcoder.h"
 
 void buffer_initEmptyBuffer(Buffer *buffer) {
     Line emptyLine;

@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "lineeditor.h"
+#include "edimcoder.h"
 
 internal void editorState_openAnotherFile(char *rest, int restLength);
 internal void editorState_openNewFile(char *rest, int restLength);

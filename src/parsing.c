@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "lineeditor.h"
+#include "edimcoder.h"
 
 /* Gets input, trims leading space, and puts into line char array
  as long as it doesn't go over the max.
@@ -290,7 +290,13 @@ char *getInput(int *canceled) {
         ++currentIndex;
     }
     
-    //printf("Result: %.*s\n", (int) buf_len(inputBuffer), inputBuffer);
+    if (buf_len(inputBuffer) == 0) {
+#ifdef _WIN32
+        printf("^Z");
+#else
+        printf("^D");
+#endif
+    }
     
     return inputBuffer;
 }
