@@ -98,8 +98,6 @@ internal bool commandInputCallback(char c, bool isSpecial, char **inputBuffer, i
             str[0] = 'F'; break;
             case 'u':
             str[0] = 'u'; break;
-            //case 'b':
-            //str[0] = 'b'; break;
             case 'n':
             str[0] = 'n'; break;
             case 'o':
