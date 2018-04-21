@@ -100,8 +100,6 @@ internal bool commandInputCallback(char c, bool isSpecial, char **inputBuffer, i
             str[0] = 'u'; break;
             //case 'b':
             //str[0] = 'b'; break;
-            case 'c':
-            str[0] = 'c'; break;
             case 'n':
             str[0] = 'n'; break;
             case 'o':
@@ -289,12 +287,11 @@ State editorState_menu(void) {
         } break;
         case 'p':
         {
-            char *end;
-            int line = (int) strtol(rest, &end, 10);
+            int line = (int) parseLineNumber(currentBuffer, current, buf_end(input));
+            current = skipLineNumber(current, buf_end(input));
             
-            if (line == 0) {
-                line = currentBuffer->currentLine;
-            } else {
+            if (!(line == 0 && buf_len(currentBuffer->lines) == 0)) {
+                if (line == 0) line = currentBuffer->currentLine;
                 line = checkLineNumber(line);
             }
             
@@ -308,6 +305,7 @@ State editorState_menu(void) {
             current = skipLineNumber(current, buf_end(input));
             
             if (!(line == 0 && buf_len(currentBuffer->lines) == 0)) {
+                if (line == 0) line = currentBuffer->currentLine;
                 line = checkLineNumber(line);
             }
             
@@ -324,9 +322,9 @@ State editorState_menu(void) {
                 int endLine = (int) parseLineNumber(currentBuffer, current, buf_end(input));
                 current = skipWhitespace(current, buf_end(input));
                 
-                // Print the line before
-                if (line - 2 >= 0)
-                    printLine(line - 2, 0, true);
+                if (endLine == 0 && buf_len(currentBuffer->lines) != 0) {
+                    if (endLine == 0) line = currentBuffer->currentLine;
+                }
                 
                 // Make sure going from low to high (forwards)
                 if (endLine < line) {
@@ -334,6 +332,10 @@ State editorState_menu(void) {
                     endLine = line;
                     line = tmp;
                 }
+                
+                // Print the line before
+                if (line - 2 >= 0)
+                    printLine(line - 2, 0, true);
                 
                 // Print the range of lines
                 for (int i = line; i <= endLine; i++) {
