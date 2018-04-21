@@ -144,6 +144,7 @@ void buffer_close(Buffer *buffer) {
 }
 
 // If openedFilename is not set in the buffer, then filename is used.
+// TODO: Boolean to forcibly use the filename passed in (useful for saveas)
 void buffer_saveFile(Buffer *buffer, char *filename) {
     FILE *fp;
     if (buffer->openedFilename && buf_len(buffer->openedFilename) > 0) {

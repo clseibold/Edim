@@ -2,18 +2,19 @@
 
 set name="edim"
 
+set "projDirectory=%cd%"
 set compiler=%1
 set command=%compiler%
 set arch=%2
 set type=%3
 rem.TODO- Fix these:
-if exist "..\..\src\win32\NUL" (
-   set win32sources="..\..\src\win32\*.c"
+if exist "%projDirectory%\src\win32\NUL" (
+   set win32sources="%projDirectory%\src\win32\*.c"
 )
-if not exist "..\..\src\libs\NUL" goto :continue
-   set libc="..\..\src\libs\*.c"
-   set libh="-I..\..\src\libs"
-   set msvclibh="/I..\..\src\libs"
+if not exist "%projDirectory%\src\libs\NUL" goto :continue
+set libc="%projDirectory%\src\libs\*.c"
+set libh="-I%projDirectory%\src\libs"
+set msvclibh="/I%projDirectory%\src\libs"
 
 :continue
 if /i "%compiler%"=="gcc" goto :gcc
@@ -77,7 +78,6 @@ goto :end
 
 
 :msvc
-set "projDirectory=%cd%"
 where cl >NUL 2>NUL
 if %ERRORLEVEL%==0 goto :msvcdo
 if /i "%arch%"=="x86" goto :msvcx86

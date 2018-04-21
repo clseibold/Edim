@@ -4,25 +4,122 @@
 #include "edimcoder.h"
 
 // Gives back pointer starting at next non-whitespace character that appears after start
-char *skipWhitespace(char *start, int boundSize) {
+char *skipWhitespace(char *start, char *endBound) {
     char *current = start;
     while (*current == ' ' || *current == '\t' || *current == '\n' || *current == '\r') {
         ++current;
-        if (current - start > boundSize) break;
+        if (current > endBound) break;
     }
     return current;
 }
 
 // Will give back a pointer just after the word skipped.
-char *skipWord(char *start, int boundSize, bool includeNumbers) {
+char *skipWord(char *start, char *endBound, bool includeNumbers, bool includeSymbols) {
     char *current = start;
     while ((*current >= 'A' && *current <= 'Z') || (*current >= 'a' && *current <= 'z')
-           || (includeNumbers && *current >= '0' && *current <= '9')) {
+           || (includeNumbers && *current >= '0' && *current <= '9')
+           || (includeNumbers && *current == '-') // Note: Technically this will also match numbers that have '-' in the middle and at end, but whatever TODO: Fix this
+           || (includeSymbols && *current >= '!' && *current <= '/')
+           || (includeSymbols && *current >= ':' && *current <= '@')
+           || (includeSymbols && *current >= '[' && *current <= '`')
+           || (includeSymbols && *current >= '{' && *current <= '~')) {
         ++current;
-        if (current - start > boundSize) break;
+        if (current > endBound) break;
     }
     return current;
 }
+
+// TODO
+char *skipText() {
+    return NULL;
+}
+
+// TODO
+char *skipSymbols() {
+    return NULL;
+}
+
+char *skipNumbers(char *start, char *endBound) {
+    char *current = start;
+    if (*current == '-') ++current; // Note: Not doing '+' here
+    while (*current >= '0' && *current <= '9') {
+        ++current;
+        if (current > endBound) break;
+    }
+    return current;
+}
+
+// Specific to Edim Command Language
+char *skipLineNumber(char *start, char *endBound) {
+    char *current = start;
+    if (*current == '\'') {
+        ++current;
+        current = skipWord(current, endBound, true, false);
+    } else {
+        // If symbol
+        if ((*current >= '!' && *current <= '/')
+            || (*current >= ':' && *current <= '@')
+            || (*current >= '[' && *current <= '`')
+            || (*current >= '{' && *current <= '~')) {
+            ++current;
+        } else {
+            current = skipNumbers(current, endBound);
+        }
+    }
+    return current;
+}
+
+// Returns '0' if number could not be parsed
+long parseLineNumber(Buffer *buffer, char *start, char *endBound) {
+    char *current = start;
+    current = skipWhitespace(current, endBound);
+    pString lineNumber;
+    lineNumber.start = current;
+    current = skipLineNumber(current, endBound);
+    if (current == lineNumber.start) return 0; // No number found
+    lineNumber.end = current;
+    
+    // Special Line Number Symbols
+    if (lineNumber.end - lineNumber.start == 1) {
+        switch (lineNumber.start[0]) {
+            case '0':
+            if (buf_len(buffer->lines) == 0)
+                return 0;
+            else return 1;
+            case '1':
+            return 1;
+            case '-':
+            return 0;
+            case '$':
+            return buf_len(buffer->lines);
+        }
+    }
+    
+    // Turn number string into long integer
+    int result = 0;
+    bool negative = false;
+    current = lineNumber.start;
+    if (*current == '-') {
+        current++;
+        negative = true;
+    }
+    while (*current >= '0' && *current <= '9') {
+        result *= 10;
+        result += *current - '0';
+        ++current;
+        if (current == lineNumber.end + 1) break;
+    }
+    
+    if (negative && result > 0) {
+        result *= -1;
+    }
+    
+    return result;
+}
+
+/*int parseLineNumber() {
+
+}*/
 
 /* Gets input, trims leading space, and puts into line char array
 as long as it doesn't go over the max.

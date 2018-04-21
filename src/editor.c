@@ -28,6 +28,9 @@ internal void editorState_moveUp(char *rest);
 internal void editorState_moveDown(char *rest);
 
 internal bool commandInputCallback(char c, bool isSpecial, char **inputBuffer, int *currentIndex) {
+    bool bufferEmpty = false;
+    if (*inputBuffer == NULL || buf_len(*inputBuffer) == 0)
+        bufferEmpty = true;
     if (!isSpecial && c == INPUT_CTRL_L) {
         clrscr();
         
@@ -42,12 +45,108 @@ internal bool commandInputCallback(char c, bool isSpecial, char **inputBuffer, i
             
         } else printPrompt("\n<%d: new file*|%d> ", currentBuffer - buffers, currentBuffer->currentLine);
         return false;
-    } else if (!isSpecial && c == INPUT_CTRL_O) {
+    } else if (!isSpecial && c == INPUT_CTRL_O && bufferEmpty) {
         char *str = "o ";
         for (int i = 0; i < strlen(str); i++)
             buf_push(*inputBuffer, str[i]);
         printf("%s", str);
-        (*currentIndex) += 2;
+        (*currentIndex) += strlen(str);
+        return false;
+    } else if (!isSpecial && c == '\t') { // TODO: Command Autocompletion
+        return false;
+    }
+    
+    /*else if (!isSpecial && c == 'i' && bufferEmpty) {
+        char *str = "i ";
+        for (int i = 0; i < strlen(str); i++)
+            buf_push(*inputBuffer, str[i]);
+        printf("%s", str);
+        (*currentIndex) += strlen(str);
+        return false;
+    }*/
+    
+    if (!isSpecial && bufferEmpty) {
+        char *str = "h ";
+        switch (c) {
+            case 'i':
+            str[0] = 'i'; break;
+            case 'a':
+            str[0] = 'a'; break;
+            case 'I':
+            str[0] = 'I'; break;
+            case 'A':
+            str[0] = 'A'; break;
+            case 'r':
+            str[0] = 'r'; break;
+            case 'R':
+            str[0] = 'R'; break;
+            case 'j':
+            str[0] = 'j'; break;
+            case 'p':
+            str[0] = 'p'; break;
+            case 'P':
+            str[0] = 'P'; break;
+            case 'x':
+            str[0] = 'x'; break;
+            case 'm':
+            str[0] = 'm'; break;
+            case 'M':
+            str[0] = 'M'; break;
+            case 'f':
+            str[0] = 'f'; break;
+            case 'F':
+            str[0] = 'F'; break;
+            case 'u':
+            str[0] = 'u'; break;
+            //case 'b':
+            //str[0] = 'b'; break;
+            case 'c':
+            str[0] = 'c'; break;
+            case 'n':
+            str[0] = 'n'; break;
+            case 'o':
+            str[0] = 'o'; break;
+            case 's':
+            str[0] = 's'; break;
+            case 'e':
+            str[0] = 'e'; break;
+            case 'E':
+            str[0] = 'E'; break;
+            case 'q':
+            str[0] = 'q'; break;
+            case 'Q':
+            str[0] = 'Q'; break;
+            // --
+            case 'h':
+            char *str2 = "help ";
+            for (int i = 0; i < strlen(str2); i++)
+                buf_push(*inputBuffer, str2[i]);
+            printf("%s", str2);
+            (*currentIndex) += strlen(str2);
+            return false;
+            // --
+            default:
+            return true;
+        }
+        for (int i = 0; i < strlen(str); i++)
+            buf_push(*inputBuffer, str[i]);
+        printf("%s", str);
+        (*currentIndex) += strlen(str);
+        return false;
+    } else if (!isSpecial) {
+        char *str = "$ ";
+        switch (c) {
+            case '$':
+            str[0] = '$'; break;
+            case '0': // Check that no other numbers before (aside from space)
+            str[0] = '0'; break;
+            default:
+            return true;
+        }
+        for (int i = 0; i < strlen(str); i++)
+            buf_push(*inputBuffer, str[i]);
+        printf("%s", str);
+        (*currentIndex) += strlen(str);
         return false;
     }
     
@@ -79,19 +178,23 @@ State editorState_menu(void) {
     char *current = input;
     
     // Parse first word for command
-    int boundSize = buf_len(input);
-    current = skipWhitespace(current, boundSize);
-    boundSize = buf_len(input) - (current - input);
+    current = skipWhitespace(current, buf_end(input));
     
     pString command;
     command.start = current;
-    current = skipWord(current, boundSize, false);
+    current = skipWord(current, buf_end(input), false, false);
     command.end = current;
-    boundSize = buf_len(input) - (current - input);
+    if (command.start == command.end) {
+        // TODO: Read symbol?
+    }
     
-    char c = command.start[0];
+    //char c = command.start[0];
     char *rest = current;
+    int boundSize = buf_len(input) - (current - input);
     int restLength = boundSize;
+    
+    // Skip Whitespace
+    current = skipWhitespace(current, buf_end(input));
     
     printf("\n");
     
@@ -108,35 +211,13 @@ State editorState_menu(void) {
         return KEEP;
     }
     
-    switch (c) {
-        case 12: // Ctrl-L
-        {
-            clrscr();
-        } break;
-        /*case '?': // TODO: Add new file and open file.
-        {
-            editorState_printHelpScreen();
-        } break;*/
+    switch (command.start[0]) {
         case 'j':
         {
-            char *end;
+            int line = (int) parseLineNumber(currentBuffer, current, buf_end(input));
             
-            if (rest[0] == '$' || (rest[0] == ' ' && rest[1] == '$')) {
-                currentBuffer->currentLine = buf_len(currentBuffer->lines);
-                break;
-            }
-            
-            int line = (int) strtol(rest, &end, 10);
-            
-            char lineInput[MAXLENGTH / 4];
-            int length;
-            while (line <= 0 || line > buf_len(currentBuffer->lines) || length == -1) {
-                if (rest != end)
-                    printError("That line number exceeds the bounds of the file.\n");
-                printPrompt("Enter a line number: ");
-                length = parsing_getLine(lineInput, MAXLENGTH / 4, true);
-                line = (int) strtol(lineInput, &end, 10);
-            }
+            if (!(line == 0 && buf_len(currentBuffer->lines) == 0))
+                line = checkLineNumber(line);
             
             currentBuffer->currentLine = line;
         } break;
@@ -223,53 +304,47 @@ State editorState_menu(void) {
         } break;
         case 'P':
         {
-            char *end;
-            int line = (int) strtol(rest, &end, 10);
+            int line = (int) parseLineNumber(currentBuffer, current, buf_end(input));
+            current = skipLineNumber(current, buf_end(input));
             
-            if (line == 0) {
-                line = currentBuffer->currentLine;
-            } else {
+            if (!(line == 0 && buf_len(currentBuffer->lines) == 0)) {
                 line = checkLineNumber(line);
-                // Don't include the space in between the line number and the string to replace
-                ++end;
             }
             
-            int endLine;
-            char *end2;
-            char str[MAXLENGTH / 4];
-            int strLength = 0;
+            current = skipWhitespace(current, buf_end(input));
             
-            // If a second line number was already given with the command
-            if (rest + restLength - end - 1 > 0) {
-                endLine = (int) strtol(end, &end2, 10);
-                // If given a valid number
-                if (endLine != -1) {
-                    // Make sure going from low to high (forwards)
-                    if (endLine < line) {
-                        int tmp = endLine;
-                        endLine = line;
-                        line = tmp;
-                    }
-                    
-                    // Print the range of lines along with the line before and after
-                    if (line - 2 >= 0)
-                        printLine(line - 2, 0, true);
-                    for (int i = line; i <= endLine; i++) {
-                        if (i - 1 >= 0 && i - 1 < buf_len(currentBuffer->lines))
-                            printLine(i - 1, 0, true);
-                    }
-                    if (endLine < buf_len(currentBuffer->lines))
-                        printLine(endLine, 0, true);
-                    break;
+            // If there was only one argument given
+            if (current >= buf_end(input)) {
+                if (line - 2 >= 0)
+                    printLine(line - 2, 0, true);
+                printLine(line - 1, 0, true);
+                if (line < buf_len(currentBuffer->lines))
+                    printLine(line, 0, true);
+            } else {
+                int endLine = (int) parseLineNumber(currentBuffer, current, buf_end(input));
+                current = skipWhitespace(current, buf_end(input));
+                
+                // Print the line before
+                if (line - 2 >= 0)
+                    printLine(line - 2, 0, true);
+                
+                // Make sure going from low to high (forwards)
+                if (endLine < line) {
+                    int tmp = endLine;
+                    endLine = line;
+                    line = tmp;
                 }
+                
+                // Print the range of lines
+                for (int i = line; i <= endLine; i++) {
+                    if (i - 1 >= 0 && i - 1 < buf_len(currentBuffer->lines))
+                        printLine(i - 1, 0, true);
+                }
+                
+                // Print the line after
+                if (endLine < buf_len(currentBuffer->lines))
+                    printLine(endLine, 0, true);
             }
-            
-            // Otherwise, just print that one line
-            if (line - 2 >= 0)
-                printLine(line - 2, 0, true);
-            printLine(line - 1, 0, true);
-            if (line < buf_len(currentBuffer->lines))
-                printLine(line, 0, true);
         } break;
         case 'f':
         {
@@ -355,7 +430,7 @@ State editorState_menu(void) {
         case 'o':
         {
             char *restOrig = rest;
-            rest = skipWhitespace(rest, restLength);
+            rest = skipWhitespace(rest, buf_end(input));
             restLength = restLength - (rest - restOrig);
             editorState_openAnotherFile(rest, restLength);
         } break;
@@ -510,6 +585,10 @@ internal int getLineNumber() {
     line = (int) strtol(lineInput, &end, 10);
     
     while (line <= 0 || line > buf_len(currentBuffer->lines) || length == -1) {
+        if (lineInput != NULL) {
+            buf_free(lineInput);
+            lineInput = NULL;
+        }
         printError("That line number exceeds the bounds of the file.\n");
         printPrompt("Enter a line number: ");
         length = parsing_getLine_dynamic(&lineInput, true);
@@ -527,11 +606,19 @@ internal int checkLineNumber(int original_line) {
     int length = 0;
     int line = original_line;
     
+    if ((currentBuffer->lines == NULL || buf_len(currentBuffer->lines) == 0) && (line == 0 || line == 1)) return 0;
+    
     while (line <= 0 || line > buf_len(currentBuffer->lines) || length == -1) {
+        if (lineInput != NULL) {
+            buf_free(lineInput);
+            lineInput = NULL;
+        }
         printError("That line number exceeds the bounds of the file.\n");
         printPrompt("Enter a line number: ");
         length = parsing_getLine_dynamic(&lineInput, true);
         line = (int) strtol(lineInput, &end, 10);
+        
+        if ((currentBuffer->lines == NULL || buf_len(currentBuffer->lines) == 0) && (line == 0 || line == 1)) return 0;
     }
     
     buf_free(lineInput);

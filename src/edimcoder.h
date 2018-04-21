@@ -43,60 +43,6 @@ void printText(int startLine);
 void printLine(int line, char operation, int printNewLine);
 void printFileInfo(void);
 
-/* === parsing.c === */
-
-typedef struct pString {
-    char *start;
-    char *end;
-} pString;
-
-// Function pointer to function that can run user-code on specific keypresses during input (with getInput). If null, the function is not called
-// Return true if keypress should continue to use default action provided by getInput()
-typedef bool (*inputKeyCallback)(char, bool isSpecial, char **, int *);
-
-// ANSI Control Characters
-#define INPUT_CTRL_L 12 // Clear Scrren
-#define INPUT_CTRL_X 24 // Cancel
-#define INPUT_CTRL_C 3 // Currently: Exit Program, TODO: Exit or Copy?
-#define INPUT_CTRL_O 15
-
-// Special Keys
-#ifdef _WIN32
-#define INPUT_SPECIAL1 -32
-#define INPUT_SPECIAL2 224 // TODO
-#define INPUT_LEFT 75
-#define INPUT_RIGHT 77
-#define INPUT_DELETE 83
-#define INPUT_END 79
-#define INPUT_HOME 71
-#define INPUT_ENDINPUT 26 // CTRL-Z
-#define INPUT_BACKSPACE '\b'
-#else
-#define INPUT_SPECIAL1 27
-#define INPUT_SPECIAL2 91
-#define INPUT_LEFT 68
-#define INPUT_RIGHT 67
-#define INPUT_DELETE1 51
-#define INPUT_DELETE2 126
-#define INPUT_END 70
-#define INPUT_HOME 72
-#define INPUT_ENDINPUT 4 // CTRL-D
-#define INPUT_BACKSPACE 127
-#endif
-
-char *skipWhitespace(char *start, int boundSize);
-char *skipWord(char *start, int boundSize, bool includeNumbers);
-char *getInput(bool *canceled, char *inputBuffer, inputKeyCallback callback);
-int parsing_getLine(char *line, int max, int trimSpace);
-int parsing_getLine_dynamic(char **chars, int trimSpace);
-void createOutline(void);
-void recreateOutline(void);
-void showOutline(void);
-void createMarkdownOutline(void);
-void createCOutline(void);
-void showMarkdownOutline(void);
-void showCOutline(void);
-
 /* == Streatchy Buffers (by Sean Barratt) === */
 
 #define MAX(x, y) ((x) >= (y) ? (x) : (y))
@@ -210,6 +156,68 @@ void buffer_deleteLine(Buffer *buffer, int line);
 // void buffer_deleteLines(Buffer *buffer, int lineStart, int lineEnd);
 int buffer_findStringInLine(Buffer *buffer, int line, char *str, int strLength);
 int buffer_findStringInFile(Buffer *buffer, char *str, int strLength, int *colIndex);
+
+
+/* === parsing.c === */
+
+typedef struct pString {
+    char *start;
+    char *end;
+} pString;
+
+// Function pointer to function that can run user-code on specific keypresses during input (with getInput). If null, the function is not called
+// Return true if keypress should continue to use default action provided by getInput()
+typedef bool (*inputKeyCallback)(char, bool isSpecial, char **, int *);
+
+// ANSI Control Characters
+#define INPUT_CTRL_L 12 // Clear Scrren
+#define INPUT_CTRL_X 24 // Cancel
+#define INPUT_CTRL_C 3 // Currently: Exit Program, TODO: Exit or Copy?
+#define INPUT_CTRL_O 15
+
+// Special Keys
+#ifdef _WIN32
+#define INPUT_SPECIAL1 -32
+#define INPUT_SPECIAL2 224 // TODO
+#define INPUT_LEFT 75
+#define INPUT_RIGHT 77
+#define INPUT_DELETE 83
+#define INPUT_END 79
+#define INPUT_HOME 71
+#define INPUT_ENDINPUT 26 // CTRL-Z
+#define INPUT_BACKSPACE '\b'
+#else
+#define INPUT_SPECIAL1 27
+#define INPUT_SPECIAL2 91
+#define INPUT_LEFT 68
+#define INPUT_RIGHT 67
+#define INPUT_DELETE1 51
+#define INPUT_DELETE2 126
+#define INPUT_END 70
+#define INPUT_HOME 72
+#define INPUT_ENDINPUT 4 // CTRL-D
+#define INPUT_BACKSPACE 127
+#endif
+
+char *skipWhitespace(char *start, char *endBound);
+char *skipWord(char *start, char *endBound, bool includeNumbers, bool includeSymbols);
+char *skipNumbers(char *start, char *endBound);
+char *skipLineNumber(char *start, char *endBound);
+
+long parseLineNumber(Buffer *buffer, char *start, char *endBound);
+
+char *getInput(bool *canceled, char *inputBuffer, inputKeyCallback callback);
+int parsing_getLine(char *line, int max, int trimSpace);
+int parsing_getLine_dynamic(char **chars, int trimSpace);
+
+void createOutline(void);
+void recreateOutline(void);
+void showOutline(void);
+
+void createMarkdownOutline(void);
+void createCOutline(void);
+void showMarkdownOutline(void);
+void showCOutline(void);
 
 /* === Colors === */
 
