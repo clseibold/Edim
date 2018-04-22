@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <malloc.h>
-
 #include "edimcoder.h"
 
 #ifdef _WIN32

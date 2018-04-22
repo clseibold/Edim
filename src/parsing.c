@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <assert.h>
-
 #include "edimcoder.h"
 
 // Gives back pointer starting at next non-whitespace character that appears after start

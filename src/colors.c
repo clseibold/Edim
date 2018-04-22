@@ -3,9 +3,6 @@
 #include <Wincon.h>
 #endif
 
-#include <stdio.h>
-#include <stdarg.h>
-
 #include "edimcoder.h"
 
 void setColor(COLOR foreground)

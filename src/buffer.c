@@ -1,9 +1,3 @@
-#include <stdio.h>
-#include <string.h>
-#include <malloc.h>
-#include <assert.h>
-#include <stdlib.h>
-
 #include "edimcoder.h"
 
 void buffer_initEmptyBuffer(Buffer *buffer) {

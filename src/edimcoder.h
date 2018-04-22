@@ -1,6 +1,10 @@
 #ifndef LINEEDITOR_H
 #define LINEEDITOR_H
 
+#ifndef __APPLE__
+#include <malloc.h>
+#endif
+
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>

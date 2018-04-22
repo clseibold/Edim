@@ -1,9 +1,3 @@
-#include <stdio.h>
-#include <string.h>
-#include <malloc.h>
-#include <assert.h>
-#include <stdlib.h>
-
 #include "edimcoder.h"
 
 internal void editorState_openAnotherFile(char *rest, int restLength);
