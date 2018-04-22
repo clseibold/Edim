@@ -1,4 +1,4 @@
-NOTE: Currently, the latest commits are bugged, so please use the files from [a7c4f](https://github.com/krixano/Edim/tree/a7c4f61b4c7cf4642bb9c232bd5f8b8b7b6e685f) until these buggs are fixed.
+NOTE: Currently, the latest commits are bugged, so please use the files from [a7c4f](https://github.com/krixano/Edim/tree/a7c4f61b4c7cf4642bb9c232bd5f8b8b7b6e685f) until these bugs are fixed.
 # Edim Line Editor
 A simple interactive line editor program inspired by vim, ed, 4coder, and modern editors.
 This readme was written using Edim.
