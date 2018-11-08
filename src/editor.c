@@ -108,12 +108,13 @@ internal bool commandInputCallback(char c, bool isSpecial, char **inputBuffer, i
             str[0] = 'Q'; break;
             // --
             case 'h':
-            char *str2 = "help ";
-            for (int i = 0; i < strlen(str2); i++)
-                buf_push(*inputBuffer, str2[i]);
-            printf("%s", str2);
-            (*currentIndex) += strlen(str2);
-            return false;
+            {
+                char *str2 = "help ";
+                for (int i = 0; i < strlen(str2); i++)
+                    buf_push(*inputBuffer, str2[i]);
+                printf("%s", str2);
+                (*currentIndex) += strlen(str2);
+            } return false;
             // --
             default:
             return true;
