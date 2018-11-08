@@ -89,14 +89,16 @@ internal bool commandInputCallback(char c, bool isSpecial, char **inputBuffer, i
             str[0] = 'm'; break;
             case 'M':
             str[0] = 'M'; break;
-            case 'f':
+            /*case 'f':
             str[0] = 'f'; break;
             case 'F':
-            str[0] = 'F'; break;
+            str[0] = 'F'; break;*/
             case 'u':
             str[0] = 'u'; break;
             case 'n':
             str[0] = 'n'; break;
+            case 'b':
+            str[0] = 'b'; break;
             case 'o':
             str[0] = 'o'; break;
             case 's':
@@ -737,7 +739,11 @@ internal void editorState_printHelpScreen() {
         printf("'%s' is currently open.\n\n", currentBuffer->openedFilename);
     else printf("An unnamed file is currently open.\n\n");
     
-    printf("Use Ctrl-D or Ctrl-Z+Enter to denote end of input\n");
+#ifdef _WIN32
+    printf("Use Ctrl-Z+Enter to denote end of input\n");
+#else
+    printf("Use Ctrl-D to denote end of input\n");
+#endif
     printf("Use Ctrl-X+Enter to cancel the current command/operation\n");
     printf("\n");
     printf(" * Ctrl-L or 'clear' - Clear the screen\n");
