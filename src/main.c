@@ -63,6 +63,14 @@ int main(int argc, char **argv) {
     /*while ((c = getch()) != 'Q') {
         printf("%d\n", c);
     }*/
+
+    char *input = NULL; // TODO: Free at end
+    bool canceled = false;
+    input = getInput(&canceled, input, NULL);
+    if (canceled || input == NULL || buf_len(input) == 0 || (buf_len(input) == 1 && input[0] == '\n')) {
+        buf_free(input);
+        return 0;
+    }
     
     char args[MAXLENGTH] = { 0 };
     int argsLength = 0;

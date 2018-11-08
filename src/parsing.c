@@ -304,7 +304,7 @@ char *getInput(bool *canceled, char *inputBuffer, inputKeyCallback callback) {
             return NULL;
         } else if (c == INPUT_CTRL_C) {
             exit(0); // TODO
-        } else if (c > 0 && c <= 26 && c != 13 && c != 8 && c != 9) { // Capture all other Control Keys (aside from Enter, backspace, and tab)
+        } else if (c > 0 && c <= 26 && c != 13 && c != 8 && c != 9 && c != 10) { // Capture all other Control Keys (aside from Enter, backspace, and tab)
             continue;
         }
         
