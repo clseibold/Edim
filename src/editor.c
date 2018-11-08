@@ -121,6 +121,15 @@ internal bool commandInputCallback(char c, bool isSpecial, char **inputBuffer, i
                 (*currentIndex) += strlen(str2);
                 free(str); str = NULL;
             } return false;
+            case '#':
+            {
+                char *str2 = "info ";
+                for (int i = 0; i < strlen(str2); i++)
+                    buf_push(*inputBuffer, str2[i]);
+                printf("%s", str2);
+                (*currentIndex) += strlen(str2);
+                free(str); str = NULL;
+            } return false;
             // --
             default:
             free(str); str = NULL;
@@ -171,8 +180,7 @@ State editorState_menu(void) {
         
     } else printPrompt("\n<%d: new file*|%d> ", currentBuffer - buffers, currentBuffer->currentLine);
     
-    /* get first character - the menu item */
-    char *input = NULL; // TODO: Free at end
+    char *input = NULL;
     bool canceled = false;
     input = getInput(&canceled, input, commandInputCallback);
     if (canceled || input == NULL || buf_len(input) == 0 || (buf_len(input) == 1 && input[0] == '\n')) {
@@ -213,6 +221,11 @@ State editorState_menu(void) {
         return KEEP;
     } else if (strncmp(command.start, "help", maxChars) == 0) {
         editorState_printHelpScreen();
+        buf_free(input);
+        return KEEP;
+    } else if (strncmp(command.start, "info", maxChars) == 0) {
+        printFileInfo();
+        buf_free(input);
         return KEEP;
     }
     
