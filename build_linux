@@ -1,4 +1,4 @@
 #!/bin/bash
 
 mkdir -p build/debug
-gcc --std=c99 src/main.c src/parsing.c src/editor.c src/stretchybuffer.c src/colors.c src/buffer.c -o build/debug/main
+gcc --std=c99 src/main.c src/parsing.c src/editor.c src/stretchybuffer.c src/colors.c src/buffer.c -o build/debug/edimcoder
