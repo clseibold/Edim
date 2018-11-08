@@ -60,7 +60,10 @@ internal bool commandInputCallback(char c, bool isSpecial, char **inputBuffer, i
     }*/
     
     if (!isSpecial && bufferEmpty) {
-        char *str = "h ";
+        char *str = malloc(3 * sizeof(char));
+        str[0] = 'h';
+        str[1] = ' ';
+        str[2] = '\0';
         switch (c) {
             case 'i':
             str[0] = 'i'; break;
@@ -114,30 +117,39 @@ internal bool commandInputCallback(char c, bool isSpecial, char **inputBuffer, i
                     buf_push(*inputBuffer, str2[i]);
                 printf("%s", str2);
                 (*currentIndex) += strlen(str2);
+                free(str); str = NULL;
             } return false;
             // --
             default:
+            free(str); str = NULL;
             return true;
         }
+        printf("%s", str);
         for (int i = 0; i < strlen(str); i++)
             buf_push(*inputBuffer, str[i]);
-        printf("%s", str);
         (*currentIndex) += strlen(str);
+        free(str); str = NULL;
         return false;
     } else if (!isSpecial) {
-        char *str = "$ ";
+        char *str = malloc(3 * sizeof(char));
+        str[0] = '$';
+        str[1] = ' ';
+        str[2] = '\0';
+        //char *str = "$ ";
         switch (c) {
             case '$':
             str[0] = '$'; break;
             case '0': // Check that no other numbers before (aside from space)
             str[0] = '0'; break;
             default:
+            free(str); str = NULL;
             return true;
         }
         for (int i = 0; i < strlen(str); i++)
             buf_push(*inputBuffer, str[i]);
         printf("%s", str);
         (*currentIndex) += strlen(str);
+        free(str); str = NULL;
         return false;
     }
     
