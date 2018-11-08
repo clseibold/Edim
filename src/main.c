@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
     printf("Edim - Ed Improved\n");
     printf("Copyright (c) Christian Seibold. All Rights Reserved.\n\n");
     
-    printf("Press '?' for help.\n");
+    printf("Press 'h' for help.\n");
     
     // Open Scratch Buffer
     // Then, go straight to prompt

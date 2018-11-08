@@ -162,12 +162,12 @@ State editorState_menu(void) {
     if (buf_len(currentBuffer->openedFilename) > 0) {
         // TODO: This will also print out the directory, so I should get rid of everything before the last slash
         if (currentBuffer->modified) {
-            printPrompt("\n<%d/%d: %.*s*|%d> ", currentBuffer - buffers, buf_len(buffers), (int) buf_len(currentBuffer->openedFilename), currentBuffer->openedFilename, currentBuffer->currentLine);
+            printPrompt("\n<%d: %.*s*|%d> ", currentBuffer - buffers, (int) buf_len(currentBuffer->openedFilename), currentBuffer->openedFilename, currentBuffer->currentLine);
         } else {
-            printPrompt("\n<%d/%d: %.*s|%d> ", currentBuffer - buffers, buf_len(buffers), (int) buf_len(currentBuffer->openedFilename), currentBuffer->openedFilename, currentBuffer->currentLine);
+            printPrompt("\n<%d: %.*s|%d> ", currentBuffer - buffers, (int) buf_len(currentBuffer->openedFilename), currentBuffer->openedFilename, currentBuffer->currentLine);
         }
         
-    } else printPrompt("\n<%d/%d: new file*|%d> ", currentBuffer - buffers, buf_len(buffers), currentBuffer->currentLine);
+    } else printPrompt("\n<%d: new file*|%d> ", currentBuffer - buffers, currentBuffer->currentLine);
     
     /* get first character - the menu item */
     char *input = NULL; // TODO: Free at end
@@ -371,7 +371,6 @@ State editorState_menu(void) {
                 switch (rest[0]) {
                     case 'n':
                     {
-                        printf("%d/%d\n", currentBuffer - buffers, buf_len(buffers));
                         int current = currentBuffer - buffers;
                         int next = current + 1;
                         if (next >= buf_len(buffers))
