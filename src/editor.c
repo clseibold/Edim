@@ -47,6 +47,9 @@ internal bool commandInputCallback(char c, bool isSpecial, char **inputBuffer, i
         (*currentIndex) += strlen(str);
         return false;
     } else if (!isSpecial && c == '\t') { // TODO: Command Autocompletion
+        // Look at all characters
+        // Find a command that starts with those characters
+        // and has the least amount of *aditional* characters.
         return false;
     }
     
@@ -191,6 +194,7 @@ State editorState_menu(void) {
     char *current = input;
     
     // Parse first word for command
+    // TODO: While loop should start here for looping through multiple commands (separated by semicolon)
     current = skipWhitespace(current, buf_end(input));
     
     pString command;
@@ -219,11 +223,11 @@ State editorState_menu(void) {
         clrscr();
         buf_free(input);
         return KEEP;
-    } else if (strncmp(command.start, "help", maxChars) == 0) {
+    } else if (strncmp(command.start, "help", 4) == 0) {
         editorState_printHelpScreen();
         buf_free(input);
         return KEEP;
-    } else if (strncmp(command.start, "info", maxChars) == 0) {
+    } else if (strncmp(command.start, "info", 4) == 0) {
         printFileInfo();
         buf_free(input);
         return KEEP;
@@ -241,6 +245,10 @@ State editorState_menu(void) {
         } break;
         case 's':
         {
+            char *restOrig = rest;
+            rest = skipWhitespace(rest, buf_end(input));
+            restLength = restLength - (rest - restOrig);
+
             if (!currentBuffer->openedFilename && buf_len(currentBuffer->openedFilename) <= 0) {
                 printPrompt("Enter a filename: ");
                 char *filename = NULL;
