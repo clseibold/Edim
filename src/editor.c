@@ -8,18 +8,18 @@ internal int checkLineNumber(int original_line);
 
 internal void editorState_printHelpScreen();
 
-internal void editorState_insertAfter(char *rest);
-internal void editorState_insertBefore(char *rest);
-internal void editorState_appendTo(char *rest);
-internal void editorState_prependTo(char *rest);
-internal void editorState_replaceLine(char *rest);
+internal void editorState_insertAfter(lineRange line_range);
+internal void editorState_insertBefore(lineRange line_range);
+internal void editorState_appendTo(lineRange line_range);
+internal void editorState_prependTo(lineRange line_range);
+internal void editorState_replaceLine(lineRange line_range);
 internal void editorState_replaceString(char *rest, int restLength);
 
 internal void editorState_findStringInLine(char *rest, int restLength);
 internal void editorState_findStringInFile(char *rest, int restLength);
-internal void editorState_deleteLine(char *rest);
-internal void editorState_moveUp(char *rest);
-internal void editorState_moveDown(char *rest);
+internal void editorState_deleteLine(lineRange line_range);
+internal void editorState_moveUp(lineRange line_range);
+internal void editorState_moveDown(lineRange line_range);
 
 internal bool commandInputCallback(char c, bool isSpecial, char **inputBuffer, int *currentIndex) {
     bool bufferEmpty = false;
@@ -276,7 +276,6 @@ State editorState_menu(void) {
                     printLine(line, 0, true);
             } else {
                 int endLine = line_range.end;
-
                 if (endLine == 0 && buf_len(currentBuffer->lines) != 0) {
                     if (endLine == 0) line = currentBuffer->currentLine;
                 }
@@ -335,13 +334,23 @@ State editorState_menu(void) {
                 // Put filename into a buffer with \0 at end
                 char *filename_buf = NULL;
                 char *c = filename.start;
-                while (c <= filename.end) {
+                buf_add(filename_buf, (long unsigned int) (filename.end - filename.start + 1));
+
+                for (int i = 0; i < filename.end - filename.start + 1; i++) {
+                    if (i == filename.end - filename.start) {
+                        filename_buf[i] = '\0';
+                    } else {
+                        filename_buf[i] = filename.start[i];
+                    }
+                }
+
+                /*while (c <= filename.end) {
                     if (*c != '\n' && *c != '\r' && *c != '\0')
                         buf_push(filename_buf, *c);
                     c++;
                 }
 
-                buf_push(filename_buf, '\0');
+                buf_push(filename_buf, '\0');*/
 
                 printf("Saving '%s'\n", filename_buf);
                 buffer_saveFile(currentBuffer, filename_buf);
@@ -357,27 +366,27 @@ State editorState_menu(void) {
         case 'c':
         {
             currentBuffer->currentLine = buf_len(currentBuffer->lines);
-            editorState_insertAfter(rest);
+            editorState_insertAfter(line_range);
         } break;
         case 'a':
         {
-            editorState_insertAfter(rest);
+            editorState_insertAfter(line_range);
         } break;
         case 'i':
         {
-            editorState_insertBefore(rest);
+            editorState_insertBefore(line_range);
         } break;
         case 'A':
         {
-            editorState_appendTo(rest);
+            editorState_appendTo(line_range);
         } break;
         case 'I':
         {
-            editorState_prependTo(rest);
+            editorState_prependTo(line_range);
         } break;
         case 'r':
         {
-            editorState_replaceLine(rest);
+            editorState_replaceLine(line_range);
         } break;
         case 'R':
         {
@@ -385,20 +394,21 @@ State editorState_menu(void) {
         } break;
         case 'x':
         {
-            editorState_deleteLine(rest);
+            editorState_deleteLine(line_range);
         } break;
         case 'm':
         {
-            editorState_moveUp(rest);
+            editorState_moveUp(line_range);
         } break;
         case 'M':
         {
-            editorState_moveDown(rest);
+            editorState_moveDown(line_range);
         } break;
         case 'p':
         {
-            int line = (int) parseLineNumber(currentBuffer, current, buf_end(input));
-            current = skipLineNumber(current, buf_end(input));
+            int line = line_range.start;
+            //int line = (int) parseLineNumber(currentBuffer, current, buf_end(input));
+            //current = skipLineNumber(current, buf_end(input));
             
             if (!(line == 0 && buf_len(currentBuffer->lines) == 0)) {
                 if (line == 0) line = currentBuffer->currentLine;
@@ -411,30 +421,32 @@ State editorState_menu(void) {
         } break;
         case 'P':
         {
-            int line = (int) parseLineNumber(currentBuffer, current, buf_end(input));
-            current = skipLineNumber(current, buf_end(input));
+            int line = line_range.start;
+            //int line = (int) parseLineNumber(currentBuffer, current, buf_end(input));
+            //current = skipLineNumber(current, buf_end(input));
             
             if (!(line == 0 && buf_len(currentBuffer->lines) == 0)) {
                 if (line == 0) line = currentBuffer->currentLine;
                 line = checkLineNumber(line);
             }
             
-            current = skipWhitespace(current, buf_end(input));
+            /*current = skipWhitespace(current, buf_end(input));
             if (*current == ':') { // NOTE: Small hack for supporting ranges using ':'
                 current++;
                 current = skipWhitespace(current, buf_end(input));
-            }
+            }*/
             
-            // If there was only one argument given
-            if (current >= buf_end(input)) {
+            // If there was only one line number given
+            if (line_range_length == 0) {
                 if (line - 2 >= 0)
                     printLine(line - 2, 0, true);
                 printLine(line - 1, 0, true);
                 if (line < buf_len(currentBuffer->lines))
                     printLine(line, 0, true);
             } else {
-                int endLine = (int) parseLineNumber(currentBuffer, current, buf_end(input));
-                current = skipWhitespace(current, buf_end(input));
+                int endLine = line_range.end;
+                //int endLine = (int) parseLineNumber(currentBuffer, current, buf_end(input));
+                //current = skipWhitespace(current, buf_end(input));
                 
                 if (endLine == 0 && buf_len(currentBuffer->lines) != 0) {
                     if (endLine == 0) line = currentBuffer->currentLine;
@@ -902,9 +914,8 @@ void editorState_editor(void) {
 }
 
 // Insert lines after a specific line. Denote end of input by typing Ctrl-D (or Ctrl-Z+Enter on Windows) on new line.
-internal void editorState_insertAfter(char *rest) {
-    char *end;
-    int line = (int) strtol(rest, &end, 10);
+internal void editorState_insertAfter(lineRange line_range) {
+    int line = line_range.start;
     
     if (line == 0) line = currentBuffer->currentLine;
     else line = checkLineNumber(line);
@@ -938,9 +949,8 @@ internal void editorState_insertAfter(char *rest) {
     recreateOutline();
 }
 
-internal void editorState_insertBefore(char *rest) {
-    char *end;
-    int line = (int) strtol(rest, &end, 10);
+internal void editorState_insertBefore(lineRange line_range) {
+    int line = line_range.start;
     
     if (line == 0) line = currentBuffer->currentLine;
     else line = checkLineNumber(line);
@@ -984,9 +994,8 @@ internal void editorState_insertBefore(char *rest) {
     recreateOutline();
 }
 
-internal void editorState_appendTo(char *rest) {
-    char *end;
-    int line = (int) strtol(rest, &end, 10);
+internal void editorState_appendTo(lineRange line_range) {
+    int line = line_range.start;
     
     if (line == 0) line = currentBuffer->currentLine;
     else line = checkLineNumber(line);
@@ -1012,9 +1021,8 @@ internal void editorState_appendTo(char *rest) {
     recreateOutline();
 }
 
-internal void editorState_prependTo(char *rest) {
-    char *end;
-    int line = (int) strtol(rest, &end, 10);
+internal void editorState_prependTo(lineRange line_range) {
+    int line = line_range.start;
     
     if (line == 0) line = currentBuffer->currentLine;
     else line = checkLineNumber(line);
@@ -1045,9 +1053,8 @@ internal void editorState_prependTo(char *rest) {
     recreateOutline();
 }
 
-internal void editorState_replaceLine(char *rest) {
-    char *end;
-    int line = (int) strtol(rest, &end, 10);
+internal void editorState_replaceLine(lineRange line_range) {
+    int line = line_range.start;
     
     if (line == 0) line = currentBuffer->currentLine;
     else line = checkLineNumber(line);
@@ -1302,9 +1309,8 @@ internal void editorState_findStringInFile(char *rest, int restLength) {
     printf("%5s %.*s- \n", "", strPointToMatchLength, strPointToMatch); // TODO: printInfo()
 }
 
-internal void editorState_deleteLine(char *rest) {
-    char *end;
-    int line = (int) strtol(rest, &end, 10);
+internal void editorState_deleteLine(lineRange line_range) {
+    int line = line_range.start;
     
     if (line == 0) line = currentBuffer->currentLine;
     else line = checkLineNumber(line);
@@ -1334,9 +1340,8 @@ internal void editorState_deleteLine(char *rest) {
     recreateOutline();
 }
 
-internal void editorState_moveUp(char *rest) {
-    char *end;
-    int line = (int) strtol(rest, &end, 10);
+internal void editorState_moveUp(lineRange line_range) {
+    int line = line_range.start;
     
     if (line == 0) line = currentBuffer->currentLine;
     else line = checkLineNumber(line);
@@ -1357,9 +1362,8 @@ internal void editorState_moveUp(char *rest) {
     recreateOutline();
 }
 
-internal void editorState_moveDown(char *rest) {
-    char *end;
-    int line = (int) strtol(rest, &end, 10);
+internal void editorState_moveDown(lineRange line_range) {
+    int line = line_range.start;
     
     if (line == 0) line = currentBuffer->currentLine;
     else line = checkLineNumber(line);
