@@ -341,14 +341,6 @@ State editorState_menu(void) {
                     }
                 }
 
-                /*while (c <= filename.end) {
-                    if (*c != '\n' && *c != '\r' && *c != '\0')
-                        buf_push(filename_buf, *c);
-                    c++;
-                }
-
-                buf_push(filename_buf, '\0');*/
-
                 printf("Saving '%s'\n", filename_buf);
                 buffer_saveFile(currentBuffer, filename_buf);
             } else {
@@ -404,8 +396,6 @@ State editorState_menu(void) {
         case 'p':
         {
             int line = line_range.start;
-            //int line = (int) parseLineNumber(currentBuffer, current, buf_end(input));
-            //current = skipLineNumber(current, buf_end(input));
             
             if (!(line == 0 && buf_len(currentBuffer->lines) == 0)) {
                 if (line == 0) line = currentBuffer->currentLine;
@@ -419,8 +409,6 @@ State editorState_menu(void) {
         case 'P':
         {
             int line = line_range.start;
-            //int line = (int) parseLineNumber(currentBuffer, current, buf_end(input));
-            //current = skipLineNumber(current, buf_end(input));
             
             if (!(line == 0 && buf_len(currentBuffer->lines) == 0)) {
                 if (line == 0) line = currentBuffer->currentLine;
@@ -1080,6 +1068,7 @@ internal void editorState_replaceLine(lineRange line_range) {
 
 internal void editorState_replaceString(lineRange line_range, char *rest, int restLength) {
     int line = line_range.start;
+    char *end = rest;
     
     if (line == 0) {
         line = currentBuffer->currentLine;
