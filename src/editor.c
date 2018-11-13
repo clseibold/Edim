@@ -209,11 +209,6 @@ State editorState_menu(void) {
     
     // Skip Whitespace
     current = skipWhitespace(current, buf_end(input));
-
-    //char c = command.start[0];
-    char *rest = current;
-    int boundSize = buf_len(input) - (current - input);
-    int restLength = boundSize;
     
     printf("\n");
     
@@ -255,8 +250,12 @@ State editorState_menu(void) {
         current = skipLineNumber(current, buf_end(input));
         line_range.end = line_end;
         line_range_length = line_range.end - line_range.start;
+        current = skipWhitespace(current, buf_end(input));
     }
 
+    char *rest = current;
+    int boundSize = buf_len(input) - (current - input);
+    int restLength = boundSize;
     
     switch (command.start[0]) {
         case 'j':
