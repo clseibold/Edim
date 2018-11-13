@@ -1085,8 +1085,6 @@ internal void editorState_replaceString(lineRange line_range, char *rest, int re
         line = currentBuffer->currentLine;
     } else {
         line = checkLineNumber(line);
-        // Don't include the space in between the line number and the string to replace
-        ++end;
     }
     
     char str[MAXLENGTH / 4];
