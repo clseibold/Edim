@@ -89,6 +89,8 @@ long parseLineNumber(Buffer *buffer, char *start, char *endBound) {
             return 0;
             case '$':
             return buf_len(buffer->lines);
+            case '.':
+            return buffer->currentLine;
         }
     }
     

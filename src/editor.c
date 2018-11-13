@@ -13,7 +13,7 @@ internal void editorState_insertBefore(lineRange line_range);
 internal void editorState_appendTo(lineRange line_range);
 internal void editorState_prependTo(lineRange line_range);
 internal void editorState_replaceLine(lineRange line_range);
-internal void editorState_replaceString(char *rest, int restLength);
+internal void editorState_replaceString(lineRange line_range, char *rest, int restLength);
 
 internal void editorState_findStringInLine(char *rest, int restLength);
 internal void editorState_findStringInFile(char *rest, int restLength);
@@ -261,8 +261,6 @@ State editorState_menu(void) {
         case 'j':
         {
             int line = line_range.start;
-            //int line = (int) parseLineNumber(currentBuffer, current, buf_end(input));
-            //current = skipLineNumber(current, buf_end(input));
             
             if (!(line == 0 && buf_len(currentBuffer->lines) == 0))
                 line = checkLineNumber(line);
@@ -389,7 +387,7 @@ State editorState_menu(void) {
         } break;
         case 'R':
         {
-            editorState_replaceString(rest, restLength);
+            editorState_replaceString(line_range, rest, restLength);
         } break;
         case 'x':
         {
@@ -1080,9 +1078,8 @@ internal void editorState_replaceLine(lineRange line_range) {
     recreateOutline();
 }
 
-internal void editorState_replaceString(char *rest, int restLength) {
-    char *end;
-    int line = (int) strtol(rest, &end, 10);
+internal void editorState_replaceString(lineRange line_range, char *rest, int restLength) {
+    int line = line_range.start;
     
     if (line == 0) {
         line = currentBuffer->currentLine;
