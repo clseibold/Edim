@@ -473,7 +473,35 @@ State editorState_menu(void) {
             rest = skipWhitespace(rest, buf_end(input));
             restLength = restLength - (rest - restOrig);
 
-            if (restLength > 0) {
+            // If p/n given without space between
+            if (command.end - command.start == 2) {
+                switch (command.start[1]) {
+                    case 'n':
+                    {
+                        int current = currentBuffer - buffers;
+                        int next = current + 1;
+                        if (next >= buf_len(buffers))
+                            next = 0;
+                        
+                        currentBuffer = &(buffers[next]);
+                        
+                        buf_free(input);
+                        return KEEP;
+                    } break;
+                    case 'p':
+                    {
+                        int current = currentBuffer - buffers;
+                        int previous = current - 1;
+                        if (previous < 0)
+                            previous = buf_len(buffers) - 1;
+                        
+                        currentBuffer = &(buffers[previous]);
+                        
+                        buf_free(input);
+                        return KEEP;
+                    } break;
+                }
+            } else if (restLength > 0 && line_range.start == 0) { // If space between p and b *and* a range wasn't given
                 switch (rest[0]) {
                     case 'n':
                     {
@@ -502,10 +530,12 @@ State editorState_menu(void) {
                 }
             }
             
-            // If a integer was  given with the command
-            if (restLength - 1 > 0) {
+            // If a integer was given with the command
+            if (line_range.start != 0) {
                 char *end;
-                int index = (int) strtol(rest, &end, 10);
+                /*char *end;
+                int index = (int) strtol(rest, &end, 10);*/
+                int index = line_range.start;
                 
                 char lineInput[MAXLENGTH / 4];
                 int length;
@@ -522,6 +552,7 @@ State editorState_menu(void) {
                 return KEEP;
             }
             
+            // Otherwise, list out the buffers
             for (int i = 0; i < buf_len(buffers); i++) {
                 if (buf_len(buffers[i].openedFilename) <= 0) {
                     // We can assume this is the current buffer because you can't switch or close a buffer with unsaved changes
