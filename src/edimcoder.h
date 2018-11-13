@@ -169,6 +169,11 @@ typedef struct pString {
     char *end;
 } pString;
 
+typedef struct lineRange {
+    int start;
+    int end;
+} lineRange;
+
 // Function pointer to function that can run user-code on specific keypresses during input (with getInput). If null, the function is not called
 // Return true if keypress should continue to use default action provided by getInput()
 typedef bool (*inputKeyCallback)(char, bool isSpecial, char **, int *);

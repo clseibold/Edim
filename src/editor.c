@@ -207,13 +207,13 @@ State editorState_menu(void) {
         // TODO: Read symbol?
     }
     
+    // Skip Whitespace
+    current = skipWhitespace(current, buf_end(input));
+
     //char c = command.start[0];
     char *rest = current;
     int boundSize = buf_len(input) - (current - input);
     int restLength = boundSize;
-    
-    // Skip Whitespace
-    current = skipWhitespace(current, buf_end(input));
     
     printf("\n");
     
@@ -234,33 +234,88 @@ State editorState_menu(void) {
         buf_free(input);
         return KEEP;
     }
+
+    // TODO: Interpret variable for line range
+    int line_start = (int) parseLineNumber(currentBuffer, current, buf_end(input));
+    current = skipLineNumber(current, buf_end(input));
+    current = skipWhitespace(current, buf_end(input));
+
+    // The line range will start and end at one line if only one integer/line give (and line_range_length is 0).
+    // If two given (a range is give), then starts and ends based on those two
+    // line numbers given (and line_range_length > 0).
+    lineRange line_range;
+    line_range.start = line_start;
+    line_range.end = line_start;
+    int line_range_length = line_range.end - line_range.start;
+
+    if (*current == ':') {
+        current++;
+        current = skipWhitespace(current, buf_end(input));
+        int line_end = (int) parseLineNumber(currentBuffer, current, buf_end(input));
+        current = skipLineNumber(current, buf_end(input));
+        line_range.end = line_end;
+        line_range_length = line_range.end - line_range.start;
+    }
+
     
     switch (command.start[0]) {
         case 'j':
         {
-            int line = (int) parseLineNumber(currentBuffer, current, buf_end(input));
+            int line = line_range.start;
+            //int line = (int) parseLineNumber(currentBuffer, current, buf_end(input));
+            //current = skipLineNumber(current, buf_end(input));
             
             if (!(line == 0 && buf_len(currentBuffer->lines) == 0))
                 line = checkLineNumber(line);
+
+            if (line_range_length == 0) {
+                if (line - 2 >= 0)
+                    printLine(line - 2, 0, true);
+                printLine(line - 1, '*', true);
+                if (line < buf_len(currentBuffer->lines))
+                    printLine(line, 0, true);
+            } else {
+                int endLine = line_range.end;
+
+                if (endLine == 0 && buf_len(currentBuffer->lines) != 0) {
+                    if (endLine == 0) line = currentBuffer->currentLine;
+                }
+                
+                // Make sure going from low to high (forwards)
+                if (endLine < line) {
+                    int tmp = endLine;
+                    endLine = line;
+                    line = tmp;
+                }
+                // Print the line before
+                if (line - 2 >= 0)
+                    printLine(line - 2, 0, true);
+                // Print the range of lines
+                for (int i = line; i <= endLine; i++) {
+                    if (i - 1 >= 0 && i - 1 < buf_len(currentBuffer->lines)) {
+                        char operation = 0;
+                        if (i == line)
+                            operation = '*';
+                        printLine(i - 1, operation, true);
+                    }
+                }
+                // Print the line after
+                if (endLine < buf_len(currentBuffer->lines))
+                    printLine(endLine, 0, true);
+            }
             
             currentBuffer->currentLine = line;
         } break;
         case 's':
         {
-            char *restOrig = rest;
-            rest = skipWhitespace(rest, buf_end(input));
-            restLength = restLength - (rest - restOrig);
-
             pString filename;
-            filename.start = rest;
-            rest = skipWord(rest, buf_end(input), true, true);
-            filename.end = rest;
+            filename.start = current;
+            current = skipWord(current, buf_end(input), true, true);
+            filename.end = current;
             int filename_length = filename.end - filename.start;
 
-            rest = skipWhitespace(rest, buf_end(input)); // TODO
-            restLength = restLength - (rest - restOrig);
-
-            printf("%p,%p: %d", filename.start, filename.end, filename.end - filename.start);
+            current = skipWhitespace(current, buf_end(input)); // TODO
+            restLength = buf_len(input) - (current - input);
 
             if (!currentBuffer->openedFilename && buf_len(currentBuffer->openedFilename) <= 0 && filename_length == 0) {
                 printPrompt("Enter a filename: ");
@@ -276,7 +331,7 @@ State editorState_menu(void) {
                 
                 printf("Saving '%s'\n", filename);
                 buffer_saveFile(currentBuffer, filename);
-            } else if (filename_length > 0) {
+            } else if (filename_length > 0) { // TODO: Should be checked first - default
                 // Put filename into a buffer with \0 at end
                 char *filename_buf = NULL;
                 char *c = filename.start;
@@ -365,6 +420,10 @@ State editorState_menu(void) {
             }
             
             current = skipWhitespace(current, buf_end(input));
+            if (*current == ':') { // NOTE: Small hack for supporting ranges using ':'
+                current++;
+                current = skipWhitespace(current, buf_end(input));
+            }
             
             // If there was only one argument given
             if (current >= buf_end(input)) {
@@ -490,16 +549,10 @@ State editorState_menu(void) {
         } break;
         case 'o':
         {
-            char *restOrig = rest;
-            rest = skipWhitespace(rest, buf_end(input));
-            restLength = restLength - (rest - restOrig);
             editorState_openAnotherFile(rest, restLength);
         } break;
         case 'n':
         {
-            char *restOrig = rest;
-            rest = skipWhitespace(rest, buf_end(input));
-            restLength = restLength - (rest - restOrig);
             editorState_openNewFile(rest, restLength);
         } break;
         case 'e':
