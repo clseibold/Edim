@@ -153,8 +153,10 @@ internal bool commandInputCallback(char c, bool isSpecial, char **inputBuffer, i
         switch (c) {
             case '$':
             str[0] = '$'; break;
-            case '0': // Check that no other numbers before (aside from space)
-            str[0] = '0'; break;
+            case '^':
+            str[0] = '^'; break;
+            /*case '0': // Check that no other numbers before (aside from space)
+            str[0] = '0'; break;*/
             default:
             free(str); str = NULL;
             return true;
@@ -249,7 +251,18 @@ State editorState_menu(void) {
             rest = skipWhitespace(rest, buf_end(input));
             restLength = restLength - (rest - restOrig);
 
-            if (!currentBuffer->openedFilename && buf_len(currentBuffer->openedFilename) <= 0) {
+            pString filename;
+            filename.start = rest;
+            rest = skipWord(rest, buf_end(input), true, true);
+            filename.end = rest;
+            int filename_length = filename.end - filename.start;
+
+            rest = skipWhitespace(rest, buf_end(input)); // TODO
+            restLength = restLength - (rest - restOrig);
+
+            printf("%p,%p: %d", filename.start, filename.end, filename.end - filename.start);
+
+            if (!currentBuffer->openedFilename && buf_len(currentBuffer->openedFilename) <= 0 && filename_length == 0) {
                 printPrompt("Enter a filename: ");
                 char *filename = NULL;
                 int length = parsing_getLine_dynamic(&filename, true);
@@ -263,6 +276,20 @@ State editorState_menu(void) {
                 
                 printf("Saving '%s'\n", filename);
                 buffer_saveFile(currentBuffer, filename);
+            } else if (filename_length > 0) {
+                // Put filename into a buffer with \0 at end
+                char *filename_buf = NULL;
+                char *c = filename.start;
+                while (c <= filename.end) {
+                    if (*c != '\n' && *c != '\r' && *c != '\0')
+                        buf_push(filename_buf, *c);
+                    c++;
+                }
+
+                buf_push(filename_buf, '\0');
+
+                printf("Saving '%s'\n", filename_buf);
+                buffer_saveFile(currentBuffer, filename_buf);
             } else {
                 printf("Saving '%s'", currentBuffer->openedFilename);
                 buffer_saveFile(currentBuffer, currentBuffer->openedFilename);
