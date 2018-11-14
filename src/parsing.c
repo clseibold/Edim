@@ -197,6 +197,8 @@ char *getInput(bool *canceled, char *inputBuffer, inputKeyCallback callback) {
         for (int i = 0; i < buf_len(inputBuffer); i++) {
             if (inputBuffer[i] == '\t')
                 fputs("    ", stdout);
+            else if (inputBuffer[i] == INPUT_ESC)
+                colors_printf(COLOR_RED, "$");
             else putchar(inputBuffer[i]);
             ++currentIndex;
         }
@@ -207,11 +209,11 @@ char *getInput(bool *canceled, char *inputBuffer, inputKeyCallback callback) {
 #ifdef _WIN32
         if (c == INPUT_SPECIAL1 || c == INPUT_SPECIAL2)
 #else
-            if (c == INPUT_SPECIAL1)
+        if (c == INPUT_SPECIAL1)
 #endif
         {
 #ifndef _WIN32
-            if (getch() == INPUT_SPECIAL2) {
+            if (getch_nonblocking() == INPUT_SPECIAL2) {
 #endif
                 if (callback != NULL) {
                     if (!callback(c, true, &inputBuffer, &currentIndex))
@@ -230,6 +232,8 @@ char *getInput(bool *canceled, char *inputBuffer, inputKeyCallback callback) {
                     if (currentIndex < buf_len(inputBuffer)) {
                         if (inputBuffer[currentIndex] == '\t')
                             fputs("    ", stdout);
+                        else if (inputBuffer[currentIndex] == INPUT_ESC)
+                            colors_printf(COLOR_RED, "$");
                         else putchar(inputBuffer[currentIndex]);
                         ++currentIndex;
                     }
@@ -251,6 +255,8 @@ char *getInput(bool *canceled, char *inputBuffer, inputKeyCallback callback) {
                             for (int i = currentIndex; i < buf_len(inputBuffer); i++) {
                                 if (inputBuffer[i] == '\t')
                                     fputs("    ", stdout);
+                                if (inputBuffer[i] == INPUT_ESC)
+                                    colors_printf(COLOR_RED, "$");
                                 else putchar(inputBuffer[i]);
                             }
                             // Print spaces where the last character(s) used to be
@@ -269,6 +275,8 @@ char *getInput(bool *canceled, char *inputBuffer, inputKeyCallback callback) {
                     for (int i = currentIndex; i < buf_len(inputBuffer); i++) {
                         if (inputBuffer[i] == '\t')
                             fputs("    ", stdout);
+                        else if (inputBuffer[i] == INPUT_ESC)
+                            colors_printf(COLOR_RED, "$");
                         else putchar(inputBuffer[i]);
                     }
                     currentIndex = buf_len(inputBuffer);
@@ -286,6 +294,17 @@ char *getInput(bool *canceled, char *inputBuffer, inputKeyCallback callback) {
                 }
                 continue;
 #ifndef _WIN32
+            } else { // TODO: Add to the location of the cursor
+                // If escape key was hit and wasn't a special key
+                // (most likely ESC hit by itself)
+                // then print $ with next character after, and add
+                // to buffer ESC + next character
+                colors_printf(COLOR_RED, "$");
+                //printf("%c", c);
+                buf_push(inputBuffer, 27);
+                ++currentIndex;
+                //buf_push(inputBuffer, c);
+                continue;
             }
 #endif
         }
@@ -337,6 +356,8 @@ char *getInput(bool *canceled, char *inputBuffer, inputKeyCallback callback) {
                 for (int i = currentIndex + 1; i < buf_len(inputBuffer); i++) {
                     if (inputBuffer[i] == '\t')
                         fputs("    ", stdout);
+                    else if (inputBuffer[i] == INPUT_ESC)
+                            colors_printf(COLOR_RED, "$");
                     else putchar(inputBuffer[i]);
                 }
                 // Move back to where the cursor is
@@ -380,6 +401,8 @@ char *getInput(bool *canceled, char *inputBuffer, inputKeyCallback callback) {
                         fputs("    ", stdout);
                     else if (inputBuffer[i] == '\n' || inputBuffer[i] == '\r')
                         ; // Do Nothing
+                    else if (inputBuffer[i] == INPUT_ESC)
+                            colors_printf(COLOR_RED, "$");
                     else putchar(inputBuffer[i]);
                 }
                 
@@ -397,6 +420,14 @@ char *getInput(bool *canceled, char *inputBuffer, inputKeyCallback callback) {
             }
             continue;
         }
+
+#ifdef _WIN32
+        if (c == INPUT_ESC) {
+            colors_printf(COLOR_RED, "$");
+            buf_push(inputBuffer, c);
+            continue;
+        }
+#endif
         
         if (currentIndex == buf_len(inputBuffer)) {
             putchar(c);
@@ -415,6 +446,8 @@ char *getInput(bool *canceled, char *inputBuffer, inputKeyCallback callback) {
             for (int i = currentIndex + 1; i < buf_len(inputBuffer); i++) {
                 if (inputBuffer[i] == '\t')
                     fputs("    ", stdout);
+                else if (inputBuffer[i] == INPUT_ESC)
+                    colors_printf(COLOR_RED, "$");
                 else putchar(inputBuffer[i]);
             }
             // Move back to where the cursor is

@@ -26,11 +26,13 @@ void clrscr();
 #ifdef _WIN32
 #include <conio.h>
 #define getch _getch
+#define kbhit _kbhit
 #else
 #include <alloca.h>
 #include <unistd.h>
 #include <termios.h>
 char getch();
+char getch_nonblocking();
 #endif
 
 typedef enum State {
@@ -177,6 +179,8 @@ typedef struct lineRange {
 // Function pointer to function that can run user-code on specific keypresses during input (with getInput). If null, the function is not called
 // Return true if keypress should continue to use default action provided by getInput()
 typedef bool (*inputKeyCallback)(char, bool isSpecial, char **, int *);
+
+#define INPUT_ESC 27
 
 // ANSI Control Characters
 #define INPUT_CTRL_L 12 // Clear Scrren

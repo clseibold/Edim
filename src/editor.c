@@ -1406,7 +1406,7 @@ void printText(int startLine) {
         return;
     }
     
-    int linesAtATime = 15; // TODO: Should have a setting for this.
+    int linesAtATime = 15; // TODO: Should have a setting for this (or based on terminal/console height)
     int offset = startLine;
     char c;
     
@@ -1535,7 +1535,7 @@ void printLine(int line, char operation, int printNewLine) {
     }
     
     int length = buf_len(currentBuffer->lines[line].chars);
-    // If shouldn't print new line and end of line is a new line, subtract it off from the length
+    // It shouldn't print new line and end of line is a new line, subtract it off from the length
     if (!printNewLine && currentBuffer->lines[line].chars[length - 1] == '\n')
         --length;
     
@@ -1543,6 +1543,8 @@ void printLine(int line, char operation, int printNewLine) {
     for (int i = 0; i < length; i++) {
         if (currentBuffer->lines[line].chars[i] == '\t')
             printf("    "); // 4 spaces // TODO: Add setting for this
+        else if (currentBuffer->lines[line].chars[i] == INPUT_ESC)
+            colors_printf(COLOR_RED, "$");
         else putchar(currentBuffer->lines[line].chars[i]);
     }
 }
