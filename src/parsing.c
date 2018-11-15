@@ -58,7 +58,9 @@ char *skipLineNumber(char *start, char *endBound) {
             || (*current >= ':' && *current <= '@')
             || (*current >= '[' && *current <= '`')
             || (*current >= '{' && *current <= '~')) {
-            ++current;
+            //++current;
+            if (*current == '.' || *current == '$') // Hacky, TODO
+                ++current;
         } else {
             current = skipNumbers(current, endBound);
         }

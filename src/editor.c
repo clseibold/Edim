@@ -253,6 +253,54 @@ State editorState_menu(void) {
         current = skipWhitespace(current, buf_end(input));
     }
 
+    // If no line number/range given, then check for a bookmark name (denoted
+    // by a # at the start)
+    if (line_range.start == 0 && line_range.end == 0) {
+        if (*current == '#') {
+            ++current;
+            
+            pString bookmarkName;
+            bookmarkName.start = NULL;
+            bookmarkName.end = NULL;
+            int bookmarkName_length = 0;
+
+            bookmarkName.start = current;
+            current = skipWord(current, buf_end(input), true, false);
+            bookmarkName.end = current;
+            bookmarkName_length = bookmarkName.end - bookmarkName.start;
+            current = skipWhitespace(current, buf_end(input));
+
+            // Bookmarks for pages of the current file
+            if (bookmarkName.start[0] == 'p') {
+                char *current_in_bookmarkName = bookmarkName.start + 1;
+                pString pageText;
+                pageText.start = current_in_bookmarkName;
+                current_in_bookmarkName = skipNumbers(current_in_bookmarkName, bookmarkName.end);
+                pageText.end = current_in_bookmarkName;
+
+                int pageNum = 0;
+                char *current_in_pageText = pageText.start;
+                while (*current_in_pageText >= '0' && *current_in_pageText <= '9') {
+                    pageNum *= 10;
+                    pageNum += *current_in_pageText - '0';
+                    ++current_in_pageText;
+                    if (current_in_pageText == pageText.end + 1) break;
+                }
+
+                int lineNum = (pageNum - 1) * 15;
+                int lineNum_end = lineNum + 15;
+                if (lineNum < 1) {
+                    lineNum = 1;
+                    lineNum_end = 15;
+                }
+                if (lineNum > buf_len(currentBuffer->lines)) lineNum = buf_len(currentBuffer->lines) - 15;
+                line_range.start = lineNum;
+                line_range.end = lineNum_end;
+                line_range_length = line_range.end - line_range.start;
+            }
+        }
+    }
+
     char *rest = current;
     int boundSize = buf_len(input) - (current - input);
     int restLength = boundSize;
