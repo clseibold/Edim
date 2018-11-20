@@ -52,7 +52,11 @@ void printFileInfo(void);
 /* == Streatchy Buffers (by Sean Barratt) === */
 
 #define MAX(x, y) ((x) >= (y) ? (x) : (y))
+#define CLAMP_MAX(x, max) MIN(x, max)
+#define CLAMP_MIN(x, min) MAX(x, min)
+#define IS_POW2(x) (((x) != 0) && ((x) & ((x)-1)) == 0)
 
+void *xcalloc(size_t num_elems, size_t elem_size);
 void *xrealloc(void *prt, size_t num_bytes);
 void *xmalloc(size_t num_bytes);
 void fatal(const char *fmt, ...);
@@ -79,6 +83,31 @@ typedef struct BufHdr {
 #define buf_free(b) ((b) ? (free(buf__hdr(b)), (b) = NULL) : 0)
 
 void *buf__grow(const void *buf, size_t new_len, size_t elem_size);
+
+/* === Hash Map === */
+
+uint64_t hash_uint64(uint64_t x);
+uint64_t hash_ptr(const void *prt);
+uint64_t hash_mix(uint64_t x, uint64_t y);
+uint64_t hash_bytes(const void *ptr, size_t len);
+
+typedef struct Map {
+    uint64_t *keys;
+    uint64_t *vals;
+    size_t len;
+    size_t cap;
+} Map;
+
+uint64_t map_get_uint64_from_uint64(Map *map, uint64_t key);
+void map_put_uint64_from_uint64(Map *map, uint64_t key, uint64_t val);
+void map_grow(Map *map, size_t new_cap);
+void *map_get(Map *map, const void *key);
+void map_put(Map *map, const void *key, void *val);
+void *map_get_from_uint64(Map *map, uint64_t key);
+void map_put_from_uint64(Map *map, uint64_t key, void *val);
+uint64_t map_get_uint64(Map *map, void *key);
+void map_put_uint64(Map *map, void *key, uint64_t val);
+void map_test(void);
 
 /* === buffer.c - Text Editing Data Structures === */
 
@@ -119,11 +148,14 @@ typedef struct COutlineNode {
     int lineNum;
 } COutlineNode;
 
+typedef struct Bookmark Bookmark;
+
 typedef struct Buffer {
     char *openedFilename; // char Stretchy buffer for the currently opened filename
     FileType fileType;
     Line *lines;
     Operation lastOperation;
+    Bookmark *bookmarks;
     // Used by default when no line passed into a command.
     // Commands that modify the file will change the currentLine to the last line it modified. Some commands, like 'c', don't modify the file based on the current line, but will change the current line to what it's modifying ('c' will change the current line to the last line in the file and start inserting from there).
     int currentLine;
@@ -175,6 +207,11 @@ typedef struct lineRange {
     int start;
     int end;
 } lineRange;
+
+typedef struct Bookmark {
+    char *name; // Dynamic Array Buffer
+    lineRange range;
+} Bookmark;
 
 // Function pointer to function that can run user-code on specific keypresses during input (with getInput). If null, the function is not called
 // Return true if keypress should continue to use default action provided by getInput()
@@ -231,6 +268,12 @@ void createMarkdownOutline(void);
 void createCOutline(void);
 void showMarkdownOutline(void);
 void showCOutline(void);
+
+// Returns if bookmark was found with result_bookmark changed to a pointer
+// to it.
+bool get_bookmark(Buffer *buffer, pString name, Bookmark **result_bookmark);
+// Returns true if updated existing bookmark, false otherwise
+bool add_bookmark(Buffer *buffer, pString name, lineRange range);
 
 /* === Colors === */
 

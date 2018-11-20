@@ -216,7 +216,7 @@ State editorState_menu(void) {
     // TODO: Look into string interning
     size_t maxChars = (command.end - command.start);
     //printf("'%.*s'", maxChars, command.start);
-    if (strncmp(command.start, "clear", maxChars) == 0) {
+    if (strncmp(command.start, "clear", 5) == 0) {
         clrscr();
         buf_free(input);
         return KEEP;
@@ -297,6 +297,15 @@ State editorState_menu(void) {
                 line_range.start = lineNum;
                 line_range.end = lineNum_end;
                 line_range_length = line_range.end - line_range.start;
+            } else {
+                Bookmark *result_bookmark;
+                bool found = get_bookmark(currentBuffer, bookmarkName, &result_bookmark);
+
+                if (found) {
+                    line_range.start = result_bookmark->range.start;
+                    line_range.end = result_bookmark->range.end;
+                    line_range_length = line_range.end - line_range.start;
+                }
             }
         }
     }
@@ -349,6 +358,55 @@ State editorState_menu(void) {
             }
             
             currentBuffer->currentLine = line;
+        } break;
+        case 'd': // Define bookmark - currently O(n) // TODO: Switch to using hashmap for storing bookmarks
+        {
+            pString name;
+            name.start = current;
+            current = skipWord(current, buf_end(input), true, false);
+            name.end = current;
+            int name_length = name.end - name.start;
+            
+            current = skipWhitespace(current, buf_end(input));
+            restLength = buf_len(input) - (current - input);
+
+            if (name_length == 0) {
+                // TODO: Prompt for name
+                printf("Unimplemented prompting for name. Please add a name after the line range.");
+                break;
+            }
+
+            printf("Set bookmark '%.*s' to %d:%d\n", name_length, name.start, line_range.start, line_range.end);
+
+            bool updated = add_bookmark(currentBuffer, name, line_range);
+            //map_put(bookmarks, (void *) name, (void *) line_range);
+        } break;
+        case 'w': // TODO: For Testing
+        {
+            pString name;
+            name.start = current;
+            current = skipWord(current, buf_end(input), true, false);
+            name.end = current;
+            int name_length = name.end - name.start;
+
+            current = skipWhitespace(current, buf_end(input));
+            restLength = buf_len(input) - (current - input);
+
+            Bookmark *result_bookmark;
+            bool found = get_bookmark(currentBuffer, name, &result_bookmark);
+
+            if (found) {
+                printf("%d:%d\n", result_bookmark->range.start, result_bookmark->range.end);
+            }
+        } break;
+        case 'g':
+        {
+            // Show list of bookmarks
+
+            for (int i = 0; i < buf_len(currentBuffer->bookmarks); i++) {
+                printf("%4d: %.*s %d:%d", i, (int) buf_len(currentBuffer->bookmarks[i].name), currentBuffer->bookmarks[i].name, currentBuffer->bookmarks[i].range.start, currentBuffer->bookmarks[i].range.end);
+                printf("\n");
+            }
         } break;
         case 's':
         {
@@ -927,7 +985,7 @@ internal void editorState_printHelpScreen() {
     /* Edit - rewrite a specific line, group of lines, group of characters in a line (given column numbers), and word/group of words */
     //printf(" * 'e' - Edit\n");
     printf(" * '#' - Gives back information on the file, including number of lines, filename, number of characters, filetype, etc.\n");
-    printf(" * 'j (line#)' - Set's current line to line number (no output). Use 'j$' to set last line as current line.");
+    printf(" * 'j (line#)' - Set's current line to line number (no output). Use 'j$' to set last line as current line.\n");
     printf(" * 'a (line#)' - Insert after the line number\n");
     printf(" * 'i (line#)' - Insert before the line number\n");
     printf(" * 'A (line#)' - Appends to a line\n");
@@ -942,17 +1000,21 @@ internal void editorState_printHelpScreen() {
     printf(" * 'u' - Undo the last operation, cannot undo an undo, cannot undo past 1 operation\n"); // TODO
     printf(" * 'c' - Continue from last line; Append to end of file\n");
     printf(" * 'p (line#:start)' - Preview whole file (optionally starting at given line)\n");
-    printf(" * 'P (line#:start) (line#:end)' - Preview a line or set of lines, including the line before and after\n");
+    printf(" * 'P (line#:start):(line#:end)' - Preview a line or set of lines, including the line before and after\n");
     printf(" * 'b' - List all currently open buffers\n");
     printf(" * 'b (buffer#)' - Switch current buffer to buffer #\n");
     printf(" * 'bn' - Switch current buffer to next buffer. Will wrap around when hits end.\n");
     printf(" * 'bp' - Switch current buffer to previous buffer. Will wrap around when hits beginning.\n");
+    printf(" * 'd(line#:start):(line#:end) (string)' - Create bookmark with line range start:end and name string\n");
+    printf(" * 'w (string)' - Print out line range of bookmark with name string\n");
+    printf(" * 'g' - List out all bookmarks");
     printf(" * 'o' - Open new buffer\n");
     printf(" * 'n' - Open new file buffer\n");
     printf(" * 's' - Save current buffer\n");
     //printf(" * 'S' - Save all buffers\n"); // TODO
     printf(" * 'e / E' - Exit current buffer / Exit current buffer (without save)\n");
     printf(" * 'q / Q' - Quit, closing all buffers / Quit, closing all buffers (without save)\n");
+    printf("\nAny command that accepts a line number or line range - denoted by '(line#:start):(line#:end)' - can also accept a bookmark. Bookmarks are prefixed with '#'. Example: 'P #test'.\n");
 }
 
 // Editor - will allow user to type in anything, showing line number at start of new lines. To exit the editor, press Ctrl-D on Linux or Ctrl-Z+Enter on Windows. As each new line is entered, the characters will be added to a char pointer streatchy buffer (dynamic array). Then, this line will be added to the streatchy buffer of lines (called 'lines').

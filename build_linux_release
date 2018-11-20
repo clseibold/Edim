@@ -1,4 +1,4 @@
 #!/bin/bash
 
 mkdir -p build/release
-gcc --std=c99 -O2 src/main.c src/parsing.c src/editor.c src/stretchybuffer.c src/colors.c src/buffer.c -o build/release/edimcoder
+gcc --std=c99 -O2 src/main.c src/parsing.c src/editor.c src/stretchybuffer.c src/hashmap.c src/colors.c src/buffer.c -o build/release/edimcoder

@@ -15,6 +15,8 @@ void buffer_initEmptyBuffer(Buffer *buffer) {
     buffer->lastOperation = emptyOperation;
     buffer->modified = false;
     buffer->outline.nodes = NULL;
+
+    buffer->bookmarks = NULL;
 }
 
 // filename should be zero-terminated
@@ -120,6 +122,12 @@ void buffer_close(Buffer *buffer) {
     for (int i = 0; i < buf_len(buffer->lines); i++) {
         buf_free(buffer->lines[i].chars);
     }
+
+    // Clear the bookmarks (and names)
+    for (int i = 0; i < buf_len(buffer->bookmarks); i++) {
+        buf_free(buffer->bookmarks[i].name);
+    }
+    buf_free(buffer->bookmarks);
     
     // Clear the outline
     switch (buffer->fileType) {

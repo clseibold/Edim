@@ -862,3 +862,53 @@ void showCOutline(void) {
         printLine(linenum, 0, true);
     }
 }
+
+/* === Bookmarks === */
+
+bool get_bookmark(Buffer *buffer, pString name, Bookmark **result_bookmark) {
+    // Go through all bookmarks in array to see matching name
+    //Bookmark *result_bookmark;
+    int name_length = name.end - name.start;
+    bool found = false;
+    for (int i = 0; i < buf_len(buffer->bookmarks); i++) {
+        Bookmark bookmark = buffer->bookmarks[i];
+        if (strncmp(bookmark.name, name.start, MAX(buf_len(bookmark.name), name_length)) == 0) { // strncmp(command.start, "clear", maxChars) == 0
+            (*result_bookmark) = &buffer->bookmarks[i];
+            found = true;
+            break;
+        }
+    }
+
+    return found;
+}
+
+// TODO: Accept the buffer to get bookmarks array
+bool add_bookmark(Buffer *buffer, pString name, lineRange range) {
+    int name_length = name.end - name.start;
+
+    // Check if bookmark already exists
+    Bookmark *result_bookmark;
+    bool found = get_bookmark(buffer, name, &result_bookmark);
+
+    if (found) {
+        // If already exists, update the range
+        result_bookmark->range.start = range.start;
+        result_bookmark->range.end = range.end;
+    } else {
+        // Otherwise, create and add the bookmark
+        Bookmark bookmark;
+        bookmark.name = NULL;
+        buf_add(bookmark.name, name_length);
+        for (int i = 0; i < name_length; i++) {
+            bookmark.name[i] = name.start[i];
+            //buf_push(bookmark.name, name.start[i]);
+        }
+
+        bookmark.range.start = range.start;
+        bookmark.range.end = range.end;
+
+        buf_push(buffer->bookmarks, bookmark);
+    }
+
+    return found;
+}

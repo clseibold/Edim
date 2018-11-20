@@ -1,7 +1,5 @@
 #include "edimcoder.h"
 
-Line *lines = NULL;
-
 void *buf__grow(const void *buf, size_t new_len, size_t elem_size) {
     assert(buf_cap(buf) <= (SIZE_MAX - 1) / 2);
     size_t new_cap = MAX(1 + 2 * buf_cap(buf), new_len);
@@ -20,6 +18,15 @@ void *buf__grow(const void *buf, size_t new_len, size_t elem_size) {
     return new_hdr->buf;
 }
 
+
+void *xcalloc(size_t num_elems, size_t elem_size) {
+    void *ptr = calloc(num_elems, elem_size);
+    if (!ptr) {
+        perror("xcalloc failed");
+        exit(1);
+    }
+    return ptr;
+}
 
 void *xrealloc(void *ptr, size_t num_bytes) {
     ptr = realloc(ptr, num_bytes);
