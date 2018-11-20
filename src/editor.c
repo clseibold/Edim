@@ -1007,7 +1007,7 @@ internal void editorState_printHelpScreen() {
     printf(" * 'bp' - Switch current buffer to previous buffer. Will wrap around when hits beginning.\n");
     printf(" * 'd(line#:start):(line#:end) (string)' - Create bookmark with line range start:end and name string\n");
     printf(" * 'w (string)' - Print out line range of bookmark with name string\n");
-    printf(" * 'g' - List out all bookmarks");
+    printf(" * 'g' - List out all bookmarks\n");
     printf(" * 'o' - Open file in new buffer\n");
     printf(" * 'n' - Create new file in new buffer\n");
     printf(" * 's' - Save current buffer\n");
