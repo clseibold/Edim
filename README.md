@@ -51,6 +51,10 @@ To run the release executable, on Windows run `build run release`.
 * Ability to open multiple buffers (files), switch between them, and close them.
 * Set current line number to specified line ('j (line#)') or to last line in file ('j$').
 * When a command accepts a line number as first argument and one wasn't passed in, use current line instead.
+* Bookmarks **NEW (11/20/2018)**
+  - Creating a bookmarks
+  - Listing all bookmarks
+  - Using bookmark in place of line number for all commands
 
 ## TODO
 * Cancel Prompts for getting information for a command (for example, when it prompt you to enter a line number when one wasn't provided when the command was typed)
@@ -77,18 +81,16 @@ To run the release executable, on Windows run `build run release`.
 * Better prompt command parsing
 * Insert before/after character in line
 * Bookmarks
-  - Creating a bookmarks
-  - Listing all bookmarks
-  - Using bookmark in place of line number for all commands
   - Deleting bookmarks
   - Ability to save them in separate (projects/settings) file
 * Ability to split a line into two lines
 
 ## Ideas
-* Ability to use relative line numbers based on what was shown previously (from any command that previews any amount of lines, including insert, delete, preview, etc.)
+* Ability to use relative line numbers based on current line number
 
 ## Commands
-* '#' - Gives back information on the file, including number of lines, filename, number of characters, filetype, etc. 
+* 'info' - Gives back information on the file, including number of lines, filename, number of characters, filetype, etc.
+* 'j (line#)' - Set's current line to line number (no output). Use 'j$' to set last line as current line.
 * 'a (line#)' - Insert after the line number
 * 'i (line#)' - Insert before the line number
 * 'A (line#)' - Appends to a line
@@ -100,15 +102,21 @@ To run the release executable, on Windows run `build run release`.
 * 'M (line#)' - Move the line down by one
 * 'f (string)' - Finds the first occurance of the string in the file and prints the line it's on out
 * 'F (line#) (string)' - Find the first occurance of the string in the line and print the line out showing you where the occurance is
-* 'u' - Undo the last operation, cannot undo an undo, cannot undo past 1 operation
+* 'u' - Undo the last operation, cannot undo an undo, cannot undo past 1 operation - *unimplemented*
 * 'c' - Continue from last line in file
 * 'p' - Preview whole file
-* 'P (line#:start) (line#:end)' - Preview a line or set of lines, including the line before and after
+* 'P (line#:start):(line#:end)' - Preview a line or set of lines, including the line before and after
 * 'b' - List all currently open buffers
 * 'b (buffer#)' - Switch current buffer to buffer #
 * 'bn' - Switch current buffer to next buffer. Will wrap around when hits end.
 * 'bp' - Switch current buffer to previous buffer. Will wrap around when hits beginning.
-* 'o' - Open new buffer
+* d(line#:start):(line#:end) (string)' - Create bookmark with line range start:end and name string
+* 'w (string)' - Print out line range of bookmark with name string
+* 'g' - List out all bookmarks
+* 'o' - Open file in new buffer
+* 'n' - Create new file in new buffer
 * 's' - Save current buffer
 * 'e / E' - Exit current buffer / Exit current buffer (without save)
 * 'q / Q' - Quit, closing all buffers / Quit, closing all buffers (without save)
+
+Any command that accepts a line number or line range - denoted by `(line#:start):(line#:end)` - can also accept a bookmark. Bookmarks are prefixed with `#`. Example: `P #test`.

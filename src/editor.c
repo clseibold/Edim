@@ -997,7 +997,7 @@ internal void editorState_printHelpScreen() {
     printf(" * 'M (line#)' - Move the line down by one\n");
     printf(" * 'f (string)' - Finds the first occurance of the string in the file and prints the line it's on out\n");
     printf(" * 'F (line#) (string)' - Find the first occurance of the string in the line and print the line out showing you where the occurance is\n");
-    printf(" * 'u' - Undo the last operation, cannot undo an undo, cannot undo past 1 operation\n"); // TODO
+    printf(" * 'u' - Undo the last operation, cannot undo an undo, cannot undo past 1 operation - UNIMPLEMENTED\n"); // TODO
     printf(" * 'c' - Continue from last line; Append to end of file\n");
     printf(" * 'p (line#:start)' - Preview whole file (optionally starting at given line)\n");
     printf(" * 'P (line#:start):(line#:end)' - Preview a line or set of lines, including the line before and after\n");
@@ -1008,8 +1008,8 @@ internal void editorState_printHelpScreen() {
     printf(" * 'd(line#:start):(line#:end) (string)' - Create bookmark with line range start:end and name string\n");
     printf(" * 'w (string)' - Print out line range of bookmark with name string\n");
     printf(" * 'g' - List out all bookmarks");
-    printf(" * 'o' - Open new buffer\n");
-    printf(" * 'n' - Open new file buffer\n");
+    printf(" * 'o' - Open file in new buffer\n");
+    printf(" * 'n' - Create new file in new buffer\n");
     printf(" * 's' - Save current buffer\n");
     //printf(" * 'S' - Save all buffers\n"); // TODO
     printf(" * 'e / E' - Exit current buffer / Exit current buffer (without save)\n");
