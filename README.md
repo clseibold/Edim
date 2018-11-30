@@ -1,5 +1,7 @@
 ~~NOTE: Currently, the latest commits are bugged, so please use the files from [a7c4f](https://github.com/krixano/Edim/tree/a7c4f61b4c7cf4642bb9c232bd5f8b8b7b6e685f) until these bugs are fixed.~~ Many bugs have been fixed recently. There are still a few more to work on.
-NOTE2: EdimCoder has been moved to Pijul's The Nest (nest.pijul.com) and now uses the Pijul VCS (pijul.org).
+
+**NOTE2: EdimCoder has been moved to Pijul's The Nest (https://nest.pijul.com) and now uses the Pijul VCS (https://pijul.org). You can find the Pijul repository here: https://nest.pijul.com/krixano/EdimCoder**
+
 # Edim Line Editor
 A simple interactive line editor program inspired by vim, ed, 4coder, and modern editors.
 This readme was written using Edim.
