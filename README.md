@@ -81,6 +81,7 @@ To run the release executable, on Windows run `build run release`.
 * Better prompt command parsing
 * Insert before/after character in line
 * Bookmarks
+  - Switch to hashmaps
   - Deleting bookmarks
   - Ability to save them in separate (projects/settings) file
 * Ability to split a line into two lines

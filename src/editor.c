@@ -1041,7 +1041,7 @@ void editorState_editor(void) {
 
 // Insert lines after a specific line. Denote end of input by typing Ctrl-D (or Ctrl-Z+Enter on Windows) on new line.
 internal void editorState_insertAfter(lineRange line_range) {
-    int line = line_range.start;
+    int line = line_range.end;
     
     if (line == 0) line = currentBuffer->currentLine;
     else line = checkLineNumber(line);
